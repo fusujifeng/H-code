@@ -1,0 +1,193 @@
+/* ============================================
+   ClaudeBridge 7-Theme System
+   ============================================ */
+
+/* ① 汇川蓝 (默认) */
+:root,
+[data-theme='antdx'] {
+  --bg: #f5f5f5;
+  --bg-elevated: #fafafa;
+  --surface: #ffffff;
+  --surface-hover: #f5f5f5;
+  --border: #f0f0f0;
+  --border-hover: #d9d9d9;
+  --text: rgba(0, 0, 0, 0.88);
+  --text-secondary: rgba(0, 0, 0, 0.45);
+  --text-tertiary: rgba(0, 0, 0, 0.25);
+  --blue: #1677ff;
+  --blue-light: #e6f4ff;
+  --blue-hover: #4096ff;
+  --blue-glow: rgba(22, 119, 255, 0.2);
+  --blue-glow-lg: rgba(22, 119, 255, 0.3);
+  --green: #52c41a;
+  --green-light: #f6ffed;
+  --yellow: #faad14;
+  --yellow-light: #fffbe6;
+  --red: #f5222d;
+  --red-light: #fff2f0;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+/* ② 至臻皮肤 (黑金) */
+[data-theme='blackgold'] {
+  --bg: #07070a;
+  --bg-elevated: #0e0e14;
+  --surface: #14141c;
+  --surface-hover: #1c1c28;
+  --border: rgba(255, 255, 255, 0.055);
+  --border-hover: rgba(255, 255, 255, 0.1);
+  --text: #e6e4df;
+  --text-secondary: #8a8594;
+  --text-tertiary: #5a5564;
+  --blue: #c8a45c;
+  --blue-light: rgba(200, 164, 92, 0.08);
+  --blue-hover: #ddb978;
+  --blue-glow: rgba(200, 164, 92, 0.2);
+  --blue-glow-lg: rgba(200, 164, 92, 0.3);
+  --green: #5acf7a;
+  --green-light: rgba(90, 207, 122, 0.1);
+  --yellow: #e8c84a;
+  --yellow-light: rgba(232, 200, 74, 0.1);
+  --red: #e86a6a;
+  --red-light: rgba(232, 106, 106, 0.1);
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6);
+}
+
+/* ③ VS Code (深色) */
+[data-theme='vscode'] {
+  --bg: #2b2b2b;
+  --bg-elevated: #313335;
+  --surface: #3c3f41;
+  --surface-hover: #45484a;
+  --border: #555555;
+  --border-hover: #666666;
+  --text: #bbbbbb;
+  --text-secondary: #a9b7c6;
+  --text-tertiary: #6a6a6a;
+  --blue: #4e9fdf;
+  --blue-light: rgba(78, 159, 223, 0.1);
+  --blue-hover: #5aa8e6;
+  --blue-glow: rgba(78, 159, 223, 0.2);
+  --blue-glow-lg: rgba(78, 159, 223, 0.3);
+  --green: #6a8759;
+  --green-light: rgba(106, 135, 89, 0.1);
+  --yellow: #bbb529;
+  --yellow-light: rgba(187, 181, 41, 0.1);
+  --red: #bc3f3c;
+  --red-light: rgba(188, 63, 60, 0.1);
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+/* ④ Claude Code (暖橙) */
+[data-theme='claude'] {
+  --bg: #faf9f7;
+  --bg-elevated: #f5f3ef;
+  --surface: #ffffff;
+  --surface-hover: #f5f3ef;
+  --border: #edeae5;
+  --border-hover: #ddd9d2;
+  --text: #1a1a1a;
+  --text-secondary: #6b6b6b;
+  --text-tertiary: #999999;
+  --blue: #d97757;
+  --blue-light: #fdf2ed;
+  --blue-hover: #e08a6d;
+  --blue-glow: rgba(217, 119, 87, 0.2);
+  --blue-glow-lg: rgba(217, 119, 87, 0.3);
+  --green: #2d8a4e;
+  --green-light: #eaf5ee;
+  --yellow: #b8860b;
+  --yellow-light: #fef7e6;
+  --red: #c73e3e;
+  --red-light: #fdf0f0;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+/* ⑤ TRAE (黑底绿光) */
+[data-theme='trae'] {
+  --bg: #0d1117;
+  --bg-elevated: #161b22;
+  --surface: #1c2128;
+  --surface-hover: #21262d;
+  --border: #30363d;
+  --border-hover: #484f58;
+  --text: #c9d1d9;
+  --text-secondary: #8b949e;
+  --text-tertiary: #484f58;
+  --blue: #3ecf8e;
+  --blue-light: rgba(62, 207, 142, 0.1);
+  --blue-hover: #4dd89a;
+  --blue-glow: rgba(62, 207, 142, 0.2);
+  --blue-glow-lg: rgba(62, 207, 142, 0.3);
+  --green: #3ecf8e;
+  --green-light: rgba(62, 207, 142, 0.1);
+  --yellow: #d29922;
+  --yellow-light: rgba(210, 153, 34, 0.1);
+  --red: #f85149;
+  --red-light: rgba(248, 81, 73, 0.1);
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6);
+}
+
+/* ⑥ Qoder (翠绿) */
+[data-theme='qoder'] {
+  --bg: #f8fafb;
+  --bg-elevated: #f0f4f5;
+  --surface: #ffffff;
+  --surface-hover: #f0f4f5;
+  --border: #e8eef1;
+  --border-hover: #d0dbe0;
+  --text: #1a2b3c;
+  --text-secondary: #5a6b7c;
+  --text-tertiary: #8a9ba8;
+  --blue: #00c853;
+  --blue-light: #e8f5e9;
+  --blue-hover: #00e676;
+  --blue-glow: rgba(0, 200, 83, 0.2);
+  --blue-glow-lg: rgba(0, 200, 83, 0.3);
+  --green: #00c853;
+  --green-light: #e8f5e9;
+  --yellow: #ffab00;
+  --yellow-light: #fff8e1;
+  --red: #ff1744;
+  --red-light: #ffebee;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+/* ⑦ IDEA (深灰蓝) */
+[data-theme='idea'] {
+  --bg: #1e1e2e;
+  --bg-elevated: #252830;
+  --surface: #2a2d38;
+  --surface-hover: #323540;
+  --border: #3a3d4a;
+  --border-hover: #4a4d5a;
+  --text: #d4d4d4;
+  --text-secondary: #a0a0a0;
+  --text-tertiary: #6a6a6a;
+  --blue: #4fc1ff;
+  --blue-light: rgba(79, 193, 255, 0.1);
+  --blue-hover: #6fd1ff;
+  --blue-glow: rgba(79, 193, 255, 0.2);
+  --blue-glow-lg: rgba(79, 193, 255, 0.3);
+  --green: #6a9955;
+  --green-light: rgba(106, 153, 85, 0.1);
+  --yellow: #dcdcaa;
+  --yellow-light: rgba(220, 220, 170, 0.1);
+  --red: #f44747;
+  --red-light: rgba(244, 71, 71, 0.1);
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6);
+}

@@ -1,0 +1,2834 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClaudeBridge — AI Task Manager</title>
+<style>
+/* ═══════════════════════════════════════════
+   Ant Design X 风格 Design Tokens
+   ═══════════════════════════════════════════ */
+:root {
+  --blue:         #1677ff;
+  --blue-light:   #e6f4ff;
+  --blue-hover:   #4096ff;
+  --blue-glow:    rgba(22,119,255,0.12);
+  --blue-glow-lg: rgba(22,119,255,0.2);
+  --bg:           #f5f5f5;
+  --bg-elevated:  #fafafa;
+  --surface:      #ffffff;
+  --surface-hover:#f5f5f5;
+  --border:       #f0f0f0;
+  --border-hover: #d9d9d9;
+  --text:         rgba(0,0,0,0.88);
+  --text-secondary: rgba(0,0,0,0.45);
+  --text-tertiary:  rgba(0,0,0,0.25);
+  --green:        #52c41a;
+  --green-light:  #f6ffed;
+  --yellow:       #faad14;
+  --yellow-light: #fffbe6;
+  --red:          #f5222d;
+  --red-light:    #fff2f0;
+  --purple:       #722ed1;
+  --user-bubble-bg: #e6f4ff;
+  --user-bubble-border: rgba(22,119,255,0.12);
+  --user-avatar-bg: #e6f4ff;
+  --user-avatar-text: #1677ff;
+  --user-avatar-border: rgba(22,119,255,0.15);
+  --code-bg: #1e1e2e;
+
+  --radius-sm:    6px;
+  --radius:       8px;
+  --radius-lg:    12px;
+  --radius-xl:    16px;
+  --shadow:       0 2px 8px rgba(0,0,0,0.06);
+  --shadow-md:    0 4px 16px rgba(0,0,0,0.08);
+  --shadow-lg:    0 8px 32px rgba(0,0,0,0.1);
+  --font:         -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  --font-mono:    'SF Mono', 'JetBrains Mono', 'Fira Code', ui-monospace, Menlo, monospace;
+  --ease:         cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* RESET */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  height: 100%;
+  font-family: var(--font);
+  font-size: 14px;
+  color: var(--text);
+  background: var(--bg);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* APP SHELL — 3-column layout */
+#app {
+  display: grid;
+  grid-template-columns: 52px 260px 1fr;
+  height: 100vh;
+  width: 100vw;
+  background: var(--bg);
+}
+
+/* ═══════════════════════════════════════════
+   LEFT RAIL — 52px icon bar
+   ═══════════════════════════════════════════ */
+.left-rail {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 0;
+  gap: 4px;
+  z-index: 50;
+}
+.rail-logo {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--blue), #0958d9);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 800; color: #fff;
+  margin-bottom: 10px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px var(--blue-glow);
+  transition: all 0.2s var(--ease);
+}
+.rail-logo:hover { transform: scale(1.06); box-shadow: 0 4px 14px var(--blue-glow-lg); }
+.rail-btn {
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  transition: all 0.2s var(--ease);
+  position: relative;
+}
+.rail-btn:hover { color: var(--text); background: var(--bg); }
+.rail-btn.active { color: var(--blue); background: var(--blue-light); }
+.rail-btn .badge {
+  position: absolute; top: 4px; right: 4px;
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--blue); border: 2px solid var(--surface);
+}
+.rail-divider { width: 20px; height: 1px; background: var(--border); margin: 6px 0; }
+.rail-spacer { flex: 1; }
+.rail-avatar {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: var(--blue-light);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; color: var(--blue);
+  cursor: pointer;
+}
+
+/* ═══════════════════════════════════════════
+   SESSION SIDEBAR
+   ═══════════════════════════════════════════ */
+.session-sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.sidebar-header {
+  padding: 14px 16px 10px;
+  display: flex; align-items: center; gap: 8px;
+}
+.sidebar-title {
+  font-size: 13px; font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.session-search {
+  margin: 0 12px 10px;
+  padding: 7px 10px 7px 32px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  color: var(--text);
+  background: var(--bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23bfbfbf' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E") no-repeat 10px center;
+  border: 1px solid var(--border);
+  outline: none;
+  transition: all 0.2s var(--ease);
+  font-family: inherit;
+}
+.session-search:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 2px var(--blue-glow);
+}
+.session-search::placeholder { color: var(--text-tertiary); }
+
+.sidebar-section { margin-bottom: 8px; }
+.sidebar-section-title {
+  padding: 8px 16px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+.session-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 14px;
+  margin: 0 8px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.15s var(--ease);
+  color: var(--text-secondary);
+  position: relative;
+}
+.session-item:hover { background: var(--bg); color: var(--text); }
+.session-item.active {
+  background: var(--blue-light);
+  color: var(--blue);
+  font-weight: 500;
+}
+.session-item .dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--text-tertiary); flex-shrink: 0;
+}
+.session-item.active .dot { background: var(--blue); }
+.session-item .title { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.session-item .pin-icon {
+  opacity: 0; transition: opacity 0.15s;
+  color: var(--text-tertiary);
+}
+.session-item:hover .pin-icon { opacity: 1; }
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 10px 16px;
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.sidebar-footer svg { opacity: 0.6; }
+
+/* ═══════════════════════════════════════════
+   RIGHT PANEL
+   ═══════════════════════════════════════════ */
+.right-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  background: var(--bg);
+}
+
+/* Header breadcrumb */
+.panel-header {
+  height: 48px;
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.crumb-path {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; font-weight: 500;
+  color: var(--text-secondary);
+}
+.crumb-path svg { opacity: 0.5; }
+.crumb-name { color: var(--text); font-weight: 600; }
+.crumb-arrow {
+  width: 14px; height: 14px;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0.4;
+  cursor: pointer;
+}
+.header-actions { display: flex; gap: 4px; }
+.header-action {
+  width: 28px; height: 28px;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  transition: all 0.15s;
+}
+.header-action:hover { background: var(--bg); color: var(--text); }
+
+/* CHAT SCROLL */
+.chat-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 20px 8px;
+  scroll-behavior: smooth;
+}
+
+/* ═══════════════════════════════════════════
+   WELCOME — Ant Design X 规范
+   ═══════════════════════════════════════════ */
+.welcome-area {
+  display: flex; flex-direction: column;
+  align-items: center;
+  padding: 24px 0 16px;
+  animation: welcomeIn 0.5s var(--ease);
+}
+@keyframes welcomeIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* AI Sparkle Icon — 四芒星 */
+.sparkle-wrap {
+  position: relative;
+  width: 56px; height: 56px;
+  display: flex; align-items: center; justify-content: center;
+}
+.sparkle-icon {
+  width: 40px; height: 40px;
+  color: var(--blue);
+  animation: sparklePulse 2.5s ease-in-out infinite;
+}
+@keyframes sparklePulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.12); opacity: 0.85; }
+}
+.sparkle-glow {
+  position: absolute;
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--blue-glow), transparent 70%);
+  animation: glowPulse 2.5s ease-in-out infinite;
+}
+@keyframes glowPulse {
+  0%, 100% { transform: scale(1); opacity: 0.6; }
+  50% { transform: scale(1.2); opacity: 0.3; }
+}
+
+.welcome-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text);
+  margin-top: 14px;
+  letter-spacing: -0.3px;
+}
+.welcome-subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+/* Quick suggestion cards — 个性化推荐提示 */
+.suggestion-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 560px;
+  width: 100%;
+  margin: 20px auto 0;
+n  padding: 0 16px;
+}
+.suggestion-card {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 12px 16px;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+  text-align: left;
+}
+.suggestion-card:hover {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 2px var(--blue-glow), var(--shadow);
+}
+.suggestion-icon {
+  width: 32px; height: 32px;
+  border-radius: var(--radius);
+  background: var(--blue-light);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  color: var(--blue);
+}
+.suggestion-content { flex: 1; min-width: 0; }
+.suggestion-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.suggestion-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* ═══════════════════════════════════════════
+   MESSAGES — Ant Design X Bubble
+   ═══════════════════════════════════════════ */
+.msg-group { margin-bottom: 20px; }
+.msg-bubble {
+  width: calc(100% - 16px);
+  border-radius: var(--radius-xl);
+  padding: 14px 18px;
+  font-size: 14px;
+  line-height: 1.7;
+  animation: msgIn 0.3s var(--ease);
+  position: relative;
+}
+@keyframes msgIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.msg-bubble.ai {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  color: var(--text);
+}
+.msg-bubble.user {
+  background: var(--user-bubble-bg);
+  border: 1px solid var(--user-bubble-border);
+  color: var(--text);
+}
+
+.msg-header-row {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 10px;
+}
+
+/* AI Sparkle avatar — 四芒星标识 */
+.msg-avatar {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.msg-avatar.ai {
+  background: linear-gradient(135deg, var(--blue), #0958d9);
+  color: #fff;
+  box-shadow: 0 0 10px var(--blue-glow);
+}
+.msg-avatar.ai svg { width: 16px; height: 16px; }
+.msg-avatar.user {
+  background: var(--user-avatar-bg);
+  color: var(--user-avatar-text);
+  border: 1px solid var(--user-avatar-border);
+  font-size: 10px; font-weight: 800;
+}
+.msg-name { font-size: 13px; font-weight: 600; }
+.msg-name.ai { color: var(--blue); }
+.msg-name.user { color: var(--text); }
+.msg-time { font-size: 11px; color: var(--text-tertiary); margin-left: auto; }
+
+/* User send actions — 编辑/删除/引用 */
+.user-send-actions {
+  display: flex; gap: 4px;
+  margin-top: 6px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.msg-bubble.user:hover .user-send-actions { opacity: 1; }
+.user-send-btn {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.user-send-btn:hover { color: var(--blue); background: var(--blue-light); }
+
+/* ═══════════════════════════════════════════
+   GENERATION PROCESS — 生成过程
+   ═══════════════════════════════════════════ */
+
+/* Typing indicator — 轻量动画加载 */
+.typing-indicator {
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+.typing-dots {
+  display: flex; gap: 4px;
+}
+.typing-dots .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--blue);
+  animation: typingBounce 1.4s ease-in-out infinite;
+}
+.typing-dots .dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots .dot:nth-child(3) { animation-delay: 0.4s; }
+@keyframes typingBounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+  40% { transform: translateY(-6px); opacity: 1; }
+}
+.typing-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* Stream output — 流式输出 + 打字机光标 */
+.stream-output {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text);
+}
+.stream-output .cursor {
+  display: inline-block;
+  width: 2px; height: 1.2em;
+  background: var(--blue);
+  margin-left: 1px;
+  vertical-align: text-bottom;
+  animation: blink 1s step-end infinite;
+}
+@keyframes blink { 50% { opacity: 0; } }
+
+/* Thinking process — 思考过程可展开 */
+.thinking-box {
+  margin: 10px 0;
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.thinking-header {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 14px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  transition: background 0.15s;
+}
+.thinking-header:hover { background: var(--bg); }
+.thinking-header svg { transition: transform 0.2s; }
+.thinking-header.open svg { transform: rotate(90deg); }
+.thinking-body {
+  padding: 0 14px 12px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+  display: none;
+}
+.thinking-body.open { display: block; animation: fadeIn 0.2s var(--ease); }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* Progress bar — 进度展示 */
+.progress-bar {
+  margin: 10px 0;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  background: var(--blue-light);
+  border: 1px solid rgba(22,119,255,0.08);
+}
+.progress-track {
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(22,119,255,0.1);
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--blue), var(--blue-hover));
+  transition: width 0.5s var(--ease);
+}
+.progress-label {
+  font-size: 12px;
+  color: var(--blue);
+  font-weight: 500;
+}
+
+/* Step done */
+.step-done {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  background: var(--green-light);
+  border: 1px solid rgba(82,196,26,0.15);
+  margin: 10px 0;
+  font-size: 13px;
+  color: var(--green);
+}
+
+/* ═══════════════════════════════════════════
+   RESULT DISPLAY — 结果展示
+   ═══════════════════════════════════════════ */
+
+/* Code block with copy button */
+.code-block-wrap {
+  margin: 12px 0;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: #1e1e2e;
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: var(--shadow-md);
+}
+.code-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.02);
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.code-header-left {
+  display: flex; align-items: center; gap: 8px;
+}
+.code-dots { display: flex; gap: 6px; }
+.code-dots .dot { width: 10px; height: 10px; border-radius: 50%; }
+.code-dots .dot.r { background: #ff5f56; }
+.code-dots .dot.y { background: #ffbd2e; }
+.code-dots .dot.g { background: #27c93f; }
+.code-filename {
+  font-size: 11px;
+  color: rgba(255,255,255,0.3);
+  font-family: var(--font-mono);
+}
+.code-copy-btn {
+  display: flex; align-items: center; gap: 5px;
+  padding: 4px 10px;
+  border-radius: 5px;
+  font-size: 11px;
+  color: rgba(255,255,255,0.4);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.code-copy-btn:hover { color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.08); }
+.code-copy-btn.copied { color: var(--green); border-color: rgba(90,207,122,0.2); }
+.code-body {
+  padding: 14px 18px;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.75;
+  color: #c8c4d4;
+}
+.code-body .kw  { color: #ff7b72; }
+.code-body .fn  { color: #d2a8ff; }
+.code-body .str { color: #a5d6a7; }
+.code-body .num { color: #79c0ff; }
+.code-body .cm  { color: #6e7681; font-style: italic; }
+.code-body .type{ color: #ffa657; }
+
+/* File list / Diff */
+.file-list {
+  margin: 10px 0;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+.file-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-family: var(--font-mono);
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.15s;
+  color: var(--text-secondary);
+}
+.file-item:last-child { border-bottom: none; }
+.file-item:hover { background: var(--bg); color: var(--text); }
+.file-item .f-name { flex: 1; }
+.file-item .f-action { font-size: 11px; color: var(--blue); opacity: 0; transition: opacity 0.15s; }
+.file-item:hover .f-action { opacity: 1; }
+
+.diff-view {
+  margin: 0;
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.6;
+  border-top: 1px solid var(--border);
+}
+.diff-line {
+  padding: 2px 12px;
+  display: flex; gap: 10px;
+}
+.diff-line.add { background: var(--green-light); }
+.diff-line.del { background: var(--red-light); }
+.diff-line .ln { color: var(--text-tertiary); min-width: 28px; text-align: right; user-select: none; }
+.diff-line.add .ch { color: var(--green); }
+.diff-line.del .ch { color: var(--red); }
+
+/* Alert boxes */
+.alert-box {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  margin: 10px 0;
+  font-size: 13px;
+}
+.alert-warn { background: var(--yellow-light); border: 1px solid rgba(250,173,20,0.15); }
+.alert-warn .icon { color: var(--yellow); flex-shrink: 0; margin-top: 2px; }
+.alert-err  { background: var(--red-light); border: 1px solid rgba(245,34,45,0.1); }
+.alert-err .icon { color: var(--red); flex-shrink: 0; margin-top: 2px; }
+
+/* Inline code */
+code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: rgba(0,0,0,0.04);
+  padding: 2px 5px;
+  border-radius: 4px;
+  color: var(--red);
+  border: 1px solid var(--border);
+}
+
+/* ═══════════════════════════════════════════
+   RESULT APPLICATION — 结果应用
+   ═══════════════════════════════════════════ */
+.msg-actions {
+  display: flex; align-items: center; gap: 4px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.msg-bubble.ai:hover .msg-actions { opacity: 1; }
+.msg-action-btn {
+  display: flex; align-items: center; gap: 5px;
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.msg-action-btn:hover { color: var(--text); background: var(--bg); }
+.msg-action-btn.copied { color: var(--green); }
+.msg-action-btn.liked { color: var(--blue); background: var(--blue-light); }
+.msg-action-btn.disliked { color: var(--red); background: var(--red-light); }
+
+/* ═══════════════════════════════════════════
+   BOTTOM INPUT AREA — Ant Design X 规范
+   ═══════════════════════════════════════════ */
+.input-area {
+  flex-shrink: 0;
+  padding: 12px 20px 16px;
+  background: var(--bg);
+}
+.input-box-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  padding: 12px 14px;
+  box-shadow: var(--shadow);
+  transition: all 0.2s var(--ease);
+}
+.input-box-wrap:focus-within {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-glow), var(--shadow-md);
+}
+.input-field {
+  width: 100%;
+  background: transparent;
+  border: none;
+  resize: none;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text);
+  max-height: 120px;
+  min-height: 22px;
+  outline: none;
+}
+.input-field::placeholder { color: var(--text-tertiary); }
+
+/* Stop generating button */
+.input-toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 8px;
+}
+.input-actions-left { display: flex; gap: 4px; }
+.input-actions-right { display: flex; gap: 6px; align-items: center; }
+
+.icon-btn {
+  width: 30px; height: 30px;
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  color: var(--text-tertiary);
+  transition: all 0.15s;
+}
+.icon-btn:hover { color: var(--text-secondary); background: var(--bg); }
+
+.stop-btn {
+  display: flex; align-items: center; gap: 5px;
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.stop-btn:hover { background: var(--red-light); color: var(--red); border-color: rgba(245,34,45,0.15); }
+.stop-btn .square {
+  width: 8px; height: 8px;
+  border-radius: 1px;
+  background: currentColor;
+}
+
+.icon-btn.send {
+  width: 32px; height: 32px;
+  background: var(--blue);
+  color: #fff;
+  border-radius: 8px;
+}
+.icon-btn.send:hover { background: var(--blue-hover); transform: translateY(-1px); }
+
+/* Bottom status bar */
+.bottom-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 20px 0;
+  font-size: 12px;
+}
+.bottom-left { display: flex; align-items: center; gap: 12px; }
+
+/* Permission selector */
+.perm-selector {
+  display: flex; align-items: center; gap: 6px;
+  cursor: pointer;
+  padding: 3px 8px;
+  border-radius: 6px;
+  transition: all 0.15s;
+  font-weight: 500;
+  position: relative;
+  color: var(--text-secondary);
+}
+.perm-selector:hover { background: var(--bg); }
+.perm-selector .dot { width: 7px; height: 7px; border-radius: 50%; }
+.perm-selector .dot.yolo   { background: var(--red); }
+.perm-selector .dot.trust  { background: var(--green); }
+.perm-selector .dot.plan   { background: var(--yellow); }
+.perm-selector .dot.manual { background: var(--text-tertiary); }
+.perm-selector .perm-label { color: var(--text); font-weight: 600; }
+.perm-dropdown {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  min-width: 220px;
+  border-radius: var(--radius-lg);
+  padding: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  opacity: 0;
+  transform: scale(0.96) translateY(4px);
+  pointer-events: none;
+  transition: all 0.2s var(--ease);
+  z-index: 100;
+}
+.perm-dropdown.open { opacity: 1; transform: scale(1) translateY(0); pointer-events: auto; }
+.perm-option {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 10px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-secondary);
+  transition: all 0.15s;
+}
+.perm-option:hover { background: var(--bg); color: var(--text); }
+.perm-option .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.perm-option .info { font-size: 11px; color: var(--text-tertiary); margin-top: 3px; }
+.perm-option.selected { background: var(--blue-light); color: var(--blue); }
+
+.model-badge {
+  display: flex; align-items: center; gap: 6px;
+  color: var(--text-tertiary);
+}
+.model-badge .model-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--blue);
+  box-shadow: 0 0 6px var(--blue-glow);
+}
+
+/* ═══════════════════════════════════════════
+   MODAL
+   ═══════════════════════════════════════════ */
+.modal-overlay {
+  position: fixed; inset: 0;
+  z-index: 400;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: auto; }
+.modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.35); backdrop-filter: blur(4px); }
+.modal-box {
+  width: 400px;
+  border-radius: var(--radius-xl);
+  padding: 24px;
+  position: relative;
+  z-index: 1;
+  transform: scale(0.95);
+  transition: transform 0.3s var(--ease);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+}
+.modal-overlay.open .modal-box { transform: scale(1); }
+.modal-title { font-size: 17px; font-weight: 600; margin-bottom: 10px; color: var(--text); }
+.modal-text { font-size: 14px; color: var(--text-secondary); line-height: 1.65; margin-bottom: 24px; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.btn {
+  padding: 8px 18px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s var(--ease);
+  font-family: inherit;
+}
+.btn-secondary {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.btn-secondary:hover { border-color: var(--border-hover); }
+.btn-primary {
+  background: var(--blue);
+  color: #fff;
+  box-shadow: 0 2px 8px var(--blue-glow);
+}
+.btn-primary:hover { background: var(--blue-hover); transform: translateY(-1px); }
+
+/* ═══════════════════════════════════════════
+   FLOATING ORB — Sparkle Star
+   ═══════════════════════════════════════════ */
+.orb-container {
+  position: fixed;
+  bottom: 90px;
+  right: 36px;
+  width: 56px; height: 56px;
+  z-index: 300;
+  cursor: grab;
+  user-select: none;
+}
+.orb-container:active { cursor: grabbing; }
+.orb {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  transition: all 0.4s var(--ease);
+}
+.orb-star {
+  width: 26px; height: 26px;
+  transition: all 0.4s var(--ease);
+}
+.orb-glow {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.4s;
+  pointer-events: none;
+}
+
+/* Idle — blue breathe */
+.orb.idle .orb-star { color: #9ca3af; animation: starBreathe 2.5s ease-in-out infinite; }
+.orb.idle .orb-glow { background: radial-gradient(circle, rgba(156,163,175,0.15), transparent 70%); opacity: 0.5; animation: glowBreathe 2.5s ease-in-out infinite; }
+
+/* Running — blue bounce */
+.orb.running .orb-star { color: var(--blue); animation: starBounce 0.8s ease-in-out infinite; }
+.orb.running .orb-glow { background: radial-gradient(circle, var(--blue-glow), transparent 70%); opacity: 0.7; }
+.orb.running { box-shadow: 0 0 24px var(--blue-glow-lg); }
+
+/* Done — green shine */
+.orb.done .orb-star { color: var(--green); animation: starShine 1.5s ease-in-out infinite; }
+.orb.done .orb-glow { background: radial-gradient(circle, rgba(82,196,26,0.2), transparent 70%); opacity: 0.8; }
+.orb.done { box-shadow: 0 0 24px rgba(82,196,26,0.25); }
+
+/* Confirm — yellow pulse */
+.orb.confirm .orb-star { color: var(--yellow); animation: starPulse 0.9s ease-in-out infinite; }
+.orb.confirm .orb-glow { background: radial-gradient(circle, rgba(250,173,20,0.2), transparent 70%); opacity: 0.7; }
+.orb.confirm { box-shadow: 0 0 24px rgba(250,173,20,0.25); }
+
+/* Error — red shake */
+.orb.error .orb-star { color: var(--red); }
+.orb.error .orb-glow { background: radial-gradient(circle, rgba(245,34,45,0.2), transparent 70%); opacity: 0.7; }
+.orb.error { animation: orbShake 0.5s ease-in-out; box-shadow: 0 0 24px rgba(245,34,45,0.25); }
+
+@keyframes starBreathe {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.15); opacity: 0.85; }
+}
+@keyframes glowBreathe {
+  0%, 100% { transform: scale(1); opacity: 0.4; }
+  50% { transform: scale(1.2); opacity: 0.2; }
+}
+@keyframes starBounce {
+  0%, 100% { transform: scale(1) translateY(0); }
+  30% { transform: scale(0.9) translateY(2px); }
+  60% { transform: scale(1.2) translateY(-4px); }
+}
+@keyframes starShine {
+  0%, 100% { transform: scale(1) rotate(0deg); filter: brightness(1); }
+  50% { transform: scale(1.25) rotate(12deg); filter: brightness(1.3); }
+}
+@keyframes starPulse {
+  0%, 100% { transform: scale(1); }
+  40% { transform: scale(1.2); }
+  60% { transform: scale(0.95); }
+  80% { transform: scale(1.1); }
+}
+@keyframes orbShake {
+  0%,100% { transform: translateX(0); }
+  20% { transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(3px); }
+}
+
+.orb-menu {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  right: 0;
+  min-width: 160px;
+  border-radius: var(--radius-lg);
+  padding: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+  opacity: 0;
+  transform: scale(0.92) translateY(6px);
+  pointer-events: none;
+  transition: all 0.2s var(--ease);
+  z-index: 10;
+}
+.orb-menu.open { opacity: 1; transform: scale(1) translateY(0); pointer-events: auto; }
+.orb-menu-item {
+  padding: 9px 11px;
+  border-radius: var(--radius);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex; align-items: center; gap: 9px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.orb-menu-item:hover { background: var(--bg); color: var(--text); }
+.orb-menu-item.danger { color: var(--red); }
+.orb-menu-item.danger:hover { background: var(--red-light); }
+
+/* ═══════════════════════════════════════════
+   SETTINGS THEME GRID
+   ═══════════════════════════════════════════ */
+.settings-header {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.settings-back-btn {
+  width: 28px; height: 28px;
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  transition: all 0.15s;
+}
+.settings-back-btn:hover { background: var(--bg); color: var(--text); }
+.settings-title { font-size: 15px; font-weight: 600; color: var(--text); }
+.theme-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.theme-card {
+  padding: 14px 12px;
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--border);
+  background: var(--bg-elevated);
+  cursor: pointer;
+  transition: all 0.2s var(--ease);
+  text-align: center;
+  position: relative;
+  box-shadow: var(--shadow);
+}
+.theme-card:hover { border-color: var(--border-hover); transform: translateY(-1px); box-shadow: var(--shadow-md); }
+.theme-card.active {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 3px var(--blue-glow);
+}
+.theme-swatch {
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  margin: 0 auto 8px;
+  position: relative;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  overflow: hidden;
+}
+.theme-swatch::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  transition: border-color 0.2s;
+}
+.theme-card.active .theme-swatch::after { border-color: var(--blue); }
+.theme-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+.theme-desc {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.settings-section {
+  margin-top: 24px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 0 16px;
+  box-shadow: var(--shadow);
+}
+.settings-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 10px;
+}
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.setting-row:last-child { border-bottom: none; }
+.setting-info { display: flex; flex-direction: column; gap: 2px; }
+.setting-name { font-size: 13px; font-weight: 500; color: var(--text); }
+.setting-desc { font-size: 11px; color: var(--text-secondary); }
+
+/* Toggle Switch */
+.toggle-switch {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: var(--border-hover);
+  border-radius: 20px;
+  transition: background 0.2s;
+}
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  height: 16px;
+  width: 16px;
+  left: 2px;
+  bottom: 2px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+.toggle-switch input:checked + .toggle-slider { background: var(--blue); }
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(16px); }
+
+/* Toggle switch for model modal (div-based, no input/slider children) */
+div.toggle-switch {
+  background: var(--border-hover);
+  border-radius: 20px;
+  transition: background 0.2s;
+}
+div.toggle-switch::before {
+  content: '';
+  position: absolute;
+  height: 16px;
+  width: 16px;
+  left: 2px;
+  bottom: 2px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+div.toggle-switch.on {
+  background: var(--blue);
+}
+div.toggle-switch.on::before {
+  transform: translateX(16px);
+}
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.08); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.15); }
+
+/* ═══════════════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════════════ */
+@media (max-width: 1023px) {
+  #app { grid-template-columns: 52px 1fr; }
+  .session-sidebar { display: none; }
+}
+@media (max-width: 640px) {
+  #app { grid-template-columns: 1fr; }
+  .left-rail { display: none; }
+  .chat-scroll { padding: 14px 14px 8px; }
+  .suggestion-list { padding: 0 8px; }
+  .msg-bubble { width: calc(100% - 16px); }
+  .input-area { padding: 10px 14px 14px; }
+  .bottom-bar { flex-direction: column; gap: 6px; align-items: flex-start; padding: 8px 14px 0; }
+}
+
+/* ═══════════════════════════════════════════
+   MODEL CONFIG — 模型配置
+   ═══════════════════════════════════════════ */
+.model-card {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px; border-bottom: 1px solid var(--border);
+  transition: background 0.2s; cursor: pointer;
+}
+.model-card:last-child { border-bottom: none; }
+.model-card:hover { background: var(--blue-light); }
+.model-card .model-icon {
+  width: 36px; height: 36px; border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; color: var(--surface);
+  background: var(--blue); flex-shrink: 0;
+}
+.model-card .model-info { flex: 1; min-width: 0; }
+.model-card .model-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+.model-card .model-meta { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
+.model-card .model-badge {
+  font-size: 11px; padding: 2px 8px; border-radius: 10px;
+  font-weight: 500; flex-shrink: 0;
+}
+.model-card .model-badge.enabled {
+  background: rgba(82,196,26,0.1); color: #52c41a;
+}
+.model-card .model-badge.disabled {
+  background: rgba(100,100,100,0.08); color: var(--text-tertiary);
+}
+.model-card .model-actions {
+  display: flex; gap: 6px; opacity: 0; transition: opacity 0.2s;
+}
+.model-card:hover .model-actions { opacity: 1; }
+.model-action-btn {
+  background: none; border: none; color: var(--text-tertiary);
+  cursor: pointer; padding: 4px; border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+}
+.model-action-btn:hover { background: var(--bg-elevated); color: var(--blue); }
+.model-action-btn.delete:hover { color: #ff4d4f; }
+
+/* ═══════════════════════════════════════════
+   BALANCE QUERY — 余额查询
+   ═══════════════════════════════════════════ */
+.balance-card {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px; border-bottom: 1px solid var(--border);
+  transition: background 0.2s;
+}
+.balance-card:last-child { border-bottom: none; }
+.balance-card:hover { background: var(--blue-light); }
+.balance-card .balance-icon {
+  width: 36px; height: 36px; border-radius: var(--radius-sm);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; color: var(--surface);
+  background: var(--green); flex-shrink: 0;
+}
+.balance-card .balance-info { flex: 1; min-width: 0; }
+.balance-card .balance-name { font-size: 14px; font-weight: 600; color: var(--text); }
+.balance-card .balance-meta { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
+.balance-card .balance-amount {
+  font-size: 15px; font-weight: 700; color: var(--green); flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+.balance-card .balance-amount.error { color: var(--red); }
+.balance-card .balance-amount.loading { color: var(--text-tertiary); font-size: 13px; font-weight: 500; }
+.balance-card .balance-status {
+  font-size: 11px; padding: 2px 8px; border-radius: 10px;
+  font-weight: 500; flex-shrink: 0; margin-left: 8px;
+}
+.balance-card .balance-status.ok {
+  background: rgba(82,196,26,0.1); color: #52c41a;
+}
+.balance-card .balance-status.error {
+  background: rgba(245,34,45,0.08); color: var(--red);
+}
+.balance-card .balance-status.loading {
+  background: var(--blue-light); color: var(--blue);
+}
+
+/* Modal */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+  display: none; align-items: center; justify-content: center; z-index: 5000;
+  backdrop-filter: blur(2px);
+}
+.modal-overlay.open { display: flex; }
+.modal-panel {
+  background: var(--bg-elevated); border: 1px solid var(--border);
+  border-radius: var(--radius-xl); width: 420px; max-width: 90vw;
+  box-shadow: var(--shadow-lg); overflow: hidden;
+  animation: modalIn 0.2s ease-out;
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(-12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.modal-header {
+  padding: 16px 20px 0; font-size: 16px; font-weight: 700; color: var(--text-primary);
+}
+.modal-body { padding: 16px 20px; }
+.form-row { margin-bottom: 14px; }
+.form-row label {
+  display: block; font-size: 12px; font-weight: 600;
+  color: var(--text-secondary); margin-bottom: 6px;
+}
+.form-row input, .form-row select {
+  width: 100%; height: 36px; padding: 0 12px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border); background: var(--bg-elevated);
+  color: var(--text-primary); font-size: 13px; outline: none; box-sizing: border-box;
+}
+.form-row input:focus, .form-row select:focus { border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue-glow); }
+.form-row input::placeholder { color: var(--text-tertiary); }
+.form-row .form-hint { font-size: 11px; color: var(--text-tertiary); margin-top: 4px; }
+.modal-footer {
+  display: flex; justify-content: flex-end; gap: 10px;
+  padding: 0 20px 16px;
+}
+.btn-secondary {
+  background: var(--bg-elevated); color: var(--text-primary);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 8px 16px; font-size: 13px; cursor: pointer;
+}
+.btn-secondary:hover { border-color: var(--text-secondary); }
+.btn-primary {
+  background: var(--blue); color: var(--surface);
+  border: none; border-radius: var(--radius-sm);
+  padding: 8px 16px; font-size: 13px; cursor: pointer; font-weight: 600;
+}
+.btn-primary:hover { background: var(--text-primary); }
+.btn-danger { background: #ff4d4f; }
+.btn-danger:hover { background: #cf1322; }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <!-- LEFT RAIL -->
+  <aside class="left-rail">
+    <div class="rail-logo" title="ClaudeBridge">CB</div>
+
+    <button class="rail-btn active" title="Code">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+    </button>
+    <button class="rail-btn" title="New session" onclick="newSession()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </button>
+    <button class="rail-btn" title="Customize">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    </button>
+    <button class="rail-btn" title="More">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+    </button>
+
+    <div class="rail-divider"></div>
+
+    <button class="rail-btn active" title="Sessions" onclick="showSessions()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <span class="badge"></span>
+    </button>
+    <button class="rail-btn" title="模型" onclick="showModelConfig()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+    </button>
+    <button class="rail-btn" title="余额" onclick="showBalanceQuery()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a3 3 0 0 0 0 6h4a3 3 0 0 1 0 6H8"/><path d="M12 2v2m0 16v2"/></svg>
+    </button>
+    <button class="rail-btn" title="Settings" onclick="showSettings()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v6m0 6v6m4.22-10.22l4.24-4.24M6.34 6.34L2.1 2.1m17.8 17.8l-4.24-4.24M6.34 17.66l-4.24 4.24M23 12h-6m-6 0H1m20.24 4.24l-4.24-4.24M6.34 17.66l-4.24 4.24"/></svg>
+    </button>
+
+    <div class="rail-spacer"></div>
+
+    <div class="rail-avatar">我</div>
+  </aside>
+
+  <!-- SESSION SIDEBAR -->
+  <aside class="session-sidebar" id="midPanel">
+    <div id="sessionView">
+    <div class="sidebar-header">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+      <span class="sidebar-title">FengVideo2</span>
+    </div>
+    <input type="text" class="session-search" placeholder="搜索会话...">
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Pinned</div>
+      <div class="session-item">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="opacity:0.4;"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+        <span class="title">Drag to pin</span>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-title">Recents</div>
+      <div class="session-item active">
+        <span class="dot"></span>
+        <span class="title">Set language to Chinese</span>
+      </div>
+      <div class="session-item">
+        <span class="dot"></span>
+        <span class="title">Fix video card missing cover image</span>
+        <span class="pin-icon">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+        </span>
+      </div>
+      <div class="session-item">
+        <span class="dot"></span>
+        <span class="title">Clone and run open-design repository</span>
+      </div>
+      <div class="session-item">
+        <span class="dot"></span>
+        <span class="title">Sync with latest local code</span>
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <span>Cowork 3P | Gateway</span>
+    </div>
+    </div>
+
+    <div id="settingsView" style="display:none;flex-direction:column;height:100%;">
+      <div class="settings-header">
+        <button class="settings-back-btn" onclick="showSessions()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <span class="settings-title">设置</span>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:16px;">
+        <div style="font-size:12px;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:10px;">主题风格</div>
+        <div class="theme-grid">
+          <div class="theme-card active" data-theme="antdx" onclick="switchTheme('antdx')">
+            <div class="theme-swatch" style="background-image: url('moyk5mua-image.png');"></div>
+            <div class="theme-name">汇川蓝</div>
+            <div class="theme-desc">蓝白明亮</div>
+          </div>
+          <div class="theme-card" data-theme="blackgold" onclick="switchTheme('blackgold')">
+            <div class="theme-swatch" style="background-image: url('moyk03lm-image.png');"></div>
+            <div class="theme-name">至臻皮肤</div>
+            <div class="theme-desc">奢华深邃</div>
+          </div>
+          <div class="theme-card" data-theme="jetbrains" onclick="switchTheme('jetbrains')">
+            <div class="theme-swatch" style="background-image: url('moyjqbvz-image.png');"></div>
+            <div class="theme-name">VS Code</div>
+            <div class="theme-desc">深色经典</div>
+          </div>
+          <div class="theme-card" data-theme="idea" onclick="switchTheme('idea')">
+            <div class="theme-swatch" style="background-image: url('moyk4xi4-image.png');"></div>
+            <div class="theme-name">IDEA</div>
+            <div class="theme-desc">深灰蓝调</div>
+          </div>
+          <div class="theme-card" data-theme="claude" onclick="switchTheme('claude')">
+            <div class="theme-swatch" style="background-image: url('moyjtptb-image.png');"></div>
+            <div class="theme-name">Claude Code</div>
+            <div class="theme-desc">暖橙米白</div>
+          </div>
+          <div class="theme-card" data-theme="trae" onclick="switchTheme('trae')">
+            <div class="theme-swatch" style="background-image: url('moyk4jfw-image.png');"></div>
+            <div class="theme-name">TRAE</div>
+            <div class="theme-desc">黑底绿光</div>
+          </div>
+          <div class="theme-card" data-theme="qoder" onclick="switchTheme('qoder')">
+            <div class="theme-swatch" style="background-image: url('moyk7tec-image.png');"></div>
+            <div class="theme-name">Qoder</div>
+            <div class="theme-desc">冷白翠绿</div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <div class="settings-section-title">其他设置</div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-name">自动保存对话历史</div>
+              <div class="setting-desc">退出时自动保存当前会话</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-name">显示消息时间戳</div>
+              <div class="setting-desc">在每条消息旁显示发送时间</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-name">代码块语法高亮</div>
+              <div class="setting-desc">为代码块启用语法着色</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-name">Markdown 实时渲染</div>
+              <div class="setting-desc">AI 输出时实时解析 Markdown</div>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODEL CONFIG VIEW -->
+    <div id="modelView" style="display:none;flex-direction:column;height:100%;">
+      <div class="settings-header">
+        <button class="settings-back-btn" onclick="showSessions()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <span class="settings-title">模型配置</span>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px;flex-wrap:wrap;">
+          <div style="font-size:12px;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.8px;flex-shrink:0;">已配置的模型</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-secondary" style="padding:6px 12px;font-size:12px;display:flex;align-items:center;gap:5px;flex-shrink:0;white-space:nowrap;" onclick="quickConfigDeepSeek()" title="一键添加 DeepSeek 预设">
+              <img src="moymelr2-image.png" style="width:14px;height:14px;border-radius:2px;object-fit:cover;pointer-events:none;" alt="">
+              <span>DeepSeek 快速配置</span>
+            </button>
+            <button class="btn btn-primary" style="padding:6px 14px;font-size:12px;flex-shrink:0;white-space:nowrap;" onclick="showModelForm()">+ 添加模型</button>
+          </div>
+        </div>
+        <div id="modelList" class="settings-section" style="padding:0;">
+          <!-- JS renders model cards here -->
+        </div>
+      </div>
+    </div>
+
+    <div id="balanceView" style="display:none;flex-direction:column;height:100%;">
+      <div class="settings-header">
+        <button class="settings-back-btn" onclick="showSessions()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <span class="settings-title">余额查询</span>
+        <button class="settings-back-btn" style="margin-left:auto;margin-right:0;" onclick="refreshAllBalances()" title="刷新余额">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        </button>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:16px;">
+        <div style="font-size:12px;font-weight:600;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">API Key 余额</div>
+        <div id="balanceList" class="settings-section" style="padding:0;">
+          <!-- JS renders balance cards here -->
+        </div>
+        <div style="margin-top:16px;font-size:12px;color:var(--text-tertiary);line-height:1.6;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            <span>余额数据为模拟展示，真实查询需各供应商 API 支持</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+    <!-- Header -->
+    <div class="panel-header">
+      <div class="crumb-path">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+        <span>FengVideo2</span>
+        <span class="crumb-arrow">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </span>
+        <span class="crumb-name">Set language to Chinese</span>
+      </div>
+      <div class="header-actions">
+        <button class="header-action">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Chat -->
+    <div class="chat-scroll" id="chatScroll">
+      <!-- Welcome — Ant Design X 规范: 欢迎 + 推荐提示 -->
+      <div class="welcome-area" id="welcomeArea">
+        <div class="sparkle-wrap">
+          <div class="sparkle-glow"></div>
+          <svg class="sparkle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5z"/>
+            <path d="M19 10l1 3 3 1-3 1-1 3-1-3-3-1 3-1z" opacity="0.5"/>
+            <path d="M5 14l0.8 2.2L8 17l-2.2 0.8L5 20l-0.8-2.2L2 17l2.2-0.8z" opacity="0.3"/>
+          </svg>
+        </div>
+        <div class="welcome-title">你好，我是 ClaudeBridge</div>
+        <div class="welcome-subtitle">你的 AI 编码助手，随时为你执行任务</div>
+
+        <!-- Suggestion cards — 个性化推荐提示 -->
+        <div class="suggestion-list">
+          <div class="suggestion-card" onclick="fillInput('帮我把项目语言切换为中文')">
+            <div class="suggestion-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            </div>
+            <div class="suggestion-content">
+              <div class="suggestion-title">切换项目语言</div>
+              <div class="suggestion-desc">将项目中的英文文案批量替换为中文</div>
+            </div>
+          </div>
+          <div class="suggestion-card" onclick="fillInput('帮我修复视频卡片缺少封面图的问题')">
+            <div class="suggestion-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            </div>
+            <div class="suggestion-content">
+              <div class="suggestion-title">修复 UI 问题</div>
+              <div class="suggestion-desc">检查并修复组件中的视觉异常</div>
+            </div>
+          </div>
+          <div class="suggestion-card" onclick="fillInput('帮我生成用户登录接口的单元测试')">
+            <div class="suggestion-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </div>
+            <div class="suggestion-content">
+              <div class="suggestion-title">生成单元测试</div>
+              <div class="suggestion-desc">为当前模块自动生成测试用例</div>
+            </div>
+          </div>
+          <div class="suggestion-card" onclick="fillInput('/refactor 重构这段代码，提高可读性')">
+            <div class="suggestion-icon">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+            </div>
+            <div class="suggestion-content">
+              <div class="suggestion-title">重构代码</div>
+              <div class="suggestion-desc">优化代码结构和可读性</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Message with thinking process -->
+      <div class="msg-group">
+        <div class="msg-bubble ai">
+          <div class="msg-header-row">
+            <div class="msg-avatar ai">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5z"/>
+              </svg>
+            </div>
+            <span class="msg-name ai">ClaudeBridge</span>
+            <span class="msg-time">10:45</span>
+          </div>
+
+          <!-- Thinking process — 可展开的思考过程 -->
+          <div class="thinking-box">
+            <div class="thinking-header" onclick="toggleThinking(this)">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+              <span>思考过程</span>
+            </div>
+            <div class="thinking-body">
+              <p>1. 分析项目结构，发现使用 React + TypeScript 技术栈</p>
+              <p>2. 检测到 i18n 配置文件位于 src/locales/</p>
+              <p>3. 识别出 47 处需要翻译的英文文案</p>
+              <p>4. 准备批量替换方案...</p>
+            </div>
+          </div>
+
+          <p>我将为您实现 JWT 认证模块。以下是执行计划：</p>
+
+          <!-- Progress bar -->
+          <div class="progress-bar">
+            <div class="progress-track"><div class="progress-fill" style="width:60%"></div></div>
+            <div class="progress-label">步骤 3/5 — 编写认证中间件</div>
+          </div>
+
+          <!-- Result actions -->
+          <div class="msg-actions">
+            <button class="msg-action-btn" onclick="copyMsg(this)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              复制
+            </button>
+            <button class="msg-action-btn" onclick="regenerateMsg(this)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              重新生成
+            </button>
+            <button class="msg-action-btn" onclick="likeMsg(this)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+            </button>
+            <button class="msg-action-btn" onclick="dislikeMsg(this)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- User Message — 可编辑/删除/引用 -->
+      <div class="msg-group user">
+        <div class="msg-bubble user">
+          <div class="msg-header-row">
+            <div class="msg-avatar user">我</div>
+            <span class="msg-name user">我</span>
+            <span class="msg-time">10:46</span>
+          </div>
+          <p>继续下一步，使用 HS256 算法，密钥从环境变量读取。</p>
+          <div class="user-send-actions">
+            <button class="user-send-btn" onclick="editMsg(this)">编辑</button>
+            <button class="user-send-btn" onclick="deleteMsg(this)">删除</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI — Typing indicator + stream output -->
+      <div class="msg-group">
+        <div class="msg-bubble ai">
+          <div class="msg-header-row">
+            <div class="msg-avatar ai">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5z"/>
+              </svg>
+            </div>
+            <span class="msg-name ai">ClaudeBridge</span>
+            <span class="msg-time">10:46</span>
+          </div>
+
+          <!-- Step done -->
+          <div class="step-done">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>步骤 1 完成：已创建 <code>src/auth/</code> 目录结构</span>
+          </div>
+
+          <p style="color:var(--text-secondary);font-size:13px;margin-bottom:8px;">已修改以下文件：</p>
+          <div class="file-list">
+            <div class="file-item" onclick="toggleDiff(this)">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="opacity:0.5;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <span class="f-name">src/auth/index.ts</span>
+              <span class="f-action">查看变更 ▸</span>
+            </div>
+            <div class="diff-view" style="display:none;">
+              <div class="diff-line add"><span class="ln">+1</span><span class="ch">+</span><span>export { signToken, verifyToken } from './jwt';</span></div>
+              <div class="diff-line add"><span class="ln">+2</span><span class="ch">+</span><span>export { authMiddleware } from './middleware';</span></div>
+            </div>
+            <div class="file-item">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="opacity:0.5;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <span class="f-name">src/auth/jwt.ts</span>
+              <span class="f-action">查看变更 ▸</span>
+            </div>
+          </div>
+
+          <!-- Result actions -->
+          <div class="msg-actions">
+            <button class="msg-action-btn" onclick="copyMsg(this)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              复制
+            </button>
+            <button class="msg-action-btn" onclick="regenerateMsg(this)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              重新生成
+            </button>
+            <button class="msg-action-btn" onclick="likeMsg(this)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+            </button>
+            <button class="msg-action-btn" onclick="dislikeMsg(this)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Code result — with copy button -->
+      <div class="msg-group">
+        <div class="msg-bubble ai">
+          <div class="msg-header-row">
+            <div class="msg-avatar ai">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5z"/>
+              </svg>
+            </div>
+            <span class="msg-name ai">ClaudeBridge</span>
+            <span class="msg-time">10:49</span>
+          </div>
+          <p>已生成 JWT 工具函数：</p>
+
+          <div class="code-block-wrap">
+            <div class="code-header">
+              <div class="code-header-left">
+                <div class="code-dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></div>
+                <span class="code-filename">jwt.ts</span>
+              </div>
+              <button class="code-copy-btn" onclick="copyCode(this)">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                复制
+              </button>
+            </div>
+            <div class="code-body">
+<div><span class="cm">// JWT 工具函数 — ClaudeBridge 生成</span></div>
+<div><span class="kw">import</span> jwt <span class="kw">from</span> <span class="str">'jsonwebtoken'</span>;</div>
+<div></div>
+<div><span class="kw">const</span> <span class="type">SECRET</span> = process.<span class="fn">env</span>.<span class="type">JWT_SECRET</span>!;</div>
+<div></div>
+<div><span class="kw">export const</span> <span class="fn">signToken</span> = (<span class="type">payload</span>: <span class="type">object</span>) =&gt;</div>
+<div>  jwt.<span class="fn">sign</span>(payload, <span class="type">SECRET</span>, {</div>
+<div>    algorithm: <span class="str">'HS256'</span>,</div>
+<div>    expiresIn: <span class="str">'7d'</span></div>
+<div>  });</div>
+<div></div>
+<div><span class="kw">export const</span> <span class="fn">verifyToken</span> = (<span class="type">token</span>: <span class="type">string</span>) =&gt;</div>
+<div>  jwt.<span class="fn">verify</span>(token, <span class="type">SECRET</span>) <span class="kw">as</span> jwt.<span class="type">JwtPayload</span>;</div>
+            </div>
+          </div>
+
+          <!-- Result actions -->
+          <div class="msg-actions">
+            <button class="msg-action-btn" onclick="copyMsg(this)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              复制
+            </button>
+            <button class="msg-action-btn" onclick="regenerateMsg(this)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              重新生成
+            </button>
+            <button class="msg-action-btn" onclick="likeMsg(this)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+            </button>
+            <button class="msg-action-btn" onclick="dislikeMsg(this)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Warning -->
+      <div class="msg-group">
+        <div class="msg-bubble ai">
+          <div class="msg-header-row">
+            <div class="msg-avatar ai">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5z"/>
+              </svg>
+            </div>
+            <span class="msg-name ai">ClaudeBridge</span>
+            <span class="msg-time">10:47</span>
+          </div>
+          <div class="alert-box alert-warn">
+            <svg class="icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <div>
+              <div style="font-weight:600;margin-bottom:3px;">发现问题</div>
+              <div>项目中尚未安装 <code>jsonwebtoken</code> 依赖。建议先执行 <code>npm install jsonwebtoken</code>。</div>
+            </div>
+          </div>
+
+          <!-- Result actions -->
+          <div class="msg-actions">
+            <button class="msg-action-btn" onclick="copyMsg(this)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              复制
+            </button>
+            <button class="msg-action-btn" onclick="regenerateMsg(this)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              重新生成
+            </button>
+            <button class="msg-action-btn" onclick="likeMsg(this)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+            </button>
+            <button class="msg-action-btn" onclick="dislikeMsg(this)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INPUT AREA -->
+    <div class="input-area">
+      <div class="input-box-wrap">
+        <textarea class="input-field" rows="1" placeholder="Type / for commands" id="chatInput"></textarea>
+        <div class="input-toolbar">
+          <div class="input-actions-left">
+            <button class="icon-btn" title="上传图片">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+            </button>
+            <button class="icon-btn" title="语音输入">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+            </button>
+            <!-- Stop generating button — Ant Design X 规范 -->
+            <button class="stop-btn" id="stopBtn" style="display:none;" onclick="stopGenerating()">
+              <span class="square"></span>
+              停止生成
+            </button>
+          </div>
+          <div class="input-actions-right">
+            <span style="font-size:12px;color:var(--text-tertiary);">⌘K</span>
+            <button class="icon-btn send" title="发送" onclick="sendMessage()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="bottom-bar">
+        <div class="bottom-left">
+          <div class="perm-selector" id="permSelector">
+            <span class="dot yolo" id="permDot"></span>
+            <span class="perm-label" id="permLabel">YOLO</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" style="opacity:0.4;margin-left:2px;"><polyline points="6 9 12 15 18 9"/></svg>
+            <div class="perm-dropdown" id="permDropdown">
+              <div class="perm-option selected" data-mode="yolo">
+                <span class="dot yolo"></span>
+                <div><div style="font-weight:600;">YOLO 模式</div><div class="info">跳过所有确认，全自动执行</div></div>
+              </div>
+              <div class="perm-option" data-mode="trust">
+                <span class="dot trust"></span>
+                <div><div style="font-weight:600;">信任编辑</div><div class="info">仅自动执行安全的文件编辑</div></div>
+              </div>
+              <div class="perm-option" data-mode="plan">
+                <span class="dot plan"></span>
+                <div><div style="font-weight:600;">计划模式</div><div class="info">先展示计划，确认后执行</div></div>
+              </div>
+              <div class="perm-option" data-mode="manual">
+                <span class="dot manual"></span>
+                <div><div style="font-weight:600;">手动确认</div><div class="info">每一步都需手动确认</div></div>
+              </div>
+            </div>
+          </div>
+          <span style="color:var(--border-hover);">|</span>
+          <button class="icon-btn" style="width:auto;height:auto;padding:3px 6px;border-radius:6px;color:var(--text-secondary);" onclick="newSession()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+        </div>
+        <div class="model-badge">
+          <span class="model-dot"></span>
+          <span>DeepSeek-V4-Pro · Medium</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FLOATING ORB -->
+<div class="orb-container" id="orbContainer">
+  <div class="orb idle" id="orb">
+    <div class="orb-glow"></div>
+    <svg class="orb-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5z"/>
+      <path d="M19 10l1 3 3 1-3 1-1 3-1-3-3-1 3-1z" opacity="0.45"/>
+      <path d="M5 14l0.8 2.2L8 17l-2.2 0.8L5 20l-0.8-2.2L2 17l2.2-0.8z" opacity="0.25"/>
+    </svg>
+  </div>
+  <div class="orb-menu" id="orbMenu">
+    <div class="orb-menu-item" onclick="openMainWindow()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      打开主界面
+    </div>
+    <div class="orb-menu-item" onclick="pauseAllTasks()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+      暂停所有任务
+    </div>
+    <div class="orb-menu-item">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="6" x2="12" y2="12"/><line x1="12" y1="12" x2="16" y2="16"/></svg>
+      ¥110.50
+    </div>
+    <div class="orb-menu-item danger" onclick="exitApp()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      退出
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// PERMISSION SELECTOR
+// ═══════════════════════════════════════════
+const permSelector = document.getElementById('permSelector');
+const permDropdown = document.getElementById('permDropdown');
+const permLabel = document.getElementById('permLabel');
+const permDot = document.getElementById('permDot');
+let currentMode = 'yolo';
+
+permSelector.addEventListener('click', (e) => {
+  e.stopPropagation();
+  permDropdown.classList.toggle('open');
+});
+document.addEventListener('click', () => permDropdown.classList.remove('open'));
+
+permDropdown.querySelectorAll('.perm-option').forEach(opt => {
+  opt.addEventListener('click', (e) => {
+    e.stopPropagation();
+    setPermMode(opt.dataset.mode);
+  });
+});
+
+function setPermMode(mode) {
+  currentMode = mode;
+  const labels = { yolo: 'YOLO', trust: '信任编辑', plan: '计划模式', manual: '手动确认' };
+  const dotClass = { yolo: 'yolo', trust: 'trust', plan: 'plan', manual: 'manual' };
+  permLabel.textContent = labels[mode];
+  permDot.className = 'dot ' + dotClass[mode];
+  permDropdown.querySelectorAll('.perm-option').forEach(o => o.classList.toggle('selected', o.dataset.mode === mode));
+  permDropdown.classList.remove('open');
+}
+
+// ═══════════════════════════════════════════
+// CHAT INPUT
+// ═══════════════════════════════════════════
+const chatInput = document.getElementById('chatInput');
+const chatScroll = document.getElementById('chatScroll');
+const stopBtn = document.getElementById('stopBtn');
+
+chatInput.addEventListener('input', () => {
+  chatInput.style.height = 'auto';
+  chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
+});
+chatInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+function fillInput(text) {
+  chatInput.value = text;
+  chatInput.focus();
+  chatInput.style.height = 'auto';
+  chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
+}
+
+let isGenerating = false;
+
+function sendMessage() {
+  const text = chatInput.value.trim();
+  if (!text) return;
+
+  // Hide welcome area on first message
+  const welcome = document.getElementById('welcomeArea');
+  if (welcome) welcome.style.display = 'none';
+
+  addUserMessage(text);
+  chatInput.value = '';
+  chatInput.style.height = 'auto';
+
+  // Show stop button during generation
+  isGenerating = true;
+  stopBtn.style.display = 'flex';
+
+  if (currentMode === 'yolo') {
+    // YOLO: direct execution, show typing then result
+    setTimeout(() => {
+      addTypingIndicator();
+      setTimeout(() => {
+        removeTypingIndicator();
+        addAIMessage('已执行：<code>' + escapeHtml(text) + '</code><br><br>YOLO 模式下直接完成，无需确认。');
+        isGenerating = false;
+        stopBtn.style.display = 'none';
+      }, 1500);
+    }, 300);
+  } else if (currentMode === 'plan') {
+    setTimeout(() => showPlanModal(text), 300);
+  } else {
+    setTimeout(() => {
+      addAIMessage('收到指令：<code>' + escapeHtml(text) + '</code><br><br>当前为「' + (currentMode === 'trust' ? '信任编辑' : '手动确认') + '」模式，正在处理...');
+      isGenerating = false;
+      stopBtn.style.display = 'none';
+    }, 400);
+  }
+}
+
+function stopGenerating() {
+  isGenerating = false;
+  stopBtn.style.display = 'none';
+  removeTypingIndicator();
+  addAIMessage('生成已停止。');
+}
+
+function addTypingIndicator() {
+  const group = document.createElement('div');
+  group.className = 'msg-group';
+  group.id = 'typingGroup';
+  group.innerHTML = `
+    <div class="msg-bubble ai">
+      <div class="msg-header-row">
+        <div class="msg-avatar ai">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5z"/>
+          </svg>
+        </div>
+        <span class="msg-name ai">ClaudeBridge</span>
+        <span class="msg-time">${new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'})}</span>
+      </div>
+      <div class="typing-indicator">
+        <div class="typing-dots">
+          <span class="dot"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+        </div>
+        <span class="typing-text">正在生成...</span>
+      </div>
+    </div>
+  `;
+  chatScroll.appendChild(group);
+  chatScroll.scrollTop = chatScroll.scrollHeight;
+}
+
+function removeTypingIndicator() {
+  const typing = document.getElementById('typingGroup');
+  if (typing) typing.remove();
+}
+
+function addUserMessage(text) {
+  const group = document.createElement('div');
+  group.className = 'msg-group user';
+  group.innerHTML = `
+    <div class="msg-bubble user">
+      <div class="msg-header-row">
+        <div class="msg-avatar user">我</div>
+        <span class="msg-name user">我</span>
+        <span class="msg-time">${new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'})}</span>
+      </div>
+      <p>${escapeHtml(text)}</p>
+      <div class="user-send-actions">
+        <button class="user-send-btn" onclick="editMsg(this)">编辑</button>
+        <button class="user-send-btn" onclick="deleteMsg(this)">删除</button>
+      </div>
+    </div>
+  `;
+  chatScroll.appendChild(group);
+  chatScroll.scrollTop = chatScroll.scrollHeight;
+}
+
+function addAIMessage(html) {
+  const group = document.createElement('div');
+  group.className = 'msg-group';
+  group.innerHTML = `
+    <div class="msg-bubble ai">
+      <div class="msg-header-row">
+        <div class="msg-avatar ai">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5z"/>
+          </svg>
+        </div>
+        <span class="msg-name ai">ClaudeBridge</span>
+        <span class="msg-time">${new Date().toLocaleTimeString('zh-CN', {hour:'2-digit', minute:'2-digit'})}</span>
+      </div>
+      <p>${html}</p>
+      <div class="msg-actions">
+        <button class="msg-action-btn" onclick="copyMsg(this)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          复制
+        </button>
+        <button class="msg-action-btn" onclick="regenerateMsg(this)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          重新生成
+        </button>
+        <button class="msg-action-btn" onclick="likeMsg(this)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+        </button>
+        <button class="msg-action-btn" onclick="dislikeMsg(this)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h3a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-3"/></svg>
+        </button>
+      </div>
+    </div>
+  `;
+  chatScroll.appendChild(group);
+  chatScroll.scrollTop = chatScroll.scrollHeight;
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// ═══════════════════════════════════════════
+// USER SEND ACTIONS
+// ═══════════════════════════════════════════
+function editMsg(btn) {
+  const bubble = btn.closest('.msg-bubble');
+  const p = bubble.querySelector('p');
+  const text = p.textContent;
+  fillInput(text);
+  bubble.closest('.msg-group').remove();
+}
+function deleteMsg(btn) {
+  btn.closest('.msg-group').remove();
+}
+
+// ═══════════════════════════════════════════
+// RESULT APPLICATION ACTIONS
+// ═══════════════════════════════════════════
+function copyMsg(btn) {
+  const bubble = btn.closest('.msg-bubble');
+  const text = bubble.querySelector('p')?.textContent || '';
+  navigator.clipboard?.writeText(text);
+  btn.classList.add('copied');
+  btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> 已复制`;
+  setTimeout(() => {
+    btn.classList.remove('copied');
+    btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> 复制`;
+  }, 2000);
+}
+function regenerateMsg(btn) {
+  btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> 重新生成中...`;
+  setTimeout(() => {
+    btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg> 重新生成`;
+  }, 1500);
+}
+function likeMsg(btn) {
+  btn.classList.toggle('liked');
+  btn.closest('.msg-bubble').querySelectorAll('.msg-action-btn').forEach(b => {
+    if (b !== btn && b.onclick && b.onclick.toString().includes('dislike')) b.classList.remove('disliked');
+  });
+}
+function dislikeMsg(btn) {
+  btn.classList.toggle('disliked');
+  btn.closest('.msg-bubble').querySelectorAll('.msg-action-btn').forEach(b => {
+    if (b !== btn && b.onclick && b.onclick.toString().includes('like')) b.classList.remove('liked');
+  });
+}
+
+// ═══════════════════════════════════════════
+// CODE COPY
+// ═══════════════════════════════════════════
+function copyCode(btn) {
+  const codeBody = btn.closest('.code-block-wrap').querySelector('.code-body');
+  const text = codeBody.textContent;
+  navigator.clipboard?.writeText(text);
+  btn.classList.add('copied');
+  btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> 已复制`;
+  setTimeout(() => {
+    btn.classList.remove('copied');
+    btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> 复制`;
+  }, 2000);
+}
+
+// ═══════════════════════════════════════════
+// THINKING TOGGLE
+// ═══════════════════════════════════════════
+function toggleThinking(el) {
+  el.classList.toggle('open');
+  const body = el.nextElementSibling;
+  body.classList.toggle('open');
+}
+
+// ═══════════════════════════════════════════
+// DIFF TOGGLE
+// ═══════════════════════════════════════════
+function toggleDiff(el) {
+  const diff = el.nextElementSibling;
+  if (diff && diff.classList.contains('diff-view')) {
+    const show = diff.style.display === 'none';
+    diff.style.display = show ? 'block' : 'none';
+    el.querySelector('.f-action').textContent = show ? '收起变更 ▾' : '查看变更 ▸';
+  }
+}
+
+// ═══════════════════════════════════════════
+// PLAN MODAL
+// ═══════════════════════════════════════════
+function showPlanModal(command) {
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay open';
+  modal.id = 'planModal';
+  modal.innerHTML = `
+    <div class="modal-backdrop" onclick="closePlanModal()"></div>
+    <div class="modal-box">
+      <div class="modal-title">计划模式确认</div>
+      <div class="modal-text">
+        AI 将先拆解任务步骤并展示给您，确认后才会开始执行。<br><br>
+        <code style="font-size:12px;">${escapeHtml(command)}</code>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-secondary" onclick="closePlanModal()">取消</button>
+        <button class="btn btn-primary" onclick="confirmPlanExec('${escapeHtml(command)}')">确认执行</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+function closePlanModal() {
+  const modal = document.getElementById('planModal');
+  if (modal) { modal.classList.remove('open'); setTimeout(() => modal.remove(), 300); }
+  isGenerating = false;
+  stopBtn.style.display = 'none';
+}
+function confirmPlanExec(command) {
+  closePlanModal();
+  setTimeout(() => addAIMessage('计划已确认，开始执行。<br><br>执行完成。'), 300);
+}
+
+// ═══════════════════════════════════════════
+// NEW SESSION
+// ═══════════════════════════════════════════
+function newSession() {
+  chatScroll.innerHTML = `
+    <div class="welcome-area" id="welcomeArea">
+      <div class="sparkle-wrap">
+        <div class="sparkle-glow"></div>
+        <svg class="sparkle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5z"/>
+          <path d="M19 10l1 3 3 1-3 1-1 3-1-3-3-1 3-1z" opacity="0.5"/>
+          <path d="M5 14l0.8 2.2L8 17l-2.2 0.8L5 20l-0.8-2.2L2 17l2.2-0.8z" opacity="0.3"/>
+        </svg>
+      </div>
+      <div class="welcome-title">你好，我是 ClaudeBridge</div>
+      <div class="welcome-subtitle">你的 AI 编码助手，随时为你执行任务</div>
+      <div class="suggestion-list">
+        <div class="suggestion-card" onclick="fillInput('帮我把项目语言切换为中文')">
+          <div class="suggestion-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          </div>
+          <div class="suggestion-content">
+            <div class="suggestion-title">切换项目语言</div><div class="suggestion-desc">将项目中的英文文案批量替换为中文</div>
+          </div>
+        </div>
+        <div class="suggestion-card" onclick="fillInput('帮我修复视频卡片缺少封面图的问题')">
+          <div class="suggestion-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          </div>
+          <div class="suggestion-content">
+            <div class="suggestion-title">修复 UI 问题</div><div class="suggestion-desc">检查并修复组件中的视觉异常</div>
+          </div>
+        </div>
+        <div class="suggestion-card" onclick="fillInput('帮我生成用户登录接口的单元测试')">
+          <div class="suggestion-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          </div>
+          <div class="suggestion-content">
+            <div class="suggestion-title">生成单元测试</div><div class="suggestion-desc">为当前模块自动生成测试用例</div>
+          </div>
+        </div>
+        <div class="suggestion-card" onclick="fillInput('/refactor 重构这段代码，提高可读性')">
+          <div class="suggestion-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          </div>
+          <div class="suggestion-content">
+            <div class="suggestion-title">重构代码</div><div class="suggestion-desc">优化代码结构和可读性</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════
+// FLOATING ORB
+// ═══════════════════════════════════════════
+const orbContainer = document.getElementById('orbContainer');
+const orb = document.getElementById('orb');
+const orbMenu = document.getElementById('orbMenu');
+let dragging = false, dragOffX = 0, dragOffY = 0;
+
+orbContainer.addEventListener('mousedown', (e) => {
+  if (e.button !== 0) return;
+  dragging = true;
+  dragOffX = e.clientX - orbContainer.offsetLeft;
+  dragOffY = e.clientY - orbContainer.offsetTop;
+  orbContainer.style.cursor = 'grabbing';
+});
+document.addEventListener('mousemove', (e) => {
+  if (!dragging) return;
+  orbContainer.style.left = (e.clientX - dragOffX) + 'px';
+  orbContainer.style.bottom = 'auto';
+  orbContainer.style.top = (e.clientY - dragOffY) + 'px';
+  orbContainer.style.right = 'auto';
+});
+document.addEventListener('mouseup', () => {
+  dragging = false;
+  orbContainer.style.cursor = 'grab';
+});
+
+orbContainer.addEventListener('contextmenu', (e) => {
+  e.preventDefault();
+  orbMenu.classList.toggle('open');
+});
+document.addEventListener('click', (e) => {
+  if (!orbContainer.contains(e.target)) orbMenu.classList.remove('open');
+});
+
+const orbStates = ['idle', 'running', 'done', 'confirm', 'error'];
+let orbIdx = 0;
+orb.addEventListener('click', () => {
+  if (orbMenu.classList.contains('open')) return;
+  orbIdx = (orbIdx + 1) % orbStates.length;
+  setOrbState(orbStates[orbIdx]);
+});
+
+function setOrbState(state) {
+  orb.className = 'orb ' + state;
+  orbMenu.classList.remove('open');
+}
+
+function showSettings() {
+  document.getElementById('sessionView').style.display = 'none';
+  document.getElementById('modelView').style.display = 'none';
+  document.getElementById('balanceView').style.display = 'none';
+  const sv = document.getElementById('settingsView');
+  sv.style.display = 'flex';
+}
+function showSessions() {
+  document.getElementById('sessionView').style.display = 'block';
+  document.getElementById('settingsView').style.display = 'none';
+  document.getElementById('modelView').style.display = 'none';
+  document.getElementById('balanceView').style.display = 'none';
+}
+function showModelConfig() {
+  document.getElementById('sessionView').style.display = 'none';
+  document.getElementById('settingsView').style.display = 'none';
+  document.getElementById('balanceView').style.display = 'none';
+  document.getElementById('modelView').style.display = 'flex';
+  renderModelList();
+}
+function showBalanceQuery() {
+  document.getElementById('sessionView').style.display = 'none';
+  document.getElementById('settingsView').style.display = 'none';
+  document.getElementById('modelView').style.display = 'none';
+  document.getElementById('balanceView').style.display = 'flex';
+  renderBalanceList();
+}
+
+// ═══════════════════════════════════════════
+// THEME SYSTEM — default is hard-coded blue-white
+// ═══════════════════════════════════════════
+const THEMES = {
+  antdx: {
+    '--bg': '#f5f5f5', '--bg-elevated': '#fafafa', '--surface': '#ffffff', '--surface-hover': '#f5f5f5',
+    '--border': '#f0f0f0', '--border-hover': '#d9d9d9',
+    '--text': 'rgba(0,0,0,0.88)', '--text-secondary': 'rgba(0,0,0,0.45)', '--text-tertiary': 'rgba(0,0,0,0.25)',
+    '--blue': '#1677ff', '--blue-light': '#e6f4ff', '--blue-hover': '#4096ff', '--blue-glow': 'rgba(22,119,255,0.12)', '--blue-glow-lg': 'rgba(22,119,255,0.2)',
+    '--green': '#52c41a', '--green-light': '#f6ffed',
+    '--yellow': '#faad14', '--yellow-light': '#fffbe6',
+    '--red': '#f5222d', '--red-light': '#fff2f0',
+    '--shadow': '0 2px 8px rgba(0,0,0,0.06)', '--shadow-md': '0 4px 16px rgba(0,0,0,0.08)', '--shadow-lg': '0 8px 32px rgba(0,0,0,0.1)',
+    '--user-bubble-bg': '#e6f4ff', '--user-bubble-border': 'rgba(22,119,255,0.12)',
+    '--user-avatar-bg': '#e6f4ff', '--user-avatar-text': '#1677ff', '--user-avatar-border': 'rgba(22,119,255,0.15)',
+    '--code-bg': '#1e1e2e',
+  },
+  blackgold: {
+    '--bg': '#07070a', '--bg-elevated': '#0e0e14', '--surface': '#14141c', '--surface-hover': '#1c1c28',
+    '--border': 'rgba(255,255,255,0.055)', '--border-hover': 'rgba(255,255,255,0.1)',
+    '--text': '#e6e4df', '--text-secondary': '#8a8594', '--text-tertiary': '#504c5a',
+    '--blue': '#c8a45c', '--blue-light': 'rgba(200,164,92,0.08)', '--blue-hover': '#ddb978', '--blue-glow': 'rgba(200,164,92,0.12)', '--blue-glow-lg': 'rgba(200,164,92,0.22)',
+    '--green': '#5acf7a', '--green-light': 'rgba(90,207,122,0.05)',
+    '--yellow': '#e8c84a', '--yellow-light': 'rgba(232,200,74,0.05)',
+    '--red': '#e86a6a', '--red-light': 'rgba(232,106,106,0.05)',
+    '--shadow': '0 2px 8px rgba(0,0,0,0.4)', '--shadow-md': '0 4px 16px rgba(0,0,0,0.5)', '--shadow-lg': '0 8px 32px rgba(0,0,0,0.6)',
+    '--user-bubble-bg': 'rgba(200,164,92,0.08)', '--user-bubble-border': 'rgba(200,164,92,0.15)',
+    '--user-avatar-bg': 'rgba(200,164,92,0.1)', '--user-avatar-text': '#c8a45c', '--user-avatar-border': 'rgba(200,164,92,0.2)',
+    '--code-bg': '#0a0a10',
+  },
+  jetbrains: {
+    '--bg': '#2b2b2b', '--bg-elevated': '#313335', '--surface': '#3c3f41', '--surface-hover': '#45484a',
+    '--border': '#555555', '--border-hover': '#646464',
+    '--text': '#bbbbbb', '--text-secondary': '#a9b7c6', '--text-tertiary': '#606366',
+    '--blue': '#4e9fdf', '--blue-light': 'rgba(78,159,223,0.1)', '--blue-hover': '#5aa8e6', '--blue-glow': 'rgba(78,159,223,0.12)', '--blue-glow-lg': 'rgba(78,159,223,0.2)',
+    '--green': '#6a8759', '--green-light': 'rgba(106,135,89,0.1)',
+    '--yellow': '#bbb529', '--yellow-light': 'rgba(187,181,41,0.1)',
+    '--red': '#bc3f3c', '--red-light': 'rgba(188,63,60,0.1)',
+    '--shadow': '0 2px 8px rgba(0,0,0,0.3)', '--shadow-md': '0 4px 16px rgba(0,0,0,0.4)', '--shadow-lg': '0 8px 32px rgba(0,0,0,0.5)',
+    '--user-bubble-bg': 'rgba(78,159,223,0.1)', '--user-bubble-border': 'rgba(78,159,223,0.15)',
+    '--user-avatar-bg': 'rgba(78,159,223,0.12)', '--user-avatar-text': '#4e9fdf', '--user-avatar-border': 'rgba(78,159,223,0.2)',
+    '--code-bg': '#1e1e1e',
+  },
+  idea: {
+    '--bg': '#1e1e2e', '--bg-elevated': '#252830', '--surface': '#252830', '--surface-hover': '#2d3139',
+    '--border': '#2d3139', '--border-hover': '#3a3f4b',
+    '--text': '#d4d4d4', '--text-secondary': '#9ca3af', '--text-tertiary': '#5c6370',
+    '--blue': '#4fc1ff', '--blue-light': 'rgba(79,193,255,0.1)', '--blue-hover': '#6fd0ff', '--blue-glow': 'rgba(79,193,255,0.12)', '--blue-glow-lg': 'rgba(79,193,255,0.22)',
+    '--green': '#6a9955', '--green-light': 'rgba(106,153,85,0.1)',
+    '--yellow': '#dcdcaa', '--yellow-light': 'rgba(220,220,170,0.1)',
+    '--red': '#f44747', '--red-light': 'rgba(244,71,71,0.1)',
+    '--shadow': '0 2px 8px rgba(0,0,0,0.35)', '--shadow-md': '0 4px 16px rgba(0,0,0,0.45)', '--shadow-lg': '0 8px 32px rgba(0,0,0,0.55)',
+    '--user-bubble-bg': 'rgba(79,193,255,0.08)', '--user-bubble-border': 'rgba(79,193,255,0.12)',
+    '--user-avatar-bg': 'rgba(79,193,255,0.1)', '--user-avatar-text': '#4fc1ff', '--user-avatar-border': 'rgba(79,193,255,0.2)',
+    '--code-bg': '#1e1e2e',
+  },
+  claude: {
+    '--bg': '#faf9f7', '--bg-elevated': '#f5f3ef', '--surface': '#ffffff', '--surface-hover': '#f5f3ef',
+    '--border': '#edeae5', '--border-hover': '#ddd8d1',
+    '--text': '#1a1a1a', '--text-secondary': '#6b6b6b', '--text-tertiary': '#a8a29e',
+    '--blue': '#d97757', '--blue-light': '#fdf2ed', '--blue-hover': '#e08a6d', '--blue-glow': 'rgba(217,119,87,0.12)', '--blue-glow-lg': 'rgba(217,119,87,0.2)',
+    '--green': '#2d8a4e', '--green-light': '#f0fdf4',
+    '--yellow': '#b8860b', '--yellow-light': '#fefce8',
+    '--red': '#c73e3e', '--red-light': '#fef2f2',
+    '--shadow': '0 2px 8px rgba(0,0,0,0.05)', '--shadow-md': '0 4px 16px rgba(0,0,0,0.06)', '--shadow-lg': '0 8px 32px rgba(0,0,0,0.08)',
+    '--user-bubble-bg': '#fdf2ed', '--user-bubble-border': 'rgba(217,119,87,0.12)',
+    '--user-avatar-bg': '#fdf2ed', '--user-avatar-text': '#d97757', '--user-avatar-border': 'rgba(217,119,87,0.15)',
+    '--code-bg': '#1e1e2e',
+  },
+  trae: {
+    '--bg': '#0d1117', '--bg-elevated': '#161b22', '--surface': '#1c2128', '--surface-hover': '#21262d',
+    '--border': '#30363d', '--border-hover': '#484f58',
+    '--text': '#c9d1d9', '--text-secondary': '#8b949e', '--text-tertiary': '#484f58',
+    '--blue': '#3ecf8e', '--blue-light': 'rgba(62,207,142,0.1)', '--blue-hover': '#4dd89a', '--blue-glow': 'rgba(62,207,142,0.12)', '--blue-glow-lg': 'rgba(62,207,142,0.22)',
+    '--green': '#3ecf8e', '--green-light': 'rgba(62,207,142,0.08)',
+    '--yellow': '#d29922', '--yellow-light': 'rgba(210,153,34,0.08)',
+    '--red': '#f85149', '--red-light': 'rgba(248,81,73,0.08)',
+    '--shadow': '0 2px 8px rgba(0,0,0,0.4)', '--shadow-md': '0 4px 16px rgba(0,0,0,0.5)', '--shadow-lg': '0 8px 32px rgba(0,0,0,0.6)',
+    '--user-bubble-bg': 'rgba(62,207,142,0.08)', '--user-bubble-border': 'rgba(62,207,142,0.12)',
+    '--user-avatar-bg': 'rgba(62,207,142,0.1)', '--user-avatar-text': '#3ecf8e', '--user-avatar-border': 'rgba(62,207,142,0.2)',
+    '--code-bg': '#0d1117',
+  },
+  qoder: {
+    '--bg': '#f8fafb', '--bg-elevated': '#f0f4f5', '--surface': '#ffffff', '--surface-hover': '#f0f4f5',
+    '--border': '#e8eef1', '--border-hover': '#d0dce2',
+    '--text': '#1a2b3c', '--text-secondary': '#5a6b7c', '--text-tertiary': '#9aaab5',
+    '--blue': '#00c853', '--blue-light': '#e8f5e9', '--blue-hover': '#00e676', '--blue-glow': 'rgba(0,200,83,0.12)', '--blue-glow-lg': 'rgba(0,200,83,0.2)',
+    '--green': '#00c853', '--green-light': '#e8f5e9',
+    '--yellow': '#ffab00', '--yellow-light': '#fff8e1',
+    '--red': '#ff1744', '--red-light': '#ffebee',
+    '--shadow': '0 2px 8px rgba(0,0,0,0.05)', '--shadow-md': '0 4px 16px rgba(0,0,0,0.06)', '--shadow-lg': '0 8px 32px rgba(0,0,0,0.08)',
+    '--user-bubble-bg': '#e8f5e9', '--user-bubble-border': 'rgba(0,200,83,0.12)',
+    '--user-avatar-bg': '#e8f5e9', '--user-avatar-text': '#00c853', '--user-avatar-border': 'rgba(0,200,83,0.15)',
+    '--code-bg': '#1e1e2e',
+  }
+};
+
+function switchTheme(name) {
+  const vars = THEMES[name];
+  if (!vars) return;
+  const root = document.documentElement;
+  for (const [key, val] of Object.entries(vars)) {
+    root.style.setProperty(key, val);
+  }
+  // Update active card
+  document.querySelectorAll('.theme-card').forEach(c => c.classList.toggle('active', c.dataset.theme === name));
+  localStorage.setItem('cb-theme', name);
+}
+
+// ═══════════════════════════════════════════
+// MODEL CONFIG — 模型配置 CRUD
+// ═══════════════════════════════════════════
+let models = JSON.parse(localStorage.getItem('cb-models')) || [
+  { id: 'm1', name: 'GPT-4o', provider: 'OpenAI', key: '', url: '', enabled: true },
+  { id: 'm2', name: 'Claude 3.5 Sonnet', provider: 'Anthropic', key: '', url: '', enabled: true },
+  { id: 'm3', name: 'Gemini 1.5 Pro', provider: 'Google', key: '', url: '', enabled: false },
+  { id: 'm4', name: 'Mistral Large', provider: 'Mistral', key: '', url: '', enabled: true },
+  { id: 'm5', name: 'DeepSeek-V3', provider: 'DeepSeek', key: '', url: 'https://api.deepseek.com/v1', enabled: false },
+];
+let deleteTargetId = null;
+
+function renderModelList() {
+  const container = document.getElementById('modelList');
+  if (!models.length) {
+    container.innerHTML = `<div style="padding:40px 20px;text-align:center;color:var(--text-tertiary);font-size:13px;">暂无模型，点击右上角「添加模型」</div>`;
+    return;
+  }
+  container.innerHTML = models.map(m => {
+    const initials = m.name.split(/[\s_-]/).map(s => s[0]).join('').slice(0, 2).toUpperCase();
+    const iconHtml = m.provider === 'DeepSeek'
+      ? `<img src="moymelr2-image.png" style="width:28px;height:28px;border-radius:4px;object-fit:cover;">`
+      : initials;
+    return `
+    <div class="model-card" onclick="editModel('${m.id}')">
+      <div class="model-icon">${iconHtml}</div>
+      <div class="model-info">
+        <div class="model-name">${escapeHtml(m.name)}</div>
+        <div class="model-meta">${escapeHtml(m.provider)}${m.url ? ' · ' + escapeHtml(m.url) : ''}</div>
+      </div>
+      <div class="model-badge ${m.enabled ? 'enabled' : 'disabled'}">${m.enabled ? '已启用' : '已禁用'}</div>
+      <div class="model-actions" onclick="event.stopPropagation()">
+        <button class="model-action-btn" title="编辑" onclick="editModel('${m.id}')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+        <button class="model-action-btn delete" title="删除" onclick="promptDeleteModel('${m.id}')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </button>
+      </div>
+    </div>
+    `;
+  }).join('');
+}
+
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function showModelForm(id) {
+  document.getElementById('modelModalTitle').textContent = id ? '编辑模型' : '添加模型';
+  document.getElementById('editModelId').value = id || '';
+  if (id) {
+    const m = models.find(x => x.id === id);
+    if (!m) return;
+    document.getElementById('modelName').value = m.name;
+    document.getElementById('modelProvider').value = m.provider;
+    document.getElementById('modelKey').value = m.key;
+    document.getElementById('modelUrl').value = m.url;
+    setToggleState(document.getElementById('modelToggle'), m.enabled);
+  } else {
+    document.getElementById('modelName').value = '';
+    document.getElementById('modelProvider').value = 'OpenAI';
+    document.getElementById('modelKey').value = '';
+    document.getElementById('modelUrl').value = '';
+    setToggleState(document.getElementById('modelToggle'), true);
+  }
+  document.getElementById('modelModal').classList.add('open');
+}
+
+function editModel(id) { showModelForm(id); }
+
+function closeModelModal() {
+  document.getElementById('modelModal').classList.remove('open');
+}
+
+function toggleModelSwitch(el) {
+  const on = !el.classList.contains('on');
+  setToggleState(el, on);
+}
+function setToggleState(el, on) {
+  el.classList.toggle('on', on);
+  document.getElementById('modelToggleLabel').textContent = on ? '已启用' : '已禁用';
+}
+
+function quickConfigDeepSeek() {
+  const existing = models.find(m => m.provider === 'DeepSeek');
+  if (existing) {
+    editModel(existing.id);
+  } else {
+    const newId = 'm' + Date.now();
+    models.push({ id: newId, name: 'DeepSeek-V3', provider: 'DeepSeek', key: '', url: 'https://api.deepseek.com/v1', enabled: true });
+    localStorage.setItem('cb-models', JSON.stringify(models));
+    renderModelList();
+    editModel(newId);
+  }
+}
+
+function saveModel() {
+  const id = document.getElementById('editModelId').value;
+  const name = document.getElementById('modelName').value.trim();
+  const provider = document.getElementById('modelProvider').value;
+  const key = document.getElementById('modelKey').value.trim();
+  const url = document.getElementById('modelUrl').value.trim();
+  const enabled = document.getElementById('modelToggle').classList.contains('on');
+  if (!name) { alert('请输入模型名称'); return; }
+  if (id) {
+    const m = models.find(x => x.id === id);
+    if (m) { m.name = name; m.provider = provider; m.key = key; m.url = url; m.enabled = enabled; }
+  } else {
+    const newId = 'm' + Date.now();
+    models.push({ id: newId, name, provider, key, url, enabled });
+  }
+  localStorage.setItem('cb-models', JSON.stringify(models));
+  closeModelModal();
+  renderModelList();
+}
+
+function promptDeleteModel(id) {
+  deleteTargetId = id;
+  const m = models.find(x => x.id === id);
+  document.getElementById('deleteModelName').textContent = m ? m.name : '';
+  document.getElementById('deleteModal').classList.add('open');
+}
+function closeDeleteModal() {
+  document.getElementById('deleteModal').classList.remove('open');
+  deleteTargetId = null;
+}
+function confirmDeleteModel() {
+  if (deleteTargetId) {
+    models = models.filter(x => x.id !== deleteTargetId);
+    localStorage.setItem('cb-models', JSON.stringify(models));
+    renderModelList();
+  }
+  closeDeleteModal();
+}
+
+// ═══════════════════════════════════════════
+// BALANCE QUERY — 余额查询
+// ═══════════════════════════════════════════
+const DEFAULT_BALANCES = [
+  { id: 'b1', provider: 'OpenAI', name: 'GPT-4o', keyMask: 'sk-****WXYZ', balance: '$12.34', currency: 'USD', status: 'ok', lastUpdated: '2025-05-09 14:32' },
+  { id: 'b2', provider: 'Anthropic', name: 'Claude 3.5 Sonnet', keyMask: 'sk-****ABCD', balance: '$8.76', currency: 'USD', status: 'ok', lastUpdated: '2025-05-09 14:30' },
+  { id: 'b3', provider: 'Google', name: 'Gemini 1.5 Pro', keyMask: 'AIza****1234', balance: '¥0.00', currency: 'CNY', status: 'error', lastUpdated: '2025-05-09 14:28' },
+  { id: 'b4', provider: 'Mistral', name: 'Mistral Large', keyMask: 'mis-****EFGH', balance: '€3.21', currency: 'EUR', status: 'ok', lastUpdated: '2025-05-09 14:25' },
+  { id: 'b5', provider: 'DeepSeek', name: 'DeepSeek-V3', keyMask: 'sk-****DSK', balance: '¥5.80', currency: 'CNY', status: 'ok', lastUpdated: '2025-05-09 14:20' },
+];
+let balances = JSON.parse(localStorage.getItem('cb-balances')) || DEFAULT_BALANCES;
+
+function saveBalances() {
+  localStorage.setItem('cb-balances', JSON.stringify(balances));
+}
+
+function renderBalanceList() {
+  const container = document.getElementById('balanceList');
+  if (!balances.length) {
+    container.innerHTML = `<div style="padding:40px 20px;text-align:center;color:var(--text-tertiary);font-size:13px;">暂无余额数据，点击右上角刷新按钮查询</div>`;
+    return;
+  }
+  container.innerHTML = balances.map(b => {
+    const statusClass = b.status === 'ok' ? 'ok' : b.status === 'error' ? 'error' : 'loading';
+    const statusText = b.status === 'ok' ? '正常' : b.status === 'error' ? '查询失败' : '查询中...';
+    const amountClass = b.status === 'ok' ? '' : b.status === 'error' ? 'error' : 'loading';
+    const amountText = b.status === 'loading' ? '查询中...' : b.balance;
+    const initials = b.provider.slice(0, 2).toUpperCase();
+    const iconHtml = b.provider === 'DeepSeek'
+      ? `<img src="moymelr2-image.png" style="width:28px;height:28px;border-radius:4px;object-fit:cover;">`
+      : initials;
+    return `
+    <div class="balance-card">
+      <div class="balance-icon">${iconHtml}</div>
+      <div class="balance-info">
+        <div class="balance-name">${escapeHtml(b.name)}</div>
+        <div class="balance-meta">${escapeHtml(b.provider)} · ${escapeHtml(b.keyMask)} · 更新于 ${escapeHtml(b.lastUpdated)}</div>
+      </div>
+      <div class="balance-amount ${amountClass}">${amountText}</div>
+      <div class="balance-status ${statusClass}">${statusText}</div>
+    </div>
+    `;
+  }).join('');
+}
+
+function refreshAllBalances() {
+  // 模拟刷新：将所有状态设为 loading，然后随机更新余额
+  balances.forEach(b => { b.status = 'loading'; });
+  renderBalanceList();
+
+  setTimeout(() => {
+    balances.forEach(b => {
+      if (b.provider === 'Google') {
+        // 模拟 Google 查询失败
+        b.status = 'error';
+        b.balance = '—';
+        b.lastUpdated = formatNow();
+        return;
+      }
+      b.status = 'ok';
+      const base = parseFloat(b.balance.replace(/[^0-9.]/g, '')) || 10;
+      const variation = (Math.random() - 0.5) * 5;
+      const newVal = Math.max(0, base + variation).toFixed(2);
+      const symbol = b.currency === 'USD' ? '$' : b.currency === 'EUR' ? '€' : b.currency === 'CNY' ? '¥' : '$';
+      b.balance = symbol + newVal;
+      b.lastUpdated = formatNow();
+    });
+    saveBalances();
+    renderBalanceList();
+  }, 1200);
+}
+
+function formatNow() {
+  const d = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+const savedTheme = localStorage.getItem('cb-theme');
+if (savedTheme && THEMES[savedTheme]) switchTheme(savedTheme);
+function openMainWindow() { orbMenu.classList.remove('open'); }
+function pauseAllTasks() { orbMenu.classList.remove('open'); alert('已暂停所有任务'); }
+function exitApp() { orbMenu.classList.remove('open'); }
+</script>
+
+<!-- Model Config Modal -->
+<div class="modal-overlay" id="modelModal" onclick="if(event.target===this)closeModelModal()">
+  <div class="modal-panel">
+    <div class="modal-header" id="modelModalTitle">添加模型</div>
+    <div class="modal-body">
+      <input type="hidden" id="editModelId">
+      <div class="form-row">
+        <label>模型名称</label>
+        <input type="text" id="modelName" placeholder="例如：Claude 3.5 Sonnet">
+      </div>
+      <div class="form-row">
+        <label>Provider</label>
+        <select id="modelProvider">
+          <option value="OpenAI">OpenAI</option>
+          <option value="Anthropic">Anthropic</option>
+          <option value="Google">Google</option>
+          <option value="DeepSeek">DeepSeek</option>
+          <option value="Cohere">Cohere</option>
+          <option value="Mistral">Mistral</option>
+          <option value="本地">本地</option>
+          <option value="其他">其他</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <label>API Key <span style="font-weight:400;color:var(--text-tertiary)">（可选）</span></label>
+        <input type="password" id="modelKey" placeholder="sk-xxxxxxxx">
+        <div class="form-hint">留空则使用全局默认 Key</div>
+      </div>
+      <div class="form-row">
+        <label>Base URL <span style="font-weight:400;color:var(--text-tertiary)">（可选）</span></label>
+        <input type="text" id="modelUrl" placeholder="https://api.openai.com/v1">
+      </div>
+      <div class="form-row">
+        <label>状态</label>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="toggle-switch on" id="modelToggle" onclick="toggleModelSwitch(this)"></div>
+          <span id="modelToggleLabel" style="font-size:13px;color:var(--text-secondary);">已启用</span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModelModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveModel()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirm Modal -->
+<div class="modal-overlay" id="deleteModal" onclick="if(event.target===this)closeDeleteModal()">
+  <div class="modal-panel">
+    <div class="modal-header">删除模型</div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-secondary);margin:0;">
+        确定要删除模型 <strong id="deleteModelName" style="color:var(--text-primary);"></strong> 吗？此操作不可撤销。
+      </p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeDeleteModal()">取消</button>
+      <button class="btn btn-primary btn-danger" onclick="confirmDeleteModel()">删除</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
