@@ -2,14 +2,12 @@ import { useState } from 'react'
 import { useAppStore } from '../stores/app-store'
 import PermissionToggle from './PermissionToggle'
 import { SendOutlined, PictureOutlined, AudioOutlined } from '@ant-design/icons'
-import { streamChat, AIError } from '../api/ai-client'
 
 export default function InputArea() {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const addMessage = useAppStore((s) => s.addMessage)
   const updateMessage = useAppStore((s) => s.updateMessage)
-  const enabledModel = useAppStore((s) => s.models.find((m) => m.enabled))
 
   const handleSend = async () => {
     const trimmed = input.trim()
@@ -31,22 +29,53 @@ export default function InputArea() {
       role: 'assistant',
       content: '',
       timestamp: new Date().toISOString(),
-      model: enabledModel?.name || 'AI'
+      model: 'Claude Code CLI'
+    })
+
+    let fullContent = ''
+
+    let cleanupOutput: (() => void) | undefined
+    let cleanupError: (() => void) | undefined
+    let cleanupClose: (() => void) | undefined
+
+    const removeListeners = () => {
+      cleanupOutput?.()
+      cleanupError?.()
+      cleanupClose?.()
+    }
+
+    cleanupOutput = window.electronAPI?.onClaudeOutput((data: string) => {
+      fullContent += data
+      updateMessage(assistantId, { content: fullContent })
+    })
+
+    // stderr 内容直接追加（可能是警告或报错，都显示出来）
+    cleanupError = window.electronAPI?.onClaudeError((err: string) => {
+      fullContent += err
+      updateMessage(assistantId, { content: fullContent })
+      // 不在这里 stop loading，等 claude-close 统一处理
+    })
+
+    cleanupClose = window.electronAPI?.onClaudeClose((code) => {
+      setLoading(false)
+      if (code !== 0 && code !== null) {
+        fullContent += `\n[进程退出码: ${code}]`
+        updateMessage(assistantId, { content: fullContent })
+      }
+      removeListeners()
     })
 
     try {
-      let fullContent = ''
-      for await (const chunk of streamChat(trimmed)) {
-        fullContent += chunk
-        updateMessage(assistantId, { content: fullContent })
+      const result = await window.electronAPI?.sendToClaude(trimmed)
+      if (!result?.success) {
+        updateMessage(assistantId, { content: '❌ 启动 Claude Code CLI 失败' })
+        setLoading(false)
+        removeListeners()
       }
     } catch (err) {
-      const msg = err instanceof AIError ? err.message : String(err)
-      updateMessage(assistantId, {
-        content: `❌ 调用失败：${msg}`
-      })
-    } finally {
+      updateMessage(assistantId, { content: `❌ 错误: ${String(err)}` })
       setLoading(false)
+      removeListeners()
     }
   }
 
@@ -218,11 +247,11 @@ export default function InputArea() {
               width: 7,
               height: 7,
               borderRadius: '50%',
-              background: enabledModel ? 'var(--green)' : 'var(--text-tertiary)'
+              background: 'var(--blue)'
             }}
           />
           <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-            {enabledModel?.name || '未选择模型'}
+            Claude Code CLI
           </span>
         </div>
       </div>

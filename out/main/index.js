@@ -1,16 +1,9 @@
 "use strict";
 const electron = require("electron");
+const nodePty = require("node-pty");
 const path = require("path");
 const fs = require("fs");
 const zlib = require("zlib");
-const is = {
-  dev: !electron.app.isPackaged
-};
-({
-  isWindows: process.platform === "win32",
-  isMacOS: process.platform === "darwin",
-  isLinux: process.platform === "linux"
-});
 const PNG_SIG = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
 const crcTable = (() => {
   const t = new Uint32Array(256);
@@ -104,137 +97,115 @@ function generateStarIcon(path$1, size = 32) {
 let mainWindow = null;
 let floatWindow = null;
 let tray = null;
-let isQuitting = false;
-const iconPath = path.join(electron.app.getPath("userData"), "tray-icon.png");
-generateStarIcon(iconPath, 32);
 function createMainWindow() {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.show();
+    return;
+  }
   mainWindow = new electron.BrowserWindow({
     width: 1280,
     height: 800,
-    minWidth: 640,
-    minHeight: 480,
-    show: false,
+    minWidth: 900,
+    minHeight: 600,
     frame: false,
     titleBarStyle: "hidden",
-    backgroundColor: "#f5f5f5",
-    icon: electron.nativeImage.createFromPath(iconPath),
     webPreferences: {
       preload: path.join(__dirname, "../preload/index.js"),
-      sandbox: false,
       contextIsolation: true,
       nodeIntegration: false
-    }
+    },
+    show: false,
+    backgroundColor: "#ffffff"
   });
-  mainWindow.on("ready-to-show", () => {
-    mainWindow?.show();
-    floatWindow?.hide();
-  });
-  mainWindow.on("close", (event) => {
-    if (!isQuitting) {
-      event.preventDefault();
-      mainWindow?.hide();
-      floatWindow?.show();
-    }
-  });
-  mainWindow.on("maximize", () => {
-    mainWindow?.webContents.send("window-maximized", true);
-  });
-  mainWindow.on("unmaximize", () => {
-    mainWindow?.webContents.send("window-maximized", false);
-  });
-  mainWindow.webContents.setWindowOpenHandler((details) => {
-    electron.shell.openExternal(details.url);
-    return { action: "deny" };
-  });
-  if (is.dev && process.env["ELECTRON_RENDERER_URL"]) {
-    mainWindow.loadURL(process.env["ELECTRON_RENDERER_URL"]);
+  if (!electron.app.isPackaged) {
+    mainWindow.loadURL("http://localhost:5173");
   } else {
     mainWindow.loadFile(path.join(__dirname, "../renderer/index.html"));
   }
+  mainWindow.once("ready-to-show", () => {
+    mainWindow?.show();
+  });
+  mainWindow.on("close", (e) => {
+    e.preventDefault();
+    mainWindow?.hide();
+    floatWindow?.showInactive();
+  });
 }
 function createFloatWindow() {
-  const { width, height } = electron.screen.getPrimaryDisplay().workAreaSize;
+  if (floatWindow && !floatWindow.isDestroyed()) return;
+  const { width: screenW, height: screenH } = electron.screen.getPrimaryDisplay().workAreaSize;
   floatWindow = new electron.BrowserWindow({
     width: 54,
     height: 54,
-    x: width - 74,
-    y: height - 134,
+    x: screenW - 74,
+    y: screenH - 74,
     frame: false,
     transparent: true,
     alwaysOnTop: true,
     skipTaskbar: true,
     resizable: false,
-    hasShadow: false,
-    show: false,
+    movable: true,
     webPreferences: {
       preload: path.join(__dirname, "../preload/index.js"),
-      sandbox: false,
       contextIsolation: true,
       nodeIntegration: false
     }
   });
   floatWindow.setIgnoreMouseEvents(false);
-  const baseUrl = process.env["ELECTRON_RENDERER_URL"] || "";
-  const url = is.dev && baseUrl ? new URL("float-ball.html", baseUrl).href : path.join(__dirname, "../renderer/float-ball.html");
-  console.log("[FloatWindow] loading URL:", url);
+  if (!electron.app.isPackaged) {
+    floatWindow.loadURL("http://localhost:5173/float-ball.html");
+  } else {
+    floatWindow.loadFile(path.join(__dirname, "../renderer/float-ball.html"));
+  }
+  floatWindow.webContents.on("dom-ready", () => {
+    console.log("[FloatWindow] dom-ready");
+  });
   floatWindow.webContents.on("did-finish-load", () => {
     console.log("[FloatWindow] did-finish-load");
   });
-  floatWindow.webContents.on("did-fail-load", (_event, errorCode, errorDescription) => {
-    console.log("[FloatWindow] did-fail-load:", errorCode, errorDescription);
+  floatWindow.webContents.on("console-message", (_event, level, message) => {
+    console.log(`[FloatWindow console] ${level} ${message}`);
   });
   floatWindow.on("ready-to-show", () => {
     console.log("[FloatWindow] ready-to-show");
   });
-  floatWindow.webContents.on("dom-ready", () => {
-    console.log("[FloatWindow] dom-ready");
+  floatWindow.on("show", () => {
+    console.log("[FloatWindow] show");
   });
-  floatWindow.webContents.on("console-message", (_event, level, message) => {
-    console.log("[FloatWindow console]", level, message);
+  floatWindow.on("hide", () => {
+    console.log("[FloatWindow] hide");
   });
-  if (typeof url === "string" && url.startsWith("http")) {
-    floatWindow.loadURL(url);
-  } else {
-    floatWindow.loadFile(url);
-  }
 }
 function createTray() {
+  if (tray) return;
+  const iconPath = path.join(electron.app.getPath("temp"), "claudebridge-icon.png");
+  generateStarIcon(iconPath, 32);
   const icon = electron.nativeImage.createFromPath(iconPath);
-  tray = new electron.Tray(icon.resize({ width: 16, height: 16 }));
-  tray.setToolTip("ClaudeBridge");
-  tray.on("click", () => showMainWindow());
-  tray.on("double-click", () => showMainWindow());
+  tray = new electron.Tray(icon);
   const contextMenu = electron.Menu.buildFromTemplate([
-    { label: "打开主界面", click: () => showMainWindow() },
+    {
+      label: "打开主界面",
+      click: () => {
+        mainWindow?.show();
+        floatWindow?.hide();
+      }
+    },
     { type: "separator" },
-    { label: "退出", click: () => quitApp() }
+    {
+      label: "退出",
+      click: () => {
+        electron.app.exit(0);
+      }
+    }
   ]);
+  tray.setToolTip("ClaudeBridge");
   tray.setContextMenu(contextMenu);
-}
-function showMainWindow() {
-  if (!mainWindow || mainWindow.isDestroyed()) {
-    createMainWindow();
-  }
-  mainWindow?.show();
-  mainWindow?.restore();
-  mainWindow?.focus();
-  floatWindow?.hide();
-}
-function quitApp() {
-  isQuitting = true;
-  tray?.destroy();
-  floatWindow?.destroy();
-  mainWindow?.destroy();
-  tray = null;
-  floatWindow = null;
-  mainWindow = null;
-  electron.app.quit();
+  tray.on("click", () => {
+    mainWindow?.show();
+    floatWindow?.hide();
+  });
 }
 function registerIPC() {
-  electron.ipcMain.handle("get-theme", () => null);
-  electron.ipcMain.handle("set-theme", (_event, theme) => {
-    return { success: true, theme };
-  });
   electron.ipcMain.handle("window-minimize", () => {
     mainWindow?.minimize();
   });
@@ -246,21 +217,77 @@ function registerIPC() {
     }
   });
   electron.ipcMain.handle("window-close", () => {
-    console.log("[IPC] window-close called");
     mainWindow?.hide();
-    floatWindow?.show();
-    floatWindow?.setAlwaysOnTop(true, "screen-saver");
+    floatWindow?.showInactive();
   });
   electron.ipcMain.handle("window-is-maximized", () => {
     return mainWindow?.isMaximized() ?? false;
   });
-  electron.ipcMain.handle("show-main-window", () => showMainWindow());
-  electron.ipcMain.handle("quit-app", () => quitApp());
+  electron.ipcMain.on("window-maximized-change", (_event, maximized) => {
+    mainWindow?.webContents.send("window-maximized", maximized);
+  });
+  electron.ipcMain.handle("show-main-window", () => {
+    mainWindow?.show();
+    floatWindow?.hide();
+  });
+  electron.ipcMain.handle("quit-app", () => {
+    electron.app.exit(0);
+  });
   electron.ipcMain.handle("float-ball-move-start", () => {
     return floatWindow?.getPosition() ?? [0, 0];
   });
   electron.ipcMain.handle("float-ball-move", (_event, x, y) => {
-    floatWindow?.setPosition(Math.round(x), Math.round(y));
+    floatWindow?.setPosition(x, y, true);
+  });
+  electron.ipcMain.handle("send-to-claude", (_event, prompt, cwd) => {
+    const workDir = cwd || process.cwd();
+    const isWin = process.platform === "win32";
+    const TIMEOUT = 12e4;
+    const timeoutId = setTimeout(() => {
+      console.log("[PTY] timeout, killing");
+      pty.kill();
+      electron.BrowserWindow.getAllWindows().forEach((win) => {
+        if (!win.isDestroyed()) {
+          win.webContents.send("claude-error", "\n[系统] 执行超时（120秒），已强制终止");
+          win.webContents.send("claude-close", -1);
+        }
+      });
+    }, TIMEOUT);
+    const shell = isWin ? "cmd.exe" : "claude";
+    const args = isWin ? ["/c", "claude"] : [];
+    console.log("[PTY] spawning:", shell, args, "cwd:", workDir);
+    const pty = nodePty.spawn(shell, args, {
+      name: "xterm-color",
+      cols: 120,
+      rows: 40,
+      cwd: workDir,
+      env: process.env
+    });
+    electron.BrowserWindow.getAllWindows().forEach((win) => {
+      if (!win.isDestroyed()) win.webContents.send("claude-task-start");
+    });
+    setTimeout(() => {
+      pty.write(prompt + "\r");
+    }, isWin ? 1500 : 500);
+    pty.onData((data) => {
+      console.log("[PTY] data:", data.slice(0, 200));
+      const cleaned = data.replace(/\x1b\[[\d;?]*[a-zA-Z]/g, "").replace(/\x1b\][\d;]*[^]*(?:\u0007|\x1b\\)/g, "").replace(/\x1b[()[\]{}#~%]/g, "").replace(/\r\n/g, "\n");
+      electron.BrowserWindow.getAllWindows().forEach((win) => {
+        if (!win.isDestroyed()) {
+          win.webContents.send("claude-output", cleaned);
+        }
+      });
+    });
+    pty.onExit(({ exitCode, signal }) => {
+      console.log("[PTY] exited, code:", exitCode, "signal:", signal);
+      clearTimeout(timeoutId);
+      electron.BrowserWindow.getAllWindows().forEach((win) => {
+        if (!win.isDestroyed()) {
+          win.webContents.send("claude-close", exitCode);
+        }
+      });
+    });
+    return { success: true };
   });
 }
 electron.app.whenReady().then(() => {

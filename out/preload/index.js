@@ -14,6 +14,28 @@ const electronAPI = {
   showMainWindow: () => electron.ipcRenderer.invoke("show-main-window"),
   quitApp: () => electron.ipcRenderer.invoke("quit-app"),
   floatBallMoveStart: () => electron.ipcRenderer.invoke("float-ball-move-start"),
-  floatBallMove: (x, y) => electron.ipcRenderer.invoke("float-ball-move", x, y)
+  floatBallMove: (x, y) => electron.ipcRenderer.invoke("float-ball-move", x, y),
+  /* Claude Code CLI */
+  sendToClaude: (prompt, cwd) => electron.ipcRenderer.invoke("send-to-claude", prompt, cwd),
+  onClaudeOutput: (callback) => {
+    const listener = (_event, data) => callback(data);
+    electron.ipcRenderer.on("claude-output", listener);
+    return () => electron.ipcRenderer.removeListener("claude-output", listener);
+  },
+  onClaudeError: (callback) => {
+    const listener = (_event, err) => callback(err);
+    electron.ipcRenderer.on("claude-error", listener);
+    return () => electron.ipcRenderer.removeListener("claude-error", listener);
+  },
+  onClaudeClose: (callback) => {
+    const listener = (_event, code) => callback(code);
+    electron.ipcRenderer.on("claude-close", listener);
+    return () => electron.ipcRenderer.removeListener("claude-close", listener);
+  },
+  onClaudeTaskStart: (callback) => {
+    const listener = () => callback();
+    electron.ipcRenderer.on("claude-task-start", listener);
+    return () => electron.ipcRenderer.removeListener("claude-task-start", listener);
+  }
 };
 electron.contextBridge.exposeInMainWorld("electronAPI", electronAPI);

@@ -18,12 +18,17 @@
     "@ant-design/icons": "^5.5.2",
     "@ant-design/x": "^1.2.1",
     "antd": "^5.22.0",
+    "node-pty": "^1.1.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "zustand": "^5.0.0"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["electron", "esbuild"]
+    "onlyBuiltDependencies": [
+      "electron",
+      "esbuild",
+      "node-pty"
+    ]
   },
   "devDependencies": {
     "@electron-toolkit/preload": "^3.0.1",

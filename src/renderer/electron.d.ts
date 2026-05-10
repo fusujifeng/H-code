@@ -8,10 +8,18 @@ declare global {
       windowClose: () => Promise<void>
       windowIsMaximized: () => Promise<boolean>
       onWindowMaximized: (cb: (maximized: boolean) => void) => () => void
+
       showMainWindow: () => Promise<void>
       quitApp: () => Promise<void>
       floatBallMoveStart: () => Promise<[number, number]>
       floatBallMove: (x: number, y: number) => Promise<void>
+
+      /* Claude Code CLI */
+      sendToClaude: (prompt: string, cwd?: string) => Promise<{ success: boolean }>
+      onClaudeOutput: (cb: (data: string) => void) => () => void
+      onClaudeError: (cb: (err: string) => void) => () => void
+      onClaudeClose: (cb: (code: number | null) => void) => () => void
+      onClaudeTaskStart: (cb: () => void) => () => void
     }
   }
 }

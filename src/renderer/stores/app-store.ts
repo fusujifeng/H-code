@@ -78,7 +78,8 @@ const defaultModels: ModelConfig[] = [
     name: 'DeepSeek-V4-Pro',
     provider: 'DeepSeek',
     enabled: true,
-    baseUrl: 'https://api.deepseek.com/anthropic'
+    baseUrl: 'https://api.deepseek.com/anthropic',
+    apiKey: 'sk-443cf9d14c654a2baac2e7e2f2058334'
   },
   {
     id: '2',

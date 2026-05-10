@@ -69,3 +69,46 @@ menu.addEventListener('click', (e) => {
   }
   menu.style.display = 'none'
 })
+
+/* ── CLI 任务状态感知 ─────────────────────────────────── */
+
+let statusTimer: ReturnType<typeof setTimeout> | null = null
+
+function setBallStatus(status: 'running' | 'success' | 'error' | 'none') {
+  ball.classList.remove('status-running', 'status-success', 'status-error')
+  if (statusTimer) {
+    clearTimeout(statusTimer)
+    statusTimer = null
+  }
+  if (status !== 'none') {
+    ball.classList.add(`status-${status}`)
+  }
+  if (status === 'success' || status === 'error') {
+    statusTimer = setTimeout(() => {
+      ball.classList.remove(`status-${status}`)
+    }, 3000)
+  }
+}
+
+window.electronAPI?.onClaudeTaskStart(() => {
+  setBallStatus('running')
+})
+
+window.electronAPI?.onClaudeClose((code) => {
+  if (code === 0) {
+    setBallStatus('success')
+  } else {
+    setBallStatus('error')
+  }
+})
+
+// 点击打开主窗口时清除状态
+ball.addEventListener('click', () => {
+  if (!hasDragged) {
+    setBallStatus('none')
+  }
+})
+
+ball.addEventListener('dblclick', () => {
+  setBallStatus('none')
+})
