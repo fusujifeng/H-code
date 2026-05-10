@@ -97,6 +97,8 @@ function generateStarIcon(path$1, size = 32) {
 let mainWindow = null;
 let floatWindow = null;
 let tray = null;
+let globalActivePty = null;
+let pendingKillTimer = null;
 function createMainWindow() {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.show();
@@ -239,12 +241,72 @@ function registerIPC() {
   electron.ipcMain.handle("float-ball-move", (_event, x, y) => {
     floatWindow?.setPosition(x, y, true);
   });
+  electron.ipcMain.handle("create-pty", (_event, cwd) => {
+    const workDir = cwd || process.cwd();
+    const isWin = process.platform === "win32";
+    if (pendingKillTimer) {
+      clearTimeout(pendingKillTimer);
+      pendingKillTimer = null;
+      console.log("[PTY] cancelled pending kill");
+    }
+    if (globalActivePty) {
+      console.log("[PTY] reusing existing session");
+      return { success: true };
+    }
+    const shell = isWin ? "cmd.exe" : "claude";
+    const args = isWin ? ["/c", "claude"] : [];
+    console.log("[PTY] creating session:", shell, args, "cwd:", workDir);
+    globalActivePty = nodePty.spawn(shell, args, {
+      name: "xterm-256color",
+      cols: 120,
+      rows: 40,
+      cwd: workDir,
+      env: process.env
+    });
+    console.log("[PTY] session created");
+    globalActivePty.onData((data) => {
+      electron.BrowserWindow.getAllWindows().forEach((win) => {
+        if (!win.isDestroyed()) {
+          win.webContents.send("pty-data", data);
+        }
+      });
+    });
+    globalActivePty.onExit(({ exitCode }) => {
+      console.log("[PTY] session exited, code:", exitCode);
+      globalActivePty = null;
+      electron.BrowserWindow.getAllWindows().forEach((win) => {
+        if (!win.isDestroyed()) {
+          win.webContents.send("pty-exit", exitCode);
+        }
+      });
+    });
+    return { success: true };
+  });
+  electron.ipcMain.handle("write-pty", (_event, data) => {
+    console.log("[PTY] write, exists:", !!globalActivePty, "data:", JSON.stringify(data));
+    if (!globalActivePty) {
+      return { success: false, error: "PTY session not created yet" };
+    }
+    globalActivePty.write(data);
+    return { success: true };
+  });
+  electron.ipcMain.handle("resize-pty", (_event, cols, rows) => {
+    globalActivePty?.resize(cols, rows);
+  });
+  electron.ipcMain.handle("kill-pty", () => {
+    if (pendingKillTimer) clearTimeout(pendingKillTimer);
+    pendingKillTimer = setTimeout(() => {
+      console.log("[PTY] delayed kill executing");
+      globalActivePty?.kill();
+      globalActivePty = null;
+      pendingKillTimer = null;
+    }, 1e3);
+  });
   electron.ipcMain.handle("send-to-claude", (_event, prompt, cwd) => {
     const workDir = cwd || process.cwd();
     const isWin = process.platform === "win32";
     const TIMEOUT = 12e4;
     const timeoutId = setTimeout(() => {
-      console.log("[PTY] timeout, killing");
       pty.kill();
       electron.BrowserWindow.getAllWindows().forEach((win) => {
         if (!win.isDestroyed()) {
@@ -255,9 +317,8 @@ function registerIPC() {
     }, TIMEOUT);
     const shell = isWin ? "cmd.exe" : "claude";
     const args = isWin ? ["/c", "claude"] : [];
-    console.log("[PTY] spawning:", shell, args, "cwd:", workDir);
     const pty = nodePty.spawn(shell, args, {
-      name: "xterm-color",
+      name: "xterm-256color",
       cols: 120,
       rows: 40,
       cwd: workDir,
@@ -270,21 +331,14 @@ function registerIPC() {
       pty.write(prompt + "\r");
     }, isWin ? 1500 : 500);
     pty.onData((data) => {
-      console.log("[PTY] data:", data.slice(0, 200));
-      const cleaned = data.replace(/\x1b\[[\d;?]*[a-zA-Z]/g, "").replace(/\x1b\][\d;]*[^]*(?:\u0007|\x1b\\)/g, "").replace(/\x1b[()[\]{}#~%]/g, "").replace(/\r\n/g, "\n");
       electron.BrowserWindow.getAllWindows().forEach((win) => {
-        if (!win.isDestroyed()) {
-          win.webContents.send("claude-output", cleaned);
-        }
+        if (!win.isDestroyed()) win.webContents.send("claude-output", data);
       });
     });
-    pty.onExit(({ exitCode, signal }) => {
-      console.log("[PTY] exited, code:", exitCode, "signal:", signal);
+    pty.onExit(({ exitCode }) => {
       clearTimeout(timeoutId);
       electron.BrowserWindow.getAllWindows().forEach((win) => {
-        if (!win.isDestroyed()) {
-          win.webContents.send("claude-close", exitCode);
-        }
+        if (!win.isDestroyed()) win.webContents.send("claude-close", exitCode);
       });
     });
     return { success: true };

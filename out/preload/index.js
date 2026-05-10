@@ -36,6 +36,21 @@ const electronAPI = {
     const listener = () => callback();
     electron.ipcRenderer.on("claude-task-start", listener);
     return () => electron.ipcRenderer.removeListener("claude-task-start", listener);
+  },
+  /* PTY 终端会话 */
+  createPty: (cwd) => electron.ipcRenderer.invoke("create-pty", cwd),
+  writePty: (data) => electron.ipcRenderer.invoke("write-pty", data),
+  resizePty: (cols, rows) => electron.ipcRenderer.invoke("resize-pty", cols, rows),
+  killPty: () => electron.ipcRenderer.invoke("kill-pty"),
+  onPtyData: (callback) => {
+    const listener = (_event, data) => callback(data);
+    electron.ipcRenderer.on("pty-data", listener);
+    return () => electron.ipcRenderer.removeListener("pty-data", listener);
+  },
+  onPtyExit: (callback) => {
+    const listener = (_event, code) => callback(code);
+    electron.ipcRenderer.on("pty-exit", listener);
+    return () => electron.ipcRenderer.removeListener("pty-exit", listener);
   }
 };
 electron.contextBridge.exposeInMainWorld("electronAPI", electronAPI);

@@ -20,6 +20,14 @@ declare global {
       onClaudeError: (cb: (err: string) => void) => () => void
       onClaudeClose: (cb: (code: number | null) => void) => () => void
       onClaudeTaskStart: (cb: () => void) => () => void
+
+      /* PTY 终端会话 */
+      createPty: (cwd?: string) => Promise<{ success: boolean }>
+      writePty: (data: string) => Promise<void>
+      resizePty: (cols: number, rows: number) => Promise<void>
+      killPty: () => Promise<void>
+      onPtyData: (cb: (data: string) => void) => () => void
+      onPtyExit: (cb: (code: number | null) => void) => () => void
     }
   }
 }

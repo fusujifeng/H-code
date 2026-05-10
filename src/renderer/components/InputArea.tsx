@@ -3,7 +3,7 @@ import { useAppStore } from '../stores/app-store'
 import PermissionToggle from './PermissionToggle'
 import { SendOutlined, PictureOutlined, AudioOutlined } from '@ant-design/icons'
 
-export default function InputArea() {
+export default function InputArea({ useTerminal }: { useTerminal: boolean }) {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const addMessage = useAppStore((s) => s.addMessage)
@@ -13,6 +13,21 @@ export default function InputArea() {
     const trimmed = input.trim()
     if (!trimmed) return
 
+    // 终端模式：直接写给 PTY，不存消息列表
+    if (useTerminal) {
+      setInput('')
+      try {
+        const result = await window.electronAPI?.writePty(trimmed + '\r')
+        if (!result?.success) {
+          console.error('[InputArea] writePty failed:', result)
+        }
+      } catch (err) {
+        console.error('[InputArea] writePty error:', err)
+      }
+      return
+    }
+
+    // 聊天模式：原来的逻辑
     addMessage({
       id: Date.now().toString(),
       role: 'user',
@@ -49,11 +64,9 @@ export default function InputArea() {
       updateMessage(assistantId, { content: fullContent })
     })
 
-    // stderr 内容直接追加（可能是警告或报错，都显示出来）
     cleanupError = window.electronAPI?.onClaudeError((err: string) => {
       fullContent += err
       updateMessage(assistantId, { content: fullContent })
-      // 不在这里 stop loading，等 claude-close 统一处理
     })
 
     cleanupClose = window.electronAPI?.onClaudeClose((code) => {

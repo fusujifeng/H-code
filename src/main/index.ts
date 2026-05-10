@@ -6,6 +6,8 @@ import { generateStarIcon } from './icon-generator'
 let mainWindow: BrowserWindow | null = null
 let floatWindow: BrowserWindow | null = null
 let tray: Tray | null = null
+let globalActivePty: ReturnType<typeof spawnPty> | null = null
+let pendingKillTimer: ReturnType<typeof setTimeout> | null = null
 
 /* ── 窗口创建 ────────────────────────────────────────────── */
 
@@ -188,16 +190,92 @@ function registerIPC() {
     floatWindow?.setPosition(x, y, true)
   })
 
-  /* ── Claude Code CLI (via node-pty) ────────────────────── */
+  /* ── PTY 终端会话（给 xterm.js 用）─────────────────────── */
 
+  ipcMain.handle('create-pty', (_event, cwd?: string) => {
+    const workDir = cwd || process.cwd()
+    const isWin = process.platform === 'win32'
+
+    // 取消待执行的 kill（应对 React StrictMode 的卸载-重挂载）
+    if (pendingKillTimer) {
+      clearTimeout(pendingKillTimer)
+      pendingKillTimer = null
+      console.log('[PTY] cancelled pending kill')
+    }
+
+    // 如果已有活跃会话，直接复用
+    if (globalActivePty) {
+      console.log('[PTY] reusing existing session')
+      return { success: true }
+    }
+
+    const shell = isWin ? 'cmd.exe' : 'claude'
+    const args = isWin ? ['/c', 'claude'] : []
+
+    console.log('[PTY] creating session:', shell, args, 'cwd:', workDir)
+
+    globalActivePty = spawnPty(shell, args, {
+      name: 'xterm-256color',
+      cols: 120,
+      rows: 40,
+      cwd: workDir,
+      env: process.env as { [key: string]: string }
+    })
+
+    console.log('[PTY] session created')
+
+    globalActivePty.onData((data) => {
+      BrowserWindow.getAllWindows().forEach((win) => {
+        if (!win.isDestroyed()) {
+          win.webContents.send('pty-data', data)
+        }
+      })
+    })
+
+    globalActivePty.onExit(({ exitCode }) => {
+      console.log('[PTY] session exited, code:', exitCode)
+      globalActivePty = null
+      BrowserWindow.getAllWindows().forEach((win) => {
+        if (!win.isDestroyed()) {
+          win.webContents.send('pty-exit', exitCode)
+        }
+      })
+    })
+
+    return { success: true }
+  })
+
+  ipcMain.handle('write-pty', (_event, data: string) => {
+    console.log('[PTY] write, exists:', !!globalActivePty, 'data:', JSON.stringify(data))
+    if (!globalActivePty) {
+      return { success: false, error: 'PTY session not created yet' }
+    }
+    globalActivePty.write(data)
+    return { success: true }
+  })
+
+  ipcMain.handle('resize-pty', (_event, cols: number, rows: number) => {
+    globalActivePty?.resize(cols, rows)
+  })
+
+  ipcMain.handle('kill-pty', () => {
+    // 延迟 kill，给 StrictMode 重挂载留出时间
+    if (pendingKillTimer) clearTimeout(pendingKillTimer)
+    pendingKillTimer = setTimeout(() => {
+      console.log('[PTY] delayed kill executing')
+      globalActivePty?.kill()
+      globalActivePty = null
+      pendingKillTimer = null
+    }, 1000)
+  })
+
+  /* 保留旧的 CLI 流式接口（供 InputArea 用） */
   ipcMain.handle('send-to-claude', (_event, prompt: string, cwd?: string) => {
     const workDir = cwd || process.cwd()
     const isWin = process.platform === 'win32'
 
-    // 120 秒超时保护
     const TIMEOUT = 120000
     const timeoutId = setTimeout(() => {
-      console.log('[PTY] timeout, killing')
       pty.kill()
       BrowserWindow.getAllWindows().forEach((win) => {
         if (!win.isDestroyed()) {
@@ -207,53 +285,35 @@ function registerIPC() {
       })
     }, TIMEOUT)
 
-    // 不用 --print（Windows 上有 bug），用交互模式 + node-pty 提供 TTY
     const shell = isWin ? 'cmd.exe' : 'claude'
     const args = isWin ? ['/c', 'claude'] : []
 
-    console.log('[PTY] spawning:', shell, args, 'cwd:', workDir)
-
     const pty = spawnPty(shell, args, {
-      name: 'xterm-color',
+      name: 'xterm-256color',
       cols: 120,
       rows: 40,
       cwd: workDir,
       env: process.env as { [key: string]: string }
     })
 
-    // 通知所有窗口任务已开始
     BrowserWindow.getAllWindows().forEach((win) => {
       if (!win.isDestroyed()) win.webContents.send('claude-task-start')
     })
 
-    // 延迟写入：等 TUI 完全初始化后再发输入
-    // Windows ConPTY 可能需要额外时间
     setTimeout(() => {
       pty.write(prompt + '\r')
     }, isWin ? 1500 : 500)
 
     pty.onData((data) => {
-      console.log('[PTY] data:', data.slice(0, 200))
-      // 去掉 ANSI 转义码（CSI、OSC、以及 cursor 控制等）
-      const cleaned = data
-        .replace(/\x1b\[[\d;?]*[a-zA-Z]/g, '')   // CSI 序列
-        .replace(/\x1b\][\d;]*[^]*(?:\u0007|\x1b\\)/g, '') // OSC 序列
-        .replace(/\x1b[()[\]{}#~%]/g, '')       // 单字符转义
-        .replace(/\r\n/g, '\n')                   // 统一换行
       BrowserWindow.getAllWindows().forEach((win) => {
-        if (!win.isDestroyed()) {
-          win.webContents.send('claude-output', cleaned)
-        }
+        if (!win.isDestroyed()) win.webContents.send('claude-output', data)
       })
     })
 
-    pty.onExit(({ exitCode, signal }) => {
-      console.log('[PTY] exited, code:', exitCode, 'signal:', signal)
+    pty.onExit(({ exitCode }) => {
       clearTimeout(timeoutId)
       BrowserWindow.getAllWindows().forEach((win) => {
-        if (!win.isDestroyed()) {
-          win.webContents.send('claude-close', exitCode)
-        }
+        if (!win.isDestroyed()) win.webContents.send('claude-close', exitCode)
       })
     })
 
