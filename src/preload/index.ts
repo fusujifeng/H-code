@@ -72,6 +72,13 @@ const electronAPI = {
     return () => ipcRenderer.removeListener('pty-exit', listener)
   },
 
+  onPtyHistory: (callback: (sessionId: string, history: string) => void) => {
+    const listener = (_event: unknown, sessionId: string, history: string) =>
+      callback(sessionId, history)
+    ipcRenderer.on('pty-history', listener)
+    return () => ipcRenderer.removeListener('pty-history', listener)
+  },
+
   /* 自动更新 */
   checkUpdate: () => ipcRenderer.invoke('check-update'),
   downloadUpdate: () => ipcRenderer.invoke('download-update'),
@@ -94,7 +101,52 @@ const electronAPI = {
     const listener = (_event: unknown, err: string) => callback(err)
     ipcRenderer.on('update-error', listener)
     return () => ipcRenderer.removeListener('update-error', listener)
-  }
+  },
+
+  /* ── 任务队列 ──────────────────────────────────────────── */
+  enqueueTask: (conversationId: string | null, prompt: string) =>
+    ipcRenderer.invoke('enqueue-task', conversationId, prompt),
+  pauseTask: (taskId: number) => ipcRenderer.invoke('pause-task', taskId),
+  resumeTask: (taskId: number) => ipcRenderer.invoke('resume-task', taskId),
+  cancelTask: (taskId: number) => ipcRenderer.invoke('cancel-task', taskId),
+  completeTask: (taskId: number, result?: string) =>
+    ipcRenderer.invoke('complete-task', taskId, result),
+  failTask: (taskId: number, error?: string) =>
+    ipcRenderer.invoke('fail-task', taskId, error),
+  getTasks: () => ipcRenderer.invoke('get-tasks'),
+
+  onTaskUpdated: (callback: (task: unknown) => void) => {
+    const listener = (_event: unknown, task: unknown) => callback(task)
+    ipcRenderer.on('task-updated', listener)
+    return () => ipcRenderer.removeListener('task-updated', listener)
+  },
+
+  onTaskExecute: (callback: (payload: { taskId: number; conversationId: string | null; prompt: string }) => void) => {
+    const listener = (_event: unknown, payload: { taskId: number; conversationId: string | null; prompt: string }) =>
+      callback(payload)
+    ipcRenderer.on('task-execute', listener)
+    return () => ipcRenderer.removeListener('task-execute', listener)
+  },
+
+  onQueueStatus: (callback: (status: { total: number; active: number }) => void) => {
+    const listener = (_event: unknown, status: { total: number; active: number }) => callback(status)
+    ipcRenderer.on('queue-status', listener)
+    return () => ipcRenderer.removeListener('queue-status', listener)
+  },
+
+  /* ── SQLite 会话存储 ───────────────────────────────────── */
+  createConversation: (id: string, title: string) =>
+    ipcRenderer.invoke('create-conversation', id, title),
+  getConversations: () => ipcRenderer.invoke('get-conversations'),
+  deleteConversation: (id: string) => ipcRenderer.invoke('delete-conversation', id),
+  addMessage: (conversationId: string, message: { role: string; content: string; model?: string; tokenUsage?: number }) =>
+    ipcRenderer.invoke('add-message', conversationId, message),
+  getMessages: (conversationId: string, limit?: number, offset?: number) =>
+    ipcRenderer.invoke('get-messages', conversationId, limit, offset),
+
+  /* ── 文件变动感知 ──────────────────────────────────────── */
+  getFileChangeSummary: () => ipcRenderer.invoke('get-file-change-summary'),
+  toggleFileWatcher: (enabled: boolean) => ipcRenderer.invoke('toggle-file-watcher', enabled)
 }
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI)

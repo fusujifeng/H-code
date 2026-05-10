@@ -78,6 +78,10 @@ export default function XtermTerminal({ sessionId }: { sessionId: string }) {
       if (id === sessionId) term.write(data)
     })
 
+    const unsubHistory = window.electronAPI?.onPtyHistory((id, history) => {
+      if (id === sessionId) term.write(history)
+    })
+
     termRef.current = term
     fitRef.current = fit
     unsubRef.current = unsub || null
@@ -98,7 +102,9 @@ export default function XtermTerminal({ sessionId }: { sessionId: string }) {
       ro.disconnect()
       disposable.dispose()
       unsubRef.current?.()
-      window.electronAPI?.killPty(sessionId)
+      unsubHistory?.()
+      // 切换 terminal/chat 模式时不 kill PTY，保持会话存活
+      // PTY 只在用户关闭会话面板时由 RightPanel 负责 kill
       term.dispose()
       termRef.current = null
       fitRef.current = null
@@ -112,7 +118,13 @@ export default function XtermTerminal({ sessionId }: { sessionId: string }) {
     }
   }, [theme])
 
+  const permissionInitRef = useRef(false)
   useEffect(() => {
+    // createPty 已经通过命令行参数设置了初始权限，跳过第一次渲染
+    if (!permissionInitRef.current) {
+      permissionInitRef.current = true
+      return
+    }
     window.electronAPI?.changePtyPermission(sessionId, permission)
   }, [permission, sessionId])
 

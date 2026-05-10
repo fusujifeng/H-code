@@ -54,6 +54,44 @@ const themeCards: ThemeCard[] = [
   }
 ]
 
+function ToggleSwitch({
+  checked,
+  onChange
+}: {
+  checked: boolean
+  onChange?: (v: boolean) => void
+}) {
+  return (
+    <div
+      onClick={() => onChange?.(!checked)}
+      style={{
+        width: 40,
+        height: 22,
+        borderRadius: 11,
+        background: checked ? 'var(--blue)' : 'var(--text-tertiary)',
+        cursor: 'pointer',
+        position: 'relative',
+        transition: 'background 0.2s',
+        flexShrink: 0
+      }}
+    >
+      <div
+        style={{
+          position: 'absolute',
+          top: 2,
+          left: checked ? 20 : 2,
+          width: 18,
+          height: 18,
+          borderRadius: '50%',
+          background: '#fff',
+          transition: 'left 0.2s',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.15)'
+        }}
+      />
+    </div>
+  )
+}
+
 function UpdateSection() {
   const updateStatus = useAppStore((s) => s.updateStatus)
   const updateProgress = useAppStore((s) => s.updateProgress)
@@ -320,6 +358,10 @@ export default function SettingsPanel() {
   const theme = useAppStore((s) => s.theme)
   const setTheme = useAppStore((s) => s.setTheme)
   const setMidPanelView = useAppStore((s) => s.setMidPanelView)
+  const funnyMode = useAppStore((s) => s.funnyMode)
+  const setFunnyMode = useAppStore((s) => s.setFunnyMode)
+  const fileWatcherEnabled = useAppStore((s) => s.fileWatcherEnabled)
+  const setFileWatcherEnabled = useAppStore((s) => s.setFileWatcherEnabled)
 
   return (
     <div style={{ height: '100%', overflowY: 'auto' }}>
@@ -403,7 +445,7 @@ export default function SettingsPanel() {
       {/* Section: Update */}
       <UpdateSection />
 
-      {/* Section: Other Settings */}
+      {/* Section: Fun Mode */}
       <div style={{ padding: '12px 16px' }}>
         <div
           style={{
@@ -415,7 +457,7 @@ export default function SettingsPanel() {
             letterSpacing: 0.5
           }}
         >
-          其他设置
+          趣味模式
         </div>
         <div
           style={{
@@ -425,63 +467,71 @@ export default function SettingsPanel() {
             overflow: 'hidden'
           }}
         >
-          {[
-            { label: '自动保存对话历史', key: 'autoSave' },
-            { label: '显示消息时间戳', key: 'showTimestamp' },
-            { label: '代码块语法高亮', key: 'syntaxHighlight' },
-            { label: 'Markdown 实时渲染', key: 'markdownRender' }
-          ].map((item, index) => (
-            <div
-              key={item.key}
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                padding: '10px 14px',
-                borderBottom:
-                  index < 3 ? '1px solid var(--border)' : 'none'
-              }}
-            >
-              <span style={{ fontSize: 13, color: 'var(--text)' }}>{item.label}</span>
-              <ToggleSwitch defaultChecked={true} />
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '10px 14px'
+            }}
+          >
+            <span style={{ fontSize: 13, color: 'var(--text)' }}>趣味状态条</span>
+            <ToggleSwitch checked={funnyMode} onChange={setFunnyMode} />
+          </div>
+        </div>
+      </div>
+
+      {/* Section: File Watcher */}
+      <div style={{ padding: '12px 16px' }}>
+        <div
+          style={{
+            fontSize: 12,
+            fontWeight: 600,
+            color: 'var(--text-secondary)',
+            textTransform: 'uppercase',
+            marginBottom: 10,
+            letterSpacing: 0.5
+          }}
+        >
+          文件感知
+        </div>
+        <div
+          style={{
+            background: 'var(--surface)',
+            borderRadius: 10,
+            border: '1px solid var(--border)',
+            overflow: 'hidden'
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '10px 14px'
+            }}
+          >
+            <div>
+              <div style={{ fontSize: 13, color: 'var(--text)' }}>监听文件变动</div>
+              <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>
+                自动感知项目 src 目录的文件变更
+              </div>
             </div>
-          ))}
+            <ToggleSwitch
+              checked={fileWatcherEnabled}
+              onChange={(v) => {
+                setFileWatcherEnabled(v)
+                window.electronAPI?.toggleFileWatcher?.(v)
+              }}
+            />
+          </div>
         </div>
       </div>
     </div>
   )
 }
 
-function ToggleSwitch({ defaultChecked }: { defaultChecked: boolean }) {
-  return (
-    <div
-      style={{
-        width: 40,
-        height: 22,
-        borderRadius: 11,
-        background: defaultChecked ? 'var(--blue)' : 'var(--text-tertiary)',
-        cursor: 'pointer',
-        position: 'relative',
-        transition: 'background 0.2s',
-        flexShrink: 0
-      }}
-    >
-      <div
-        style={{
-          position: 'absolute',
-          top: 2,
-          left: defaultChecked ? 20 : 2,
-          width: 18,
-          height: 18,
-          borderRadius: '50%',
-          background: '#fff',
-          transition: 'left 0.2s',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.15)'
-        }}
-      />
-    </div>
-  )
-}
+
 
 function getThemePreviewBg(themeId: ThemeId): string {
   const map: Record<ThemeId, string> = {

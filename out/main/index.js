@@ -4,6 +4,389 @@ const nodePty = require("node-pty");
 const path = require("path");
 const electronUpdater = require("electron-updater");
 const https = require("https");
+const Database = require("better-sqlite3");
+const chokidar = require("chokidar");
+class SessionStore {
+  db;
+  constructor() {
+    const dbPath = electron.app.isPackaged ? path.join(electron.app.getPath("userData"), "claude-bridge.db") : path.join(process.cwd(), "claude-bridge.db");
+    this.db = new Database(dbPath);
+    this.initTables();
+  }
+  initTables() {
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS conversations (
+        id TEXT PRIMARY KEY,
+        title TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        conversation_id TEXT NOT NULL REFERENCES conversations(id),
+        role TEXT NOT NULL CHECK(role IN ('user','assistant','system')),
+        content TEXT NOT NULL,
+        model TEXT,
+        token_usage INTEGER,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS tasks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        conversation_id TEXT,
+        status TEXT NOT NULL CHECK(status IN ('queued','running','paused','completed','failed','cancelled')),
+        pipeline_config TEXT,
+        result TEXT,
+        prompt TEXT NOT NULL DEFAULT '',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        finished_at DATETIME
+      );
+
+      CREATE TABLE IF NOT EXISTS snapshots (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        task_id INTEGER REFERENCES tasks(id),
+        file_path TEXT NOT NULL,
+        snapshot_path TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+  }
+  createConversation(id, title) {
+    const now = (/* @__PURE__ */ new Date()).toISOString();
+    const stmt = this.db.prepare(
+      "INSERT INTO conversations (id, title, created_at, updated_at) VALUES (?, ?, ?, ?)"
+    );
+    stmt.run(id, title, now, now);
+    return { id, title, createdAt: now, updatedAt: now };
+  }
+  getAllConversations() {
+    const stmt = this.db.prepare(
+      "SELECT id, title, created_at as createdAt, updated_at as updatedAt FROM conversations ORDER BY updated_at DESC"
+    );
+    return stmt.all();
+  }
+  updateConversationTime(id) {
+    const stmt = this.db.prepare("UPDATE conversations SET updated_at = ? WHERE id = ?");
+    stmt.run((/* @__PURE__ */ new Date()).toISOString(), id);
+  }
+  deleteConversation(id) {
+    this.db.prepare("DELETE FROM messages WHERE conversation_id = ?").run(id);
+    this.db.prepare("DELETE FROM tasks WHERE conversation_id = ?").run(id);
+    this.db.prepare("DELETE FROM conversations WHERE id = ?").run(id);
+  }
+  addMessage(conversationId, message) {
+    const stmt = this.db.prepare(
+      "INSERT INTO messages (conversation_id, role, content, model, token_usage) VALUES (?, ?, ?, ?, ?)"
+    );
+    const result = stmt.run(
+      conversationId,
+      message.role,
+      message.content,
+      message.model ?? null,
+      message.tokenUsage ?? null
+    );
+    this.updateConversationTime(conversationId);
+    return {
+      id: result.lastInsertRowid,
+      conversationId,
+      role: message.role,
+      content: message.content,
+      model: message.model,
+      tokenUsage: message.tokenUsage,
+      timestamp: (/* @__PURE__ */ new Date()).toISOString()
+    };
+  }
+  getMessages(conversationId, limit, offset) {
+    let sql = "SELECT id, conversation_id as conversationId, role, content, model, token_usage as tokenUsage, timestamp FROM messages WHERE conversation_id = ? ORDER BY timestamp ASC";
+    const params = [conversationId];
+    if (limit !== void 0) {
+      sql += " LIMIT ?";
+      params.push(limit);
+      if (offset !== void 0) {
+        sql += " OFFSET ?";
+        params.push(offset);
+      }
+    }
+    const stmt = this.db.prepare(sql);
+    return stmt.all(...params);
+  }
+  createTask(conversationId, prompt, pipelineConfig) {
+    const stmt = this.db.prepare(
+      "INSERT INTO tasks (conversation_id, status, pipeline_config, prompt) VALUES (?, ?, ?, ?)"
+    );
+    const result = stmt.run(
+      conversationId,
+      "queued",
+      pipelineConfig ? JSON.stringify(pipelineConfig) : null,
+      prompt
+    );
+    return {
+      id: result.lastInsertRowid,
+      conversationId,
+      status: "queued",
+      pipelineConfig: pipelineConfig ? JSON.stringify(pipelineConfig) : null,
+      result: null,
+      prompt,
+      createdAt: (/* @__PURE__ */ new Date()).toISOString(),
+      finishedAt: null
+    };
+  }
+  getTasks() {
+    const stmt = this.db.prepare(
+      "SELECT id, conversation_id as conversationId, status, pipeline_config as pipelineConfig, result, prompt, created_at as createdAt, finished_at as finishedAt FROM tasks ORDER BY created_at DESC"
+    );
+    return stmt.all();
+  }
+  getTasksByConversation(conversationId) {
+    const stmt = this.db.prepare(
+      "SELECT id, conversation_id as conversationId, status, pipeline_config as pipelineConfig, result, prompt, created_at as createdAt, finished_at as finishedAt FROM tasks WHERE conversation_id = ? ORDER BY created_at DESC"
+    );
+    return stmt.all(conversationId);
+  }
+  updateTaskStatus(id, status, result) {
+    const stmt = this.db.prepare(
+      "UPDATE tasks SET status = ?, result = ?, finished_at = ? WHERE id = ?"
+    );
+    stmt.run(
+      status,
+      result ?? null,
+      status === "completed" || status === "failed" || status === "cancelled" ? (/* @__PURE__ */ new Date()).toISOString() : null,
+      id
+    );
+  }
+  deleteTask(id) {
+    this.db.prepare("DELETE FROM snapshots WHERE task_id = ?").run(id);
+    this.db.prepare("DELETE FROM tasks WHERE id = ?").run(id);
+  }
+  createSnapshot(taskId, filePath, snapshotPath) {
+    const stmt = this.db.prepare(
+      "INSERT INTO snapshots (task_id, file_path, snapshot_path) VALUES (?, ?, ?)"
+    );
+    const result = stmt.run(taskId, filePath, snapshotPath);
+    return {
+      id: result.lastInsertRowid,
+      taskId,
+      filePath,
+      snapshotPath,
+      createdAt: (/* @__PURE__ */ new Date()).toISOString()
+    };
+  }
+  getSnapshots(taskId) {
+    const stmt = this.db.prepare(
+      "SELECT id, task_id as taskId, file_path as filePath, snapshot_path as snapshotPath, created_at as createdAt FROM snapshots WHERE task_id = ?"
+    );
+    return stmt.all(taskId);
+  }
+  cleanOldSnapshots(maxCount) {
+    const stmt = this.db.prepare(
+      "DELETE FROM snapshots WHERE id NOT IN (SELECT id FROM snapshots ORDER BY created_at DESC LIMIT ?)"
+    );
+    stmt.run(maxCount);
+  }
+  close() {
+    this.db.close();
+  }
+}
+const sessionStore = new SessionStore();
+class TaskQueue {
+  queue = [];
+  isProcessing = false;
+  currentTaskId = null;
+  enqueue(conversationId, prompt, pipelineConfig) {
+    const task = sessionStore.createTask(conversationId, prompt, pipelineConfig);
+    this.queue.push(task);
+    this.broadcast("task-updated", task);
+    this.broadcastQueueStatus();
+    this.process();
+    return task;
+  }
+  pause(taskId) {
+    const task = this.queue.find((t) => t.id === taskId);
+    if (!task) return false;
+    if (task.status === "running") {
+      task.status = "paused";
+      sessionStore.updateTaskStatus(taskId, "paused");
+      this.currentTaskId = null;
+      this.isProcessing = false;
+      this.broadcast("task-updated", task);
+      this.broadcastQueueStatus();
+      this.process();
+      return true;
+    }
+    if (task.status === "queued") {
+      task.status = "paused";
+      sessionStore.updateTaskStatus(taskId, "paused");
+      this.broadcast("task-updated", task);
+      this.broadcastQueueStatus();
+      return true;
+    }
+    return false;
+  }
+  resume(taskId) {
+    const task = this.queue.find((t) => t.id === taskId);
+    if (!task || task.status !== "paused") return false;
+    task.status = "queued";
+    sessionStore.updateTaskStatus(taskId, "queued");
+    this.broadcast("task-updated", task);
+    this.broadcastQueueStatus();
+    this.process();
+    return true;
+  }
+  cancel(taskId) {
+    const task = this.queue.find((t) => t.id === taskId);
+    if (!task) return false;
+    const wasRunning = task.status === "running";
+    task.status = "cancelled";
+    sessionStore.updateTaskStatus(taskId, "cancelled");
+    if (wasRunning) {
+      this.currentTaskId = null;
+      this.isProcessing = false;
+    }
+    this.broadcast("task-updated", task);
+    this.broadcastQueueStatus();
+    if (wasRunning) {
+      this.process();
+    }
+    return true;
+  }
+  complete(taskId, result) {
+    const task = this.queue.find((t) => t.id === taskId);
+    if (!task || task.status !== "running") return false;
+    task.status = "completed";
+    task.result = result || null;
+    sessionStore.updateTaskStatus(taskId, "completed", result);
+    this.currentTaskId = null;
+    this.isProcessing = false;
+    this.broadcast("task-updated", task);
+    this.broadcastQueueStatus();
+    this.process();
+    return true;
+  }
+  fail(taskId, error) {
+    const task = this.queue.find((t) => t.id === taskId);
+    if (!task || task.status !== "running") return false;
+    task.status = "failed";
+    task.result = error || null;
+    sessionStore.updateTaskStatus(taskId, "failed", error);
+    this.currentTaskId = null;
+    this.isProcessing = false;
+    this.broadcast("task-updated", task);
+    this.broadcastQueueStatus();
+    this.process();
+    return true;
+  }
+  getTasks() {
+    const dbTasks = sessionStore.getTasks();
+    const merged = dbTasks.map((dbTask) => {
+      const memTask = this.queue.find((q) => q.id === dbTask.id);
+      return memTask || dbTask;
+    });
+    const memOnly = this.queue.filter((q) => !dbTasks.find((d) => d.id === q.id));
+    return [...merged, ...memOnly];
+  }
+  getCurrentTaskId() {
+    return this.currentTaskId;
+  }
+  process() {
+    if (this.isProcessing) return;
+    const next = this.queue.find((t) => t.status === "queued");
+    if (!next) return;
+    this.isProcessing = true;
+    this.currentTaskId = next.id;
+    next.status = "running";
+    sessionStore.updateTaskStatus(next.id, "running");
+    this.broadcast("task-updated", next);
+    this.broadcastQueueStatus();
+    this.broadcast("task-execute", {
+      taskId: next.id,
+      conversationId: next.conversationId,
+      prompt: next.prompt
+    });
+  }
+  broadcast(channel, ...args) {
+    electron.BrowserWindow.getAllWindows().forEach((win) => {
+      if (!win.isDestroyed()) {
+        win.webContents.send(channel, ...args);
+      }
+    });
+  }
+  broadcastQueueStatus() {
+    const total = this.queue.length;
+    const active = this.queue.filter((t) => t.status === "running").length;
+    this.broadcast("queue-status", { total, active });
+  }
+}
+const taskQueue = new TaskQueue();
+class FileWatcher {
+  watcher;
+  changes = [];
+  options = {
+    maxAgeMs: 3 * 60 * 60 * 1e3,
+    // 3小时
+    maxChangeCount: 10
+  };
+  projectPath = "";
+  start(projectPath, options) {
+    if (this.watcher) {
+      this.watcher.close();
+    }
+    this.projectPath = projectPath;
+    if (options) {
+      this.options = { ...this.options, ...options };
+    }
+    this.changes = [];
+    const watchPath = path.join(projectPath, "src");
+    this.watcher = chokidar.watch(watchPath, {
+      ignored: /(^|[\/\\])\../,
+      // 忽略隐藏文件
+      ignoreInitial: true,
+      persistent: true,
+      depth: 5
+    });
+    this.watcher.on("change", (filePath) => this.recordChange(filePath));
+    this.watcher.on("add", (filePath) => this.recordChange(filePath));
+    this.watcher.on("unlink", (filePath) => this.recordChange(filePath));
+    console.log("[FileWatcher] watching", watchPath);
+  }
+  stop() {
+    if (this.watcher) {
+      this.watcher.close();
+      this.watcher = void 0;
+      console.log("[FileWatcher] stopped");
+    }
+  }
+  recordChange(filePath) {
+    const now = Date.now();
+    this.changes = this.changes.filter((c) => now - c.timestamp < this.options.maxAgeMs);
+    const existing = this.changes.find((c) => c.filePath === filePath);
+    if (existing) {
+      existing.timestamp = now;
+    } else {
+      this.changes.push({ filePath, timestamp: now });
+    }
+    if (this.changes.length > this.options.maxChangeCount) {
+      this.changes = this.changes.slice(-this.options.maxChangeCount);
+    }
+  }
+  getSummary() {
+    if (this.changes.length === 0) return null;
+    const now = Date.now();
+    const recent = this.changes.filter((c) => now - c.timestamp < this.options.maxAgeMs);
+    if (recent.length === 0) return null;
+    const lines = recent.map((c) => {
+      const relPath = path.relative(this.projectPath, c.filePath);
+      const minsAgo = Math.round((now - c.timestamp) / 6e4);
+      return `- ${relPath} (${minsAgo}分钟前)`;
+    });
+    return `【文件变动摘要】
+${lines.join("\n")}`;
+  }
+  isWatching() {
+    return !!this.watcher;
+  }
+}
+const fileWatcher = new FileWatcher();
 function getIconPath() {
   if (electron.app.isPackaged) {
     return path.join(process.resourcesPath, "appIcon.png");
@@ -97,6 +480,8 @@ let floatWindow = null;
 let tray = null;
 const ptySessions = /* @__PURE__ */ new Map();
 const pendingKillTimers = /* @__PURE__ */ new Map();
+const ptyCreateTime = /* @__PURE__ */ new Map();
+const ptyOutputHistory = /* @__PURE__ */ new Map();
 let floatBallVisible = true;
 function getPermissionFlags(mode) {
   switch (mode) {
@@ -113,13 +498,13 @@ function getPermissionFlags(mode) {
 function getPermissionSlashCommand(mode) {
   switch (mode) {
     case "yolo":
-      return "/permission-mode bypass\r";
+      return "/permissions bypass\r";
     case "trust-edit":
-      return "/permission-mode accept-edits\r";
+      return "/permissions accept-edits\r";
     case "plan":
-      return "/permission-mode plan\r";
+      return "/permissions plan\r";
     default:
-      return "/permission-mode default\r";
+      return "/permissions default\r";
   }
 }
 function createMainWindow() {
@@ -338,6 +723,14 @@ function registerIPC() {
     }
     if (ptySessions.has(sessionId)) {
       console.log("[PTY] reusing existing session", sessionId);
+      const history = ptyOutputHistory.get(sessionId) || "";
+      if (history) {
+        electron.BrowserWindow.getAllWindows().forEach((win) => {
+          if (!win.isDestroyed()) {
+            win.webContents.send("pty-history", sessionId, history);
+          }
+        });
+      }
       return { success: true, sessionId };
     }
     const shell = isWin ? "cmd.exe" : "claude";
@@ -353,14 +746,24 @@ function registerIPC() {
     });
     ptySessions.set(sessionId, pty);
     console.log("[PTY] session created:", sessionId);
+    ptyCreateTime.set(sessionId, Date.now());
     pty.onData((data) => {
+      const history = ptyOutputHistory.get(sessionId) || "";
+      ptyOutputHistory.set(sessionId, history + data);
       sendPtyData(sessionId, data);
     });
     pty.onExit(({ exitCode }) => {
       console.log("[PTY] session exited:", sessionId, "code:", exitCode);
-      ptySessions.delete(sessionId);
-      pendingKillTimers.delete(sessionId);
-      sendPtyExit(sessionId, exitCode ?? -1);
+      const currentPty = ptySessions.get(sessionId);
+      if (currentPty === pty) {
+        ptySessions.delete(sessionId);
+        pendingKillTimers.delete(sessionId);
+        ptyCreateTime.delete(sessionId);
+        ptyOutputHistory.delete(sessionId);
+        sendPtyExit(sessionId, exitCode ?? -1);
+      } else {
+        console.log("[PTY] session already replaced, ignoring exit for", sessionId);
+      }
     });
     return { success: true, sessionId };
   });
@@ -394,10 +797,64 @@ function registerIPC() {
     if (!pty) {
       return { success: false, error: "PTY session not active: " + sessionId };
     }
+    const createdAt = ptyCreateTime.get(sessionId);
+    if (createdAt && Date.now() - createdAt < 3e3) {
+      console.log("[PTY] ignoring permission change within 3s of creation for", sessionId);
+      return { success: true };
+    }
     const cmd = getPermissionSlashCommand(permission);
     console.log("[PTY] changing permission:", sessionId, permission, "→", JSON.stringify(cmd));
     pty.write(cmd);
     return { success: true };
+  });
+  electron.ipcMain.handle("enqueue-task", (_event, conversationId, prompt) => {
+    const task = taskQueue.enqueue(conversationId, prompt);
+    return task;
+  });
+  electron.ipcMain.handle("pause-task", (_event, taskId) => {
+    return taskQueue.pause(taskId);
+  });
+  electron.ipcMain.handle("resume-task", (_event, taskId) => {
+    return taskQueue.resume(taskId);
+  });
+  electron.ipcMain.handle("cancel-task", (_event, taskId) => {
+    return taskQueue.cancel(taskId);
+  });
+  electron.ipcMain.handle("complete-task", (_event, taskId, result) => {
+    return taskQueue.complete(taskId, result);
+  });
+  electron.ipcMain.handle("fail-task", (_event, taskId, error) => {
+    return taskQueue.fail(taskId, error);
+  });
+  electron.ipcMain.handle("get-tasks", () => {
+    return taskQueue.getTasks();
+  });
+  electron.ipcMain.handle("create-conversation", (_event, id, title) => {
+    return sessionStore.createConversation(id, title);
+  });
+  electron.ipcMain.handle("get-conversations", () => {
+    return sessionStore.getAllConversations();
+  });
+  electron.ipcMain.handle("delete-conversation", (_event, id) => {
+    sessionStore.deleteConversation(id);
+  });
+  electron.ipcMain.handle("add-message", (_event, conversationId, message) => {
+    const validRole = ["user", "assistant", "system"].includes(message.role) ? message.role : "user";
+    return sessionStore.addMessage(conversationId, { ...message, role: validRole });
+  });
+  electron.ipcMain.handle("get-messages", (_event, conversationId, limit, offset) => {
+    return sessionStore.getMessages(conversationId, limit, offset);
+  });
+  electron.ipcMain.handle("get-file-change-summary", () => {
+    return fileWatcher.getSummary();
+  });
+  electron.ipcMain.handle("toggle-file-watcher", (_event, enabled) => {
+    if (enabled) {
+      const cwd = process.cwd();
+      fileWatcher.start(cwd);
+    } else {
+      fileWatcher.stop();
+    }
   });
   electron.ipcMain.handle("send-to-claude", (_event, prompt, permission, cwd) => {
     const workDir = cwd || process.cwd();

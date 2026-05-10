@@ -62,7 +62,7 @@ export default function LeftRail() {
       key: 'settings',
       icon: <SettingOutlined style={{ fontSize: 18 }} />,
       label: '设置',
-      badge: hasUpdate ? 1 : 0
+      badge: hasUpdate ? 1 : undefined
     },
     { key: 'history', icon: <HistoryOutlined style={{ fontSize: 18 }} />, label: '历史记录' }
   ]

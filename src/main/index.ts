@@ -3,6 +3,10 @@ import { spawn as spawnPty } from 'node-pty'
 import path from 'path'
 import { autoUpdater } from 'electron-updater'
 import https from 'https'
+import { sessionStore } from './session-store'
+import { taskQueue } from './task-queue'
+import { fileWatcher } from './file-watcher'
+import { snapshotManager } from './snapshot-manager'
 
 function getIconPath(): string {
   if (app.isPackaged) {
@@ -118,6 +122,8 @@ let floatWindow: BrowserWindow | null = null
 let tray: Tray | null = null
 const ptySessions = new Map<string, ReturnType<typeof spawnPty>>()
 const pendingKillTimers = new Map<string, ReturnType<typeof setTimeout>>()
+const ptyCreateTime = new Map<string, number>()
+const ptyOutputHistory = new Map<string, string>()
 let floatBallVisible = true
 
 /* ── 权限映射 ────────────────────────────────────────────── */
@@ -140,13 +146,13 @@ function getPermissionFlags(mode?: UIPermission): string[] {
 function getPermissionSlashCommand(mode: UIPermission): string {
   switch (mode) {
     case 'yolo':
-      return '/permission-mode bypass\r'
+      return '/permissions bypass\r'
     case 'trust-edit':
-      return '/permission-mode accept-edits\r'
+      return '/permissions accept-edits\r'
     case 'plan':
-      return '/permission-mode plan\r'
+      return '/permissions plan\r'
     default:
-      return '/permission-mode default\r'
+      return '/permissions default\r'
   }
 }
 
@@ -420,6 +426,14 @@ function registerIPC() {
 
     if (ptySessions.has(sessionId)) {
       console.log('[PTY] reusing existing session', sessionId)
+      const history = ptyOutputHistory.get(sessionId) || ''
+      if (history) {
+        BrowserWindow.getAllWindows().forEach((win) => {
+          if (!win.isDestroyed()) {
+            win.webContents.send('pty-history', sessionId, history)
+          }
+        })
+      }
       return { success: true, sessionId }
     }
 
@@ -439,16 +453,26 @@ function registerIPC() {
 
     ptySessions.set(sessionId, pty)
     console.log('[PTY] session created:', sessionId)
+    ptyCreateTime.set(sessionId, Date.now())
 
     pty.onData((data) => {
+      const history = ptyOutputHistory.get(sessionId) || ''
+      ptyOutputHistory.set(sessionId, history + data)
       sendPtyData(sessionId, data)
     })
 
     pty.onExit(({ exitCode }) => {
       console.log('[PTY] session exited:', sessionId, 'code:', exitCode)
-      ptySessions.delete(sessionId)
-      pendingKillTimers.delete(sessionId)
-      sendPtyExit(sessionId, exitCode ?? -1)
+      const currentPty = ptySessions.get(sessionId)
+      if (currentPty === pty) {
+        ptySessions.delete(sessionId)
+        pendingKillTimers.delete(sessionId)
+        ptyCreateTime.delete(sessionId)
+      ptyOutputHistory.delete(sessionId)
+        sendPtyExit(sessionId, exitCode ?? -1)
+      } else {
+        console.log('[PTY] session already replaced, ignoring exit for', sessionId)
+      }
     })
 
     return { success: true, sessionId }
@@ -488,10 +512,84 @@ function registerIPC() {
     if (!pty) {
       return { success: false, error: 'PTY session not active: ' + sessionId }
     }
+    const createdAt = ptyCreateTime.get(sessionId)
+    if (createdAt && Date.now() - createdAt < 3000) {
+      console.log('[PTY] ignoring permission change within 3s of creation for', sessionId)
+      return { success: true }
+    }
     const cmd = getPermissionSlashCommand(permission)
     console.log('[PTY] changing permission:', sessionId, permission, '→', JSON.stringify(cmd))
     pty.write(cmd)
     return { success: true }
+  })
+
+  /* ── 任务队列 IPC ──────────────────────────────────────── */
+
+  ipcMain.handle('enqueue-task', (_event, conversationId: string | null, prompt: string) => {
+    const task = taskQueue.enqueue(conversationId, prompt)
+    return task
+  })
+
+  ipcMain.handle('pause-task', (_event, taskId: number) => {
+    return taskQueue.pause(taskId)
+  })
+
+  ipcMain.handle('resume-task', (_event, taskId: number) => {
+    return taskQueue.resume(taskId)
+  })
+
+  ipcMain.handle('cancel-task', (_event, taskId: number) => {
+    return taskQueue.cancel(taskId)
+  })
+
+  ipcMain.handle('complete-task', (_event, taskId: number, result?: string) => {
+    return taskQueue.complete(taskId, result)
+  })
+
+  ipcMain.handle('fail-task', (_event, taskId: number, error?: string) => {
+    return taskQueue.fail(taskId, error)
+  })
+
+  ipcMain.handle('get-tasks', () => {
+    return taskQueue.getTasks()
+  })
+
+  /* ── SQLite 会话存储 IPC ───────────────────────────────── */
+
+  ipcMain.handle('create-conversation', (_event, id: string, title: string) => {
+    return sessionStore.createConversation(id, title)
+  })
+
+  ipcMain.handle('get-conversations', () => {
+    return sessionStore.getAllConversations()
+  })
+
+  ipcMain.handle('delete-conversation', (_event, id: string) => {
+    sessionStore.deleteConversation(id)
+  })
+
+  ipcMain.handle('add-message', (_event, conversationId: string, message: { role: string; content: string; model?: string; tokenUsage?: number }) => {
+    const validRole = ['user', 'assistant', 'system'].includes(message.role) ? message.role as 'user' | 'assistant' | 'system' : 'user'
+    return sessionStore.addMessage(conversationId, { ...message, role: validRole })
+  })
+
+  ipcMain.handle('get-messages', (_event, conversationId: string, limit?: number, offset?: number) => {
+    return sessionStore.getMessages(conversationId, limit, offset)
+  })
+
+  /* ── 文件变动感知 IPC ──────────────────────────────────── */
+
+  ipcMain.handle('get-file-change-summary', () => {
+    return fileWatcher.getSummary()
+  })
+
+  ipcMain.handle('toggle-file-watcher', (_event, enabled: boolean) => {
+    if (enabled) {
+      const cwd = process.cwd()
+      fileWatcher.start(cwd)
+    } else {
+      fileWatcher.stop()
+    }
   })
 
   /* 保留旧的 CLI 流式接口（供 InputArea 用） */

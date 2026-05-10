@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useAppStore } from '../stores/app-store'
 import PermissionToggle from './PermissionToggle'
-import { SendOutlined, PictureOutlined, AudioOutlined } from '@ant-design/icons'
+import { SendOutlined, PictureOutlined, AudioOutlined, ContainerOutlined } from '@ant-design/icons'
 
 export default function InputArea({ useTerminal, sessionId }: { useTerminal: boolean; sessionId: string }) {
   const [input, setInput] = useState('')
@@ -91,6 +91,23 @@ export default function InputArea({ useTerminal, sessionId }: { useTerminal: boo
       updateMessage(assistantId, { content: `❌ 错误: ${String(err)}` })
       setLoading(false)
       removeListeners()
+    }
+  }
+
+  const handleEnqueue = async () => {
+    const trimmed = input.trim()
+    if (!trimmed) return
+
+    setInput('')
+    const result = await window.electronAPI?.enqueueTask?.(sessionId, trimmed)
+    if (result) {
+      addMessage({
+        id: `enqueue-${Date.now()}`,
+        role: 'system',
+        content: `📝 已加入任务队列 (#${(result as unknown as { id: number }).id})`,
+        timestamp: new Date().toISOString(),
+        sessionId
+      })
     }
   }
 
@@ -187,6 +204,28 @@ export default function InputArea({ useTerminal, sessionId }: { useTerminal: boo
               )}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <button
+                onClick={handleEnqueue}
+                disabled={loading || !input.trim() || useTerminal}
+                title="加入任务队列"
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: '50%',
+                  border: 'none',
+                  background:
+                    loading || !input.trim() || useTerminal ? 'var(--text-tertiary)' : 'var(--orange)',
+                  color: '#fff',
+                  cursor: loading || !input.trim() || useTerminal ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.15s',
+                  opacity: loading || !input.trim() || useTerminal ? 0.5 : 1
+                }}
+              >
+                <ContainerOutlined style={{ fontSize: 14 }} />
+              </button>
               <span
                 style={{
                   fontSize: 11,

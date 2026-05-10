@@ -4,6 +4,7 @@ export type ThemeId = 'antdx' | 'blackgold' | 'vscode' | 'claude' | 'trae' | 'qo
 export type MidPanelView = 'sessions' | 'settings' | 'models' | 'balance' | 'history'
 export type PermissionMode = 'yolo' | 'trust-edit' | 'plan' | 'manual'
 export type FloatStatus = 'idle' | 'running' | 'success' | 'confirm' | 'error'
+export type TaskStatus = 'queued' | 'running' | 'paused' | 'completed' | 'failed' | 'cancelled'
 
 export interface ModelConfig {
   id: string
@@ -55,6 +56,17 @@ export interface HistoryEntry {
   messages: Message[]
 }
 
+export interface TaskItem {
+  id: number
+  conversationId: string | null
+  status: TaskStatus
+  pipelineConfig: string | null
+  result: string | null
+  prompt: string
+  createdAt: string
+  finishedAt: string | null
+}
+
 /* ── 历史记录持久化 ──────────────────────────────────────── */
 
 const HISTORY_KEY = 'cb-chat-history'
@@ -82,6 +94,20 @@ function saveHistory(entries: HistoryEntry[]): void {
   } catch { /* storage full or unavailable */ }
 }
 
+function loadSetting<T>(key: string, defaultValue: T): T {
+  try {
+    const raw = localStorage.getItem(key)
+    if (raw !== null) return JSON.parse(raw) as T
+  } catch { /* ignore */ }
+  return defaultValue
+}
+
+function saveSetting<T>(key: string, value: T): void {
+  try {
+    localStorage.setItem(key, JSON.stringify(value))
+  } catch { /* ignore */ }
+}
+
 interface AppState {
   theme: ThemeId
   midPanelView: MidPanelView
@@ -106,6 +132,17 @@ interface AppState {
   updateStatus: 'idle' | 'checking' | 'available' | 'not-available' | 'downloading' | 'downloaded' | 'error'
   updateProgress: number
   updateError: string | null
+
+  /* 任务队列 */
+  tasks: TaskItem[]
+  queueStatus: { total: number; active: number }
+  currentTaskId: number | null
+
+  /* 趣味模式 */
+  funnyMode: boolean
+
+  /* 文件感知 */
+  fileWatcherEnabled: boolean
 
   setTheme: (theme: ThemeId) => void
   setMidPanelView: (view: MidPanelView) => void
@@ -138,6 +175,18 @@ interface AppState {
   setUpdateStatus: (status: AppState['updateStatus']) => void
   setUpdateProgress: (progress: number) => void
   setUpdateError: (error: string | null) => void
+
+  /* 任务队列 actions */
+  setTasks: (tasks: TaskItem[]) => void
+  updateTask: (task: TaskItem) => void
+  setQueueStatus: (status: { total: number; active: number }) => void
+  setCurrentTaskId: (id: number | null) => void
+
+  /* 趣味模式 */
+  setFunnyMode: (enabled: boolean) => void
+
+  /* 文件感知 */
+  setFileWatcherEnabled: (enabled: boolean) => void
 }
 
 const defaultModels: ModelConfig[] = [
@@ -224,6 +273,11 @@ export const useAppStore = create<AppState>((set) => ({
   updateStatus: 'idle',
   updateProgress: 0,
   updateError: null,
+  tasks: [],
+  queueStatus: { total: 0, active: 0 },
+  currentTaskId: null,
+  funnyMode: loadSetting('cb-funny-mode', false),
+  fileWatcherEnabled: loadSetting('cb-file-watcher', false),
 
   setTheme: (theme) => {
     try {
@@ -352,5 +406,32 @@ export const useAppStore = create<AppState>((set) => ({
   /* 自动更新 */
   setUpdateStatus: (status) => set({ updateStatus: status }),
   setUpdateProgress: (progress) => set({ updateProgress: progress }),
-  setUpdateError: (error) => set({ updateError: error })
+  setUpdateError: (error) => set({ updateError: error }),
+
+  /* 任务队列 */
+  setTasks: (tasks) => set({ tasks }),
+  updateTask: (task) =>
+    set((state) => {
+      const exists = state.tasks.find((t) => t.id === task.id)
+      if (exists) {
+        return {
+          tasks: state.tasks.map((t) => (t.id === task.id ? task : t))
+        }
+      }
+      return { tasks: [task, ...state.tasks] }
+    }),
+  setQueueStatus: (queueStatus) => set({ queueStatus }),
+  setCurrentTaskId: (id) => set({ currentTaskId: id }),
+
+  /* 趣味模式 */
+  setFunnyMode: (enabled) => {
+    saveSetting('cb-funny-mode', enabled)
+    set({ funnyMode: enabled })
+  },
+
+  /* 文件感知 */
+  setFileWatcherEnabled: (enabled) => {
+    saveSetting('cb-file-watcher', enabled)
+    set({ fileWatcherEnabled: enabled })
+  }
 }))
