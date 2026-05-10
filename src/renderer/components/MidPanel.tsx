@@ -3,12 +3,14 @@ import SessionsList from './SessionsList'
 import SettingsPanel from './SettingsPanel'
 import ModelConfig from './ModelConfig'
 import BalanceQuery from './BalanceQuery'
+import HistoryList from './HistoryList'
 
 const titles: Record<MidPanelView, string> = {
   sessions: '会话列表',
   settings: '设置',
   models: '模型配置',
-  balance: '余额查询'
+  balance: '余额查询',
+  history: '历史记录'
 }
 
 export default function MidPanel() {
@@ -24,6 +26,8 @@ export default function MidPanel() {
         return <ModelConfig />
       case 'balance':
         return <BalanceQuery />
+      case 'history':
+        return <HistoryList />
       default:
         return <SessionsList />
     }

@@ -29,7 +29,7 @@ const suggestions = [
   }
 ]
 
-export default function WelcomeArea() {
+export default function WelcomeArea({ sessionId }: { sessionId: string }) {
   const addMessage = useAppStore((s) => s.addMessage)
 
   const handleSuggestionClick = (suggestion: (typeof suggestions)[0]) => {
@@ -37,7 +37,8 @@ export default function WelcomeArea() {
       id: Date.now().toString(),
       role: 'user',
       content: suggestion.description,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      sessionId
     })
   }
 

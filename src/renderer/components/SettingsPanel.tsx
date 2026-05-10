@@ -1,5 +1,6 @@
 import { useAppStore, type ThemeId } from '../stores/app-store'
-import { ArrowLeftOutlined } from '@ant-design/icons'
+import { ArrowLeftOutlined, DownloadOutlined, SyncOutlined, CheckCircleOutlined, ExclamationCircleOutlined, RedoOutlined } from '@ant-design/icons'
+import { useState } from 'react'
 
 interface ThemeCard {
   id: ThemeId
@@ -52,6 +53,268 @@ const themeCards: ThemeCard[] = [
     image: '../assets/moyk4xi4-image.png'
   }
 ]
+
+function UpdateSection() {
+  const updateStatus = useAppStore((s) => s.updateStatus)
+  const updateProgress = useAppStore((s) => s.updateProgress)
+  const updateError = useAppStore((s) => s.updateError)
+  const [showConfirm, setShowConfirm] = useState(false)
+
+  const handleCheck = () => {
+    window.electronAPI?.checkUpdate()
+  }
+
+  const handleDownload = () => {
+    window.electronAPI?.downloadUpdate()
+    showConfirmDialog()
+  }
+
+  const handleInstall = () => {
+    window.electronAPI?.installUpdate()
+  }
+
+  const showConfirmDialog = () => {
+    setShowConfirm(true)
+  }
+
+  const handleLater = () => {
+    setShowConfirm(false)
+  }
+
+  const statusConfig: Record<string, { icon: React.ReactNode; text: string; color: string }> = {
+    idle: {
+      icon: <SyncOutlined />,
+      text: '检查更新',
+      color: 'var(--blue)'
+    },
+    checking: {
+      icon: <RedoOutlined spin />,
+      text: '正在检查...',
+      color: 'var(--text-secondary)'
+    },
+    available: {
+      icon: <DownloadOutlined />,
+      text: '发现新版本，点击下载',
+      color: 'var(--blue)'
+    },
+    downloading: {
+      icon: <DownloadOutlined />,
+      text: `下载中 ${Math.round(updateProgress)}%`,
+      color: 'var(--blue)'
+    },
+    'not-available': {
+      icon: <CheckCircleOutlined />,
+      text: '已是最新版本',
+      color: 'var(--green)'
+    },
+    downloaded: {
+      icon: <ExclamationCircleOutlined />,
+      text: '更新已下载，点击安装',
+      color: 'var(--green)'
+    },
+    error: {
+      icon: <ExclamationCircleOutlined />,
+      text: updateError || '检查失败，点击重试',
+      color: 'var(--red)'
+    }
+  }
+
+  const cfg = statusConfig[updateStatus] || statusConfig.idle
+
+  return (
+    <>
+      <div style={{ padding: '12px 16px' }}>
+        <div
+          style={{
+            fontSize: 12,
+            fontWeight: 600,
+            color: 'var(--text-secondary)',
+            textTransform: 'uppercase',
+            marginBottom: 10,
+            letterSpacing: 0.5
+          }}
+        >
+          更新
+        </div>
+        <div
+          style={{
+            background: 'var(--surface)',
+            borderRadius: 10,
+            border: '1px solid var(--border)',
+            overflow: 'hidden'
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '12px 14px'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ color: cfg.color, fontSize: 16, display: 'flex' }}>
+                {cfg.icon}
+              </span>
+              <div>
+                <div style={{ fontSize: 13, color: 'var(--text)', fontWeight: 500 }}>
+                  {cfg.text}
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 1 }}>
+                  每周五 10:00 自动检查
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={
+                updateStatus === 'downloaded'
+                  ? handleInstall
+                  : updateStatus === 'available'
+                    ? handleDownload
+                    : updateStatus === 'error'
+                      ? handleCheck
+                      : handleCheck
+              }
+              style={{
+                padding: '5px 14px',
+                borderRadius: 6,
+                border: 'none',
+                background:
+                  updateStatus === 'downloaded'
+                    ? 'var(--green)'
+                    : 'var(--blue)',
+                color: '#fff',
+                cursor: 'pointer',
+                fontSize: 12,
+                fontWeight: 500,
+                flexShrink: 0,
+                marginLeft: 8
+              }}
+            >
+              {updateStatus === 'downloaded'
+                ? '立即安装'
+                : updateStatus === 'available'
+                  ? '下载更新'
+                  : updateStatus === 'downloading'
+                    ? '下载中...'
+                    : '检查更新'}
+            </button>
+          </div>
+
+          {/* Progress bar */}
+          {updateStatus === 'downloading' && (
+            <div style={{ padding: '0 14px 12px' }}>
+              <div
+                style={{
+                  height: 4,
+                  borderRadius: 2,
+                  background: 'var(--border)',
+                  overflow: 'hidden'
+                }}
+              >
+                <div
+                  style={{
+                    height: '100%',
+                    width: `${Math.min(updateProgress, 100)}%`,
+                    background: 'var(--blue)',
+                    borderRadius: 2,
+                    transition: 'width 0.3s'
+                  }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 更新确认弹窗 */}
+      {showConfirm && (
+        <>
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0,0,0,0.4)',
+              zIndex: 1000,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            onClick={handleLater}
+          />
+          <div
+            style={{
+              position: 'fixed',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              background: 'var(--surface)',
+              borderRadius: 14,
+              border: '1px solid var(--border)',
+              boxShadow: 'var(--shadow-lg)',
+              padding: '24px 28px',
+              zIndex: 1001,
+              minWidth: 340,
+              maxWidth: 420
+            }}
+          >
+            <div
+              style={{
+                fontSize: 16,
+                fontWeight: 600,
+                color: 'var(--text)',
+                marginBottom: 8
+              }}
+            >
+              更新已下载
+            </div>
+            <div
+              style={{
+                fontSize: 13,
+                color: 'var(--text-secondary)',
+                marginBottom: 20,
+                lineHeight: 1.5
+              }}
+            >
+              新版本安装包已下载完成，是否立即安装更新？安装将会重启应用。
+            </div>
+            <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
+              <button
+                onClick={handleLater}
+                style={{
+                  padding: '7px 18px',
+                  borderRadius: 8,
+                  border: '1px solid var(--border)',
+                  background: 'var(--surface)',
+                  color: 'var(--text)',
+                  cursor: 'pointer',
+                  fontSize: 13
+                }}
+              >
+                稍后更新
+              </button>
+              <button
+                onClick={handleInstall}
+                style={{
+                  padding: '7px 18px',
+                  borderRadius: 8,
+                  border: 'none',
+                  background: 'var(--blue)',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  fontSize: 13,
+                  fontWeight: 600
+                }}
+              >
+                立即更新
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+    </>
+  )
+}
 
 export default function SettingsPanel() {
   const theme = useAppStore((s) => s.theme)
@@ -136,6 +399,9 @@ export default function SettingsPanel() {
           ))}
         </div>
       </div>
+
+      {/* Section: Update */}
+      <UpdateSection />
 
       {/* Section: Other Settings */}
       <div style={{ padding: '12px 16px' }}>

@@ -2,103 +2,126 @@
 const electron = require("electron");
 const nodePty = require("node-pty");
 const path = require("path");
-const fs = require("fs");
-const zlib = require("zlib");
-const PNG_SIG = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
-const crcTable = (() => {
-  const t = new Uint32Array(256);
-  for (let i = 0; i < 256; i++) {
-    let c = i;
-    for (let j = 0; j < 8; j++) {
-      c = c & 1 ? 3988292384 ^ c >>> 1 : c >>> 1;
-    }
-    t[i] = c;
+const electronUpdater = require("electron-updater");
+const https = require("https");
+function getIconPath() {
+  if (electron.app.isPackaged) {
+    return path.join(process.resourcesPath, "appIcon.png");
   }
-  return t;
-})();
-function crc32(buf) {
-  let crc = 4294967295;
-  for (let i = 0; i < buf.length; i++) {
-    crc = crcTable[(crc ^ buf[i]) & 255] ^ crc >>> 8;
+  return path.join(__dirname, "../../src/renderer/assets/appIcon.png");
+}
+let updateDownloaded = false;
+function setupAutoUpdater() {
+  electronUpdater.autoUpdater.setFeedURL({
+    provider: "github",
+    owner: "fusujifeng",
+    repo: "H-code"
+  });
+  electronUpdater.autoUpdater.autoDownload = false;
+  electronUpdater.autoUpdater.autoInstallOnAppQuit = false;
+  electronUpdater.autoUpdater.on("update-available", () => {
+    console.log("[Updater] update available, attempting silent download");
+    mainWindow?.webContents.send("update-status", "available");
+  });
+  electronUpdater.autoUpdater.on("update-not-available", () => {
+    console.log("[Updater] no update available");
+    mainWindow?.webContents.send("update-status", "not-available");
+  });
+  electronUpdater.autoUpdater.on("download-progress", (progress) => {
+    mainWindow?.webContents.send("update-progress", progress.percent);
+  });
+  electronUpdater.autoUpdater.on("update-downloaded", () => {
+    console.log("[Updater] update downloaded");
+    updateDownloaded = true;
+    mainWindow?.webContents.send("update-status", "downloaded");
+  });
+  electronUpdater.autoUpdater.on("error", (err) => {
+    console.error("[Updater] error:", err.message);
+    mainWindow?.webContents.send("update-error", err.message);
+  });
+}
+function checkGitHubReachable() {
+  return new Promise((resolve) => {
+    const req = https.get("https://github.com", { timeout: 1e4 }, (res) => {
+      resolve(res.statusCode === 200 || res.statusCode === 301 || res.statusCode === 302);
+    });
+    req.on("error", () => resolve(false));
+    req.on("timeout", () => {
+      req.destroy();
+      resolve(false);
+    });
+  });
+}
+async function checkForUpdatesSilent() {
+  const reachable = await checkGitHubReachable();
+  if (!reachable) {
+    console.log("[Updater] GitHub not reachable, skipping check");
+    return;
   }
-  return (crc ^ 4294967295) >>> 0;
-}
-function chunk(type, data) {
-  const t = Buffer.from(type, "ascii");
-  const c = Buffer.alloc(4);
-  c.writeUInt32BE(crc32(Buffer.concat([t, data])), 0);
-  const l = Buffer.alloc(4);
-  l.writeUInt32BE(data.length, 0);
-  return Buffer.concat([l, t, data, c]);
-}
-function mod(a, b) {
-  return (a % b + b) % b;
-}
-function pointInSparkle(px, py, cx, cy, maxDist) {
-  const dx = px - cx;
-  const dy = py - cy;
-  const dist = Math.sqrt(dx * dx + dy * dy);
-  if (dist <= maxDist * 0.22) return true;
-  if (dist > maxDist) return false;
-  const angle = Math.atan2(dy, dx);
-  const normalized = Math.abs(mod(angle + Math.PI / 4, Math.PI / 2) - Math.PI / 4);
-  const maxWidth = 0.35 - 0.18 * (dist / maxDist);
-  return normalized < maxWidth;
-}
-function generateStarIcon(path$1, size = 32) {
-  if (fs.existsSync(path$1)) {
-    try {
-      fs.unlinkSync(path$1);
-    } catch {
-    }
+  try {
+    await electronUpdater.autoUpdater.checkForUpdates();
+  } catch (err) {
+    console.error("[Updater] check failed:", err);
   }
-  fs.mkdirSync(path.dirname(path$1), { recursive: true });
-  const cx = size / 2;
-  const cy = size / 2;
-  const circleR = size * 0.46;
-  const starMaxDist = size * 0.4;
-  const rowSize = 1 + size * 4;
-  const raw = Buffer.alloc(size * rowSize);
-  for (let y = 0; y < size; y++) {
-    raw[y * rowSize] = 0;
-    for (let x = 0; x < size; x++) {
-      const off = y * rowSize + 1 + x * 4;
-      const dist = Math.sqrt((x + 0.5 - cx) ** 2 + (y + 0.5 - cy) ** 2);
-      if (dist <= circleR) {
-        raw[off] = 255;
-        raw[off + 1] = 255;
-        raw[off + 2] = 255;
-        raw[off + 3] = 255;
-      }
-      if (pointInSparkle(x + 0.5, y + 0.5, cx, cy, starMaxDist)) {
-        raw[off] = 245;
-        raw[off + 1] = 166;
-        raw[off + 2] = 35;
-        raw[off + 3] = 255;
-      }
-    }
+}
+async function checkForUpdatesAndNotify() {
+  mainWindow?.webContents.send("update-status", "checking");
+  await checkForUpdatesSilent();
+}
+async function downloadUpdate() {
+  try {
+    await electronUpdater.autoUpdater.downloadUpdate();
+  } catch (err) {
+    console.error("[Updater] download failed:", err);
+    mainWindow?.webContents.send("update-error", String(err));
   }
-  const ihdr = Buffer.alloc(13);
-  ihdr.writeUInt32BE(size, 0);
-  ihdr.writeUInt32BE(size, 4);
-  ihdr[8] = 8;
-  ihdr[9] = 6;
-  ihdr[10] = 0;
-  ihdr[11] = 0;
-  ihdr[12] = 0;
-  const png = Buffer.concat([
-    PNG_SIG,
-    chunk("IHDR", ihdr),
-    chunk("IDAT", zlib.deflateSync(raw, { level: 9 })),
-    chunk("IEND", Buffer.alloc(0))
-  ]);
-  fs.writeFileSync(path$1, png);
+}
+function scheduleNextFridayCheck() {
+  const now = /* @__PURE__ */ new Date();
+  const target = new Date(now);
+  target.setHours(10, 0, 0, 0);
+  const daysUntilFriday = (5 - target.getDay() + 7) % 7;
+  target.setDate(target.getDate() + daysUntilFriday);
+  if (daysUntilFriday === 0 && now > target) {
+    target.setDate(target.getDate() + 7);
+  }
+  const delay = target.getTime() - now.getTime();
+  console.log("[Updater] next check scheduled at", target.toLocaleString(), "in", Math.round(delay / 36e5), "hours");
+  setTimeout(() => {
+    checkForUpdatesSilent();
+    setInterval(checkForUpdatesSilent, 7 * 24 * 60 * 60 * 1e3);
+  }, delay);
 }
 let mainWindow = null;
 let floatWindow = null;
 let tray = null;
-let globalActivePty = null;
-let pendingKillTimer = null;
+const ptySessions = /* @__PURE__ */ new Map();
+const pendingKillTimers = /* @__PURE__ */ new Map();
+let floatBallVisible = true;
+function getPermissionFlags(mode) {
+  switch (mode) {
+    case "yolo":
+      return ["--dangerously-skip-permissions"];
+    case "trust-edit":
+      return ["--permission-mode", "accept-edits"];
+    case "plan":
+      return ["--permission-mode", "plan"];
+    default:
+      return [];
+  }
+}
+function getPermissionSlashCommand(mode) {
+  switch (mode) {
+    case "yolo":
+      return "/permission-mode bypass\r";
+    case "trust-edit":
+      return "/permission-mode accept-edits\r";
+    case "plan":
+      return "/permission-mode plan\r";
+    default:
+      return "/permission-mode default\r";
+  }
+}
 function createMainWindow() {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.show();
@@ -111,6 +134,7 @@ function createMainWindow() {
     minHeight: 600,
     frame: false,
     titleBarStyle: "hidden",
+    icon: getIconPath(),
     webPreferences: {
       preload: path.join(__dirname, "../preload/index.js"),
       contextIsolation: true,
@@ -147,6 +171,7 @@ function createFloatWindow() {
     skipTaskbar: true,
     resizable: false,
     movable: true,
+    icon: getIconPath(),
     webPreferences: {
       preload: path.join(__dirname, "../preload/index.js"),
       contextIsolation: true,
@@ -178,18 +203,31 @@ function createFloatWindow() {
     console.log("[FloatWindow] hide");
   });
 }
-function createTray() {
-  if (tray) return;
-  const iconPath = path.join(electron.app.getPath("temp"), "claudebridge-icon.png");
-  generateStarIcon(iconPath, 32);
-  const icon = electron.nativeImage.createFromPath(iconPath);
-  tray = new electron.Tray(icon);
+function rebuildTrayMenu() {
+  if (!tray) return;
   const contextMenu = electron.Menu.buildFromTemplate([
     {
       label: "打开主界面",
       click: () => {
         mainWindow?.show();
         floatWindow?.hide();
+      }
+    },
+    {
+      label: floatBallVisible ? "隐藏悬浮球" : "显示悬浮球",
+      click: () => {
+        if (floatBallVisible) {
+          floatWindow?.hide();
+          floatBallVisible = false;
+        } else {
+          if (floatWindow && !floatWindow.isDestroyed()) {
+            floatWindow.showInactive();
+          } else {
+            createFloatWindow();
+          }
+          floatBallVisible = true;
+        }
+        rebuildTrayMenu();
       }
     },
     { type: "separator" },
@@ -200,8 +238,15 @@ function createTray() {
       }
     }
   ]);
-  tray.setToolTip("ClaudeBridge");
   tray.setContextMenu(contextMenu);
+}
+function createTray() {
+  if (tray) return;
+  const iconPath = getIconPath();
+  const icon = electron.nativeImage.createFromPath(iconPath).resize({ width: 32, height: 32 });
+  tray = new electron.Tray(icon);
+  tray.setToolTip("ClaudeBridge");
+  rebuildTrayMenu();
   tray.on("click", () => {
     mainWindow?.show();
     floatWindow?.hide();
@@ -235,76 +280,129 @@ function registerIPC() {
   electron.ipcMain.handle("quit-app", () => {
     electron.app.exit(0);
   });
+  electron.ipcMain.handle("hide-float-ball", () => {
+    floatWindow?.hide();
+    floatBallVisible = false;
+    rebuildTrayMenu();
+  });
+  electron.ipcMain.handle("show-float-ball", () => {
+    if (floatWindow && !floatWindow.isDestroyed()) {
+      floatWindow.showInactive();
+    } else {
+      createFloatWindow();
+    }
+    floatBallVisible = true;
+    rebuildTrayMenu();
+  });
+  electron.ipcMain.handle("check-update", async () => {
+    await checkForUpdatesAndNotify();
+  });
+  electron.ipcMain.handle("download-update", async () => {
+    await downloadUpdate();
+  });
+  electron.ipcMain.handle("install-update", () => {
+    updateDownloaded = false;
+    setImmediate(() => electronUpdater.autoUpdater.quitAndInstall());
+  });
+  electron.ipcMain.handle("get-update-downloaded", () => {
+    return updateDownloaded;
+  });
   electron.ipcMain.handle("float-ball-move-start", () => {
     return floatWindow?.getPosition() ?? [0, 0];
   });
   electron.ipcMain.handle("float-ball-move", (_event, x, y) => {
     floatWindow?.setPosition(x, y, true);
   });
-  electron.ipcMain.handle("create-pty", (_event, cwd) => {
+  function sendPtyData(sessionId, data) {
+    electron.BrowserWindow.getAllWindows().forEach((win) => {
+      if (!win.isDestroyed()) {
+        win.webContents.send("pty-data", sessionId, data);
+      }
+    });
+  }
+  function sendPtyExit(sessionId, exitCode) {
+    electron.BrowserWindow.getAllWindows().forEach((win) => {
+      if (!win.isDestroyed()) {
+        win.webContents.send("pty-exit", sessionId, exitCode);
+      }
+    });
+  }
+  electron.ipcMain.handle("create-pty", (_event, sessionId, permission, cwd) => {
     const workDir = cwd || process.cwd();
     const isWin = process.platform === "win32";
-    if (pendingKillTimer) {
-      clearTimeout(pendingKillTimer);
-      pendingKillTimer = null;
-      console.log("[PTY] cancelled pending kill");
+    const permFlags = getPermissionFlags(permission);
+    if (pendingKillTimers.has(sessionId)) {
+      clearTimeout(pendingKillTimers.get(sessionId));
+      pendingKillTimers.delete(sessionId);
+      console.log("[PTY] cancelled pending kill for", sessionId);
     }
-    if (globalActivePty) {
-      console.log("[PTY] reusing existing session");
-      return { success: true };
+    if (ptySessions.has(sessionId)) {
+      console.log("[PTY] reusing existing session", sessionId);
+      return { success: true, sessionId };
     }
     const shell = isWin ? "cmd.exe" : "claude";
-    const args = isWin ? ["/c", "claude"] : [];
-    console.log("[PTY] creating session:", shell, args, "cwd:", workDir);
-    globalActivePty = nodePty.spawn(shell, args, {
+    const claudeCmd = ["claude", ...permFlags].join(" ");
+    const args = isWin ? ["/c", claudeCmd] : permFlags;
+    console.log("[PTY] creating session:", sessionId, shell, args, "cwd:", workDir);
+    const pty = nodePty.spawn(shell, args, {
       name: "xterm-256color",
       cols: 120,
       rows: 40,
       cwd: workDir,
       env: process.env
     });
-    console.log("[PTY] session created");
-    globalActivePty.onData((data) => {
-      electron.BrowserWindow.getAllWindows().forEach((win) => {
-        if (!win.isDestroyed()) {
-          win.webContents.send("pty-data", data);
-        }
-      });
+    ptySessions.set(sessionId, pty);
+    console.log("[PTY] session created:", sessionId);
+    pty.onData((data) => {
+      sendPtyData(sessionId, data);
     });
-    globalActivePty.onExit(({ exitCode }) => {
-      console.log("[PTY] session exited, code:", exitCode);
-      globalActivePty = null;
-      electron.BrowserWindow.getAllWindows().forEach((win) => {
-        if (!win.isDestroyed()) {
-          win.webContents.send("pty-exit", exitCode);
-        }
-      });
+    pty.onExit(({ exitCode }) => {
+      console.log("[PTY] session exited:", sessionId, "code:", exitCode);
+      ptySessions.delete(sessionId);
+      pendingKillTimers.delete(sessionId);
+      sendPtyExit(sessionId, exitCode ?? -1);
     });
-    return { success: true };
+    return { success: true, sessionId };
   });
-  electron.ipcMain.handle("write-pty", (_event, data) => {
-    console.log("[PTY] write, exists:", !!globalActivePty, "data:", JSON.stringify(data));
-    if (!globalActivePty) {
-      return { success: false, error: "PTY session not created yet" };
+  electron.ipcMain.handle("write-pty", (_event, sessionId, data) => {
+    console.log("[PTY] write, session:", sessionId, "data:", JSON.stringify(data));
+    const pty = ptySessions.get(sessionId);
+    if (!pty) {
+      return { success: false, error: "PTY session not found: " + sessionId };
     }
-    globalActivePty.write(data);
+    pty.write(data);
     return { success: true };
   });
-  electron.ipcMain.handle("resize-pty", (_event, cols, rows) => {
-    globalActivePty?.resize(cols, rows);
+  electron.ipcMain.handle("resize-pty", (_event, sessionId, cols, rows) => {
+    const pty = ptySessions.get(sessionId);
+    pty?.resize(cols, rows);
   });
-  electron.ipcMain.handle("kill-pty", () => {
-    if (pendingKillTimer) clearTimeout(pendingKillTimer);
-    pendingKillTimer = setTimeout(() => {
-      console.log("[PTY] delayed kill executing");
-      globalActivePty?.kill();
-      globalActivePty = null;
-      pendingKillTimer = null;
-    }, 1e3);
+  electron.ipcMain.handle("kill-pty", (_event, sessionId) => {
+    if (pendingKillTimers.has(sessionId)) {
+      clearTimeout(pendingKillTimers.get(sessionId));
+    }
+    pendingKillTimers.set(sessionId, setTimeout(() => {
+      console.log("[PTY] delayed kill executing:", sessionId);
+      const pty = ptySessions.get(sessionId);
+      pty?.kill();
+      ptySessions.delete(sessionId);
+      pendingKillTimers.delete(sessionId);
+    }, 1e3));
   });
-  electron.ipcMain.handle("send-to-claude", (_event, prompt, cwd) => {
+  electron.ipcMain.handle("change-pty-permission", (_event, sessionId, permission) => {
+    const pty = ptySessions.get(sessionId);
+    if (!pty) {
+      return { success: false, error: "PTY session not active: " + sessionId };
+    }
+    const cmd = getPermissionSlashCommand(permission);
+    console.log("[PTY] changing permission:", sessionId, permission, "→", JSON.stringify(cmd));
+    pty.write(cmd);
+    return { success: true };
+  });
+  electron.ipcMain.handle("send-to-claude", (_event, prompt, permission, cwd) => {
     const workDir = cwd || process.cwd();
     const isWin = process.platform === "win32";
+    const permFlags = getPermissionFlags(permission);
     const TIMEOUT = 12e4;
     const timeoutId = setTimeout(() => {
       pty.kill();
@@ -316,7 +414,8 @@ function registerIPC() {
       });
     }, TIMEOUT);
     const shell = isWin ? "cmd.exe" : "claude";
-    const args = isWin ? ["/c", "claude"] : [];
+    const claudeCmd = ["claude", ...permFlags].join(" ");
+    const args = isWin ? ["/c", claudeCmd] : permFlags;
     const pty = nodePty.spawn(shell, args, {
       name: "xterm-256color",
       cols: 120,
@@ -345,10 +444,13 @@ function registerIPC() {
   });
 }
 electron.app.whenReady().then(() => {
+  setupAutoUpdater();
   createFloatWindow();
   createTray();
   createMainWindow();
   registerIPC();
+  setTimeout(() => checkForUpdatesSilent(), 3e4);
+  scheduleNextFridayCheck();
   electron.app.on("activate", () => {
     if (electron.BrowserWindow.getAllWindows().length === 0) {
       createMainWindow();

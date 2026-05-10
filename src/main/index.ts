@@ -1,13 +1,154 @@
-import { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage, screen } from 'electron'
+import { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage, screen, dialog } from 'electron'
 import { spawn as spawnPty } from 'node-pty'
 import path from 'path'
-import { generateStarIcon } from './icon-generator'
+import { autoUpdater } from 'electron-updater'
+import https from 'https'
+
+function getIconPath(): string {
+  if (app.isPackaged) {
+    return path.join(process.resourcesPath, 'appIcon.png')
+  }
+  return path.join(__dirname, '../../src/renderer/assets/appIcon.png')
+}
+
+/* ── 自动更新 ──────────────────────────────────────────────── */
+
+let updateDownloaded = false
+
+function setupAutoUpdater() {
+  autoUpdater.setFeedURL({
+    provider: 'github',
+    owner: 'fusujifeng',
+    repo: 'H-code'
+  })
+
+  autoUpdater.autoDownload = false
+  autoUpdater.autoInstallOnAppQuit = false
+
+  autoUpdater.on('update-available', () => {
+    console.log('[Updater] update available, attempting silent download')
+    mainWindow?.webContents.send('update-status', 'available')
+  })
+
+  autoUpdater.on('update-not-available', () => {
+    console.log('[Updater] no update available')
+    mainWindow?.webContents.send('update-status', 'not-available')
+  })
+
+  autoUpdater.on('download-progress', (progress) => {
+    mainWindow?.webContents.send('update-progress', progress.percent)
+  })
+
+  autoUpdater.on('update-downloaded', () => {
+    console.log('[Updater] update downloaded')
+    updateDownloaded = true
+    mainWindow?.webContents.send('update-status', 'downloaded')
+  })
+
+  autoUpdater.on('error', (err) => {
+    console.error('[Updater] error:', err.message)
+    mainWindow?.webContents.send('update-error', err.message)
+  })
+}
+
+function checkGitHubReachable(): Promise<boolean> {
+  return new Promise((resolve) => {
+    const req = https.get('https://github.com', { timeout: 10000 }, (res) => {
+      resolve(res.statusCode === 200 || res.statusCode === 301 || res.statusCode === 302)
+    })
+    req.on('error', () => resolve(false))
+    req.on('timeout', () => {
+      req.destroy()
+      resolve(false)
+    })
+  })
+}
+
+async function checkForUpdatesSilent() {
+  const reachable = await checkGitHubReachable()
+  if (!reachable) {
+    console.log('[Updater] GitHub not reachable, skipping check')
+    return
+  }
+  try {
+    await autoUpdater.checkForUpdates()
+  } catch (err) {
+    console.error('[Updater] check failed:', err)
+  }
+}
+
+async function checkForUpdatesAndNotify() {
+  mainWindow?.webContents.send('update-status', 'checking')
+  await checkForUpdatesSilent()
+}
+
+async function downloadUpdate() {
+  try {
+    await autoUpdater.downloadUpdate()
+  } catch (err) {
+    console.error('[Updater] download failed:', err)
+    mainWindow?.webContents.send('update-error', String(err))
+  }
+}
+
+function scheduleNextFridayCheck() {
+  const now = new Date()
+  // 周五 = 5, 北京时间 10:00
+  const target = new Date(now)
+  target.setHours(10, 0, 0, 0)
+  // 找到下一个周五
+  const daysUntilFriday = (5 - target.getDay() + 7) % 7
+  target.setDate(target.getDate() + daysUntilFriday)
+  // 如果今天就是周五但已经过了 10:00，则移到下周五
+  if (daysUntilFriday === 0 && now > target) {
+    target.setDate(target.getDate() + 7)
+  }
+  const delay = target.getTime() - now.getTime()
+  console.log('[Updater] next check scheduled at', target.toLocaleString(), 'in', Math.round(delay / 3600000), 'hours')
+
+  setTimeout(() => {
+    checkForUpdatesSilent()
+    // 之后每周检查一次
+    setInterval(checkForUpdatesSilent, 7 * 24 * 60 * 60 * 1000)
+  }, delay)
+}
 
 let mainWindow: BrowserWindow | null = null
 let floatWindow: BrowserWindow | null = null
 let tray: Tray | null = null
-let globalActivePty: ReturnType<typeof spawnPty> | null = null
-let pendingKillTimer: ReturnType<typeof setTimeout> | null = null
+const ptySessions = new Map<string, ReturnType<typeof spawnPty>>()
+const pendingKillTimers = new Map<string, ReturnType<typeof setTimeout>>()
+let floatBallVisible = true
+
+/* ── 权限映射 ────────────────────────────────────────────── */
+
+type UIPermission = 'yolo' | 'trust-edit' | 'plan' | 'manual'
+
+function getPermissionFlags(mode?: UIPermission): string[] {
+  switch (mode) {
+    case 'yolo':
+      return ['--dangerously-skip-permissions']
+    case 'trust-edit':
+      return ['--permission-mode', 'accept-edits']
+    case 'plan':
+      return ['--permission-mode', 'plan']
+    default:
+      return []
+  }
+}
+
+function getPermissionSlashCommand(mode: UIPermission): string {
+  switch (mode) {
+    case 'yolo':
+      return '/permission-mode bypass\r'
+    case 'trust-edit':
+      return '/permission-mode accept-edits\r'
+    case 'plan':
+      return '/permission-mode plan\r'
+    default:
+      return '/permission-mode default\r'
+  }
+}
 
 /* ── 窗口创建 ────────────────────────────────────────────── */
 
@@ -24,6 +165,7 @@ function createMainWindow() {
     minHeight: 600,
     frame: false,
     titleBarStyle: 'hidden',
+    icon: getIconPath(),
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
       contextIsolation: true,
@@ -66,6 +208,7 @@ function createFloatWindow() {
     skipTaskbar: true,
     resizable: false,
     movable: true,
+    icon: getIconPath(),
     webPreferences: {
       preload: path.join(__dirname, '../preload/index.js'),
       contextIsolation: true,
@@ -108,13 +251,8 @@ function createFloatWindow() {
 
 /* ── 托盘 ────────────────────────────────────────────────── */
 
-function createTray() {
-  if (tray) return
-
-  const iconPath = path.join(app.getPath('temp'), 'claudebridge-icon.png')
-  generateStarIcon(iconPath, 32)
-  const icon = nativeImage.createFromPath(iconPath)
-  tray = new Tray(icon)
+function rebuildTrayMenu() {
+  if (!tray) return
 
   const contextMenu = Menu.buildFromTemplate([
     {
@@ -122,6 +260,23 @@ function createTray() {
       click: () => {
         mainWindow?.show()
         floatWindow?.hide()
+      }
+    },
+    {
+      label: floatBallVisible ? '隐藏悬浮球' : '显示悬浮球',
+      click: () => {
+        if (floatBallVisible) {
+          floatWindow?.hide()
+          floatBallVisible = false
+        } else {
+          if (floatWindow && !floatWindow.isDestroyed()) {
+            floatWindow.showInactive()
+          } else {
+            createFloatWindow()
+          }
+          floatBallVisible = true
+        }
+        rebuildTrayMenu()
       }
     },
     { type: 'separator' },
@@ -133,8 +288,18 @@ function createTray() {
     }
   ])
 
-  tray.setToolTip('ClaudeBridge')
   tray.setContextMenu(contextMenu)
+}
+
+function createTray() {
+  if (tray) return
+
+  const iconPath = getIconPath()
+  const icon = nativeImage.createFromPath(iconPath).resize({ width: 32, height: 32 })
+  tray = new Tray(icon)
+
+  tray.setToolTip('ClaudeBridge')
+  rebuildTrayMenu()
 
   tray.on('click', () => {
     mainWindow?.show()
@@ -181,6 +346,40 @@ function registerIPC() {
     app.exit(0)
   })
 
+  ipcMain.handle('hide-float-ball', () => {
+    floatWindow?.hide()
+    floatBallVisible = false
+    rebuildTrayMenu()
+  })
+
+  ipcMain.handle('show-float-ball', () => {
+    if (floatWindow && !floatWindow.isDestroyed()) {
+      floatWindow.showInactive()
+    } else {
+      createFloatWindow()
+    }
+    floatBallVisible = true
+    rebuildTrayMenu()
+  })
+
+  /* 自动更新 */
+  ipcMain.handle('check-update', async () => {
+    await checkForUpdatesAndNotify()
+  })
+
+  ipcMain.handle('download-update', async () => {
+    await downloadUpdate()
+  })
+
+  ipcMain.handle('install-update', () => {
+    updateDownloaded = false
+    setImmediate(() => autoUpdater.quitAndInstall())
+  })
+
+  ipcMain.handle('get-update-downloaded', () => {
+    return updateDownloaded
+  })
+
   /* 悬浮球拖拽 */
   ipcMain.handle('float-ball-move-start', () => {
     return floatWindow?.getPosition() ?? [0, 0]
@@ -190,31 +389,47 @@ function registerIPC() {
     floatWindow?.setPosition(x, y, true)
   })
 
-  /* ── PTY 终端会话（给 xterm.js 用）─────────────────────── */
+  /* ── PTY 终端会话（给 xterm.js 用，支持多会话）─────────── */
 
-  ipcMain.handle('create-pty', (_event, cwd?: string) => {
+  function sendPtyData(sessionId: string, data: string) {
+    BrowserWindow.getAllWindows().forEach((win) => {
+      if (!win.isDestroyed()) {
+        win.webContents.send('pty-data', sessionId, data)
+      }
+    })
+  }
+
+  function sendPtyExit(sessionId: string, exitCode: number | null) {
+    BrowserWindow.getAllWindows().forEach((win) => {
+      if (!win.isDestroyed()) {
+        win.webContents.send('pty-exit', sessionId, exitCode)
+      }
+    })
+  }
+
+  ipcMain.handle('create-pty', (_event, sessionId: string, permission?: UIPermission, cwd?: string) => {
     const workDir = cwd || process.cwd()
     const isWin = process.platform === 'win32'
+    const permFlags = getPermissionFlags(permission)
 
-    // 取消待执行的 kill（应对 React StrictMode 的卸载-重挂载）
-    if (pendingKillTimer) {
-      clearTimeout(pendingKillTimer)
-      pendingKillTimer = null
-      console.log('[PTY] cancelled pending kill')
+    if (pendingKillTimers.has(sessionId)) {
+      clearTimeout(pendingKillTimers.get(sessionId))
+      pendingKillTimers.delete(sessionId)
+      console.log('[PTY] cancelled pending kill for', sessionId)
     }
 
-    // 如果已有活跃会话，直接复用
-    if (globalActivePty) {
-      console.log('[PTY] reusing existing session')
-      return { success: true }
+    if (ptySessions.has(sessionId)) {
+      console.log('[PTY] reusing existing session', sessionId)
+      return { success: true, sessionId }
     }
 
     const shell = isWin ? 'cmd.exe' : 'claude'
-    const args = isWin ? ['/c', 'claude'] : []
+    const claudeCmd = ['claude', ...permFlags].join(' ')
+    const args = isWin ? ['/c', claudeCmd] : permFlags
 
-    console.log('[PTY] creating session:', shell, args, 'cwd:', workDir)
+    console.log('[PTY] creating session:', sessionId, shell, args, 'cwd:', workDir)
 
-    globalActivePty = spawnPty(shell, args, {
+    const pty = spawnPty(shell, args, {
       name: 'xterm-256color',
       cols: 120,
       rows: 40,
@@ -222,57 +437,68 @@ function registerIPC() {
       env: process.env as { [key: string]: string }
     })
 
-    console.log('[PTY] session created')
+    ptySessions.set(sessionId, pty)
+    console.log('[PTY] session created:', sessionId)
 
-    globalActivePty.onData((data) => {
-      BrowserWindow.getAllWindows().forEach((win) => {
-        if (!win.isDestroyed()) {
-          win.webContents.send('pty-data', data)
-        }
-      })
+    pty.onData((data) => {
+      sendPtyData(sessionId, data)
     })
 
-    globalActivePty.onExit(({ exitCode }) => {
-      console.log('[PTY] session exited, code:', exitCode)
-      globalActivePty = null
-      BrowserWindow.getAllWindows().forEach((win) => {
-        if (!win.isDestroyed()) {
-          win.webContents.send('pty-exit', exitCode)
-        }
-      })
+    pty.onExit(({ exitCode }) => {
+      console.log('[PTY] session exited:', sessionId, 'code:', exitCode)
+      ptySessions.delete(sessionId)
+      pendingKillTimers.delete(sessionId)
+      sendPtyExit(sessionId, exitCode ?? -1)
     })
 
-    return { success: true }
+    return { success: true, sessionId }
   })
 
-  ipcMain.handle('write-pty', (_event, data: string) => {
-    console.log('[PTY] write, exists:', !!globalActivePty, 'data:', JSON.stringify(data))
-    if (!globalActivePty) {
-      return { success: false, error: 'PTY session not created yet' }
+  ipcMain.handle('write-pty', (_event, sessionId: string, data: string) => {
+    console.log('[PTY] write, session:', sessionId, 'data:', JSON.stringify(data))
+    const pty = ptySessions.get(sessionId)
+    if (!pty) {
+      return { success: false, error: 'PTY session not found: ' + sessionId }
     }
-    globalActivePty.write(data)
+    pty.write(data)
     return { success: true }
   })
 
-  ipcMain.handle('resize-pty', (_event, cols: number, rows: number) => {
-    globalActivePty?.resize(cols, rows)
+  ipcMain.handle('resize-pty', (_event, sessionId: string, cols: number, rows: number) => {
+    const pty = ptySessions.get(sessionId)
+    pty?.resize(cols, rows)
   })
 
-  ipcMain.handle('kill-pty', () => {
-    // 延迟 kill，给 StrictMode 重挂载留出时间
-    if (pendingKillTimer) clearTimeout(pendingKillTimer)
-    pendingKillTimer = setTimeout(() => {
-      console.log('[PTY] delayed kill executing')
-      globalActivePty?.kill()
-      globalActivePty = null
-      pendingKillTimer = null
-    }, 1000)
+  ipcMain.handle('kill-pty', (_event, sessionId: string) => {
+    if (pendingKillTimers.has(sessionId)) {
+      clearTimeout(pendingKillTimers.get(sessionId))
+    }
+    pendingKillTimers.set(sessionId, setTimeout(() => {
+      console.log('[PTY] delayed kill executing:', sessionId)
+      const pty = ptySessions.get(sessionId)
+      pty?.kill()
+      ptySessions.delete(sessionId)
+      pendingKillTimers.delete(sessionId)
+    }, 1000))
+  })
+
+  /* 运行时切换权限：向 PTY 发送 /permission-mode 命令 */
+  ipcMain.handle('change-pty-permission', (_event, sessionId: string, permission: UIPermission) => {
+    const pty = ptySessions.get(sessionId)
+    if (!pty) {
+      return { success: false, error: 'PTY session not active: ' + sessionId }
+    }
+    const cmd = getPermissionSlashCommand(permission)
+    console.log('[PTY] changing permission:', sessionId, permission, '→', JSON.stringify(cmd))
+    pty.write(cmd)
+    return { success: true }
   })
 
   /* 保留旧的 CLI 流式接口（供 InputArea 用） */
-  ipcMain.handle('send-to-claude', (_event, prompt: string, cwd?: string) => {
+  ipcMain.handle('send-to-claude', (_event, prompt: string, permission?: UIPermission, cwd?: string) => {
     const workDir = cwd || process.cwd()
     const isWin = process.platform === 'win32'
+    const permFlags = getPermissionFlags(permission)
 
     const TIMEOUT = 120000
     const timeoutId = setTimeout(() => {
@@ -286,7 +512,8 @@ function registerIPC() {
     }, TIMEOUT)
 
     const shell = isWin ? 'cmd.exe' : 'claude'
-    const args = isWin ? ['/c', 'claude'] : []
+    const claudeCmd = ['claude', ...permFlags].join(' ')
+    const args = isWin ? ['/c', claudeCmd] : permFlags
 
     const pty = spawnPty(shell, args, {
       name: 'xterm-256color',
@@ -324,10 +551,15 @@ function registerIPC() {
 /* ── lifecycle ───────────────────────────────────────────── */
 
 app.whenReady().then(() => {
+  setupAutoUpdater()
   createFloatWindow()
   createTray()
   createMainWindow()
   registerIPC()
+
+  // 启动后延迟检查更新，然后按每周五 10:00 安排定时检查
+  setTimeout(() => checkForUpdatesSilent(), 30000)
+  scheduleNextFridayCheck()
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {

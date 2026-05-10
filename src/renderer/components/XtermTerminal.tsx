@@ -14,12 +14,13 @@ const terminalThemes: Record<ThemeId, { background: string; foreground: string; 
   idea:      { background: '#1e1e2e', foreground: '#d4d4d4',        cursor: '#4fc1ff' },
 }
 
-export default function XtermTerminal() {
+export default function XtermTerminal({ sessionId }: { sessionId: string }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const termRef = useRef<Terminal | null>(null)
   const fitRef = useRef<FitAddon | null>(null)
   const unsubRef = useRef<(() => void) | null>(null)
   const theme = useAppStore((s) => s.theme)
+  const permission = useAppStore((s) => s.permission)
 
   useEffect(() => {
     if (!containerRef.current || termRef.current) return
@@ -42,16 +43,14 @@ export default function XtermTerminal() {
       term.focus()
       const dims = fit.proposeDimensions()
       if (dims) {
-        window.electronAPI?.resizePty(dims.cols, dims.rows)
+        window.electronAPI?.resizePty(sessionId, dims.cols, dims.rows)
       }
     })
 
-    // xterm.js onData: 用户按键输入
     const disposable = term.onData((data) => {
-      window.electronAPI?.writePty(data)
+      window.electronAPI?.writePty(sessionId, data)
     })
 
-    // 兜底：直接捕获方向键和功能键，避免 Electron 拦截
     const keyHandler = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement
       if (!containerRef.current?.contains(target)) return
@@ -64,36 +63,32 @@ export default function XtermTerminal() {
       }
       if (arrows[e.key]) {
         e.preventDefault()
-        window.electronAPI?.writePty(arrows[e.key])
+        window.electronAPI?.writePty(sessionId, arrows[e.key])
         return
       }
-      // Tab 键有时也会被拦截
       if (e.key === 'Tab') {
         e.preventDefault()
-        window.electronAPI?.writePty('\t')
+        window.electronAPI?.writePty(sessionId, '\t')
         return
       }
     }
     document.addEventListener('keydown', keyHandler)
 
-    // main process 数据 → 终端
-    const unsub = window.electronAPI?.onPtyData((data) => {
-      term.write(data)
+    const unsub = window.electronAPI?.onPtyData((id, data) => {
+      if (id === sessionId) term.write(data)
     })
 
     termRef.current = term
     fitRef.current = fit
     unsubRef.current = unsub || null
 
-    // 创建 PTY 会话
-    window.electronAPI?.createPty()
+    window.electronAPI?.createPty(sessionId, permission)
 
-    // 窗口大小变化时自适应
     const ro = new ResizeObserver(() => {
       fit.fit()
       const dims = fit.proposeDimensions()
       if (dims) {
-        window.electronAPI?.resizePty(dims.cols, dims.rows)
+        window.electronAPI?.resizePty(sessionId, dims.cols, dims.rows)
       }
     })
     ro.observe(containerRef.current)
@@ -103,19 +98,23 @@ export default function XtermTerminal() {
       ro.disconnect()
       disposable.dispose()
       unsubRef.current?.()
-      window.electronAPI?.killPty()
+      window.electronAPI?.killPty(sessionId)
       term.dispose()
       termRef.current = null
       fitRef.current = null
       unsubRef.current = null
     }
-  }, [])
+  }, [sessionId])
 
   useEffect(() => {
     if (termRef.current) {
       termRef.current.options.theme = terminalThemes[theme]
     }
   }, [theme])
+
+  useEffect(() => {
+    window.electronAPI?.changePtyPermission(sessionId, permission)
+  }, [permission, sessionId])
 
   return (
     <div
@@ -126,7 +125,7 @@ export default function XtermTerminal() {
         background: 'var(--surface)',
         borderRadius: 8,
         overflow: 'hidden',
-        margin: '0 8px 8px'
+        margin: '0 4px 4px'
       }}
     />
   )

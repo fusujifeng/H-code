@@ -1,4 +1,4 @@
-import { useAppStore, type MidPanelView } from '../stores/app-store'
+import { useAppStore, type MidPanelView, type TerminalSession } from '../stores/app-store'
 import {
   CodeOutlined,
   PlusOutlined,
@@ -7,11 +7,16 @@ import {
   MessageOutlined,
   AppstoreOutlined,
   DollarOutlined,
-  SettingOutlined
+  SettingOutlined,
+  HistoryOutlined
 } from '@ant-design/icons'
 
+function generateId() {
+  return `pty-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+}
+
 interface NavItem {
-  key: MidPanelView | 'code' | 'new-session' | 'customize' | 'more'
+  key: MidPanelView | 'history' | 'code' | 'new-session' | 'customize' | 'more'
   icon: React.ReactNode
   label: string
   badge?: number
@@ -23,6 +28,10 @@ export default function LeftRail() {
   const setMidPanelView = useAppStore((s) => s.setMidPanelView)
   const showMidPanel = useAppStore((s) => s.showMidPanel)
   const toggleMidPanel = useAppStore((s) => s.toggleMidPanel)
+  const splitSessions = useAppStore((s) => s.splitSessions)
+  const addSplitSession = useAppStore((s) => s.addSplitSession)
+  const updateStatus = useAppStore((s) => s.updateStatus)
+  const hasUpdate = updateStatus === 'available' || updateStatus === 'downloaded'
 
   const topItems: NavItem[] = [
     {
@@ -49,12 +58,26 @@ export default function LeftRail() {
       label: '模型'
     },
     { key: 'balance', icon: <DollarOutlined style={{ fontSize: 18 }} />, label: '余额' },
-    { key: 'settings', icon: <SettingOutlined style={{ fontSize: 18 }} />, label: '设置' }
+    {
+      key: 'settings',
+      icon: <SettingOutlined style={{ fontSize: 18 }} />,
+      label: '设置',
+      badge: hasUpdate ? 1 : 0
+    },
+    { key: 'history', icon: <HistoryOutlined style={{ fontSize: 18 }} />, label: '历史记录' }
   ]
 
   const handleClick = (item: NavItem) => {
     if (item.key === 'code') return
-    if (item.key === 'new-session') return
+    if (item.key === 'new-session') {
+      const id = generateId()
+      addSplitSession({
+        id,
+        title: `会话 ${splitSessions.length + 1}`,
+        updatedAt: new Date().toLocaleString('zh-CN')
+      })
+      return
+    }
     if (item.key === 'customize') return
     if (item.key === 'more') return
 

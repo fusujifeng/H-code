@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 
 export type ThemeId = 'antdx' | 'blackgold' | 'vscode' | 'claude' | 'trae' | 'qoder' | 'idea'
-export type MidPanelView = 'sessions' | 'settings' | 'models' | 'balance'
+export type MidPanelView = 'sessions' | 'settings' | 'models' | 'balance' | 'history'
 export type PermissionMode = 'yolo' | 'trust-edit' | 'plan' | 'manual'
 export type FloatStatus = 'idle' | 'running' | 'success' | 'confirm' | 'error'
 
@@ -32,6 +32,7 @@ export interface Message {
   content: string
   timestamp: string
   model?: string
+  sessionId?: string
 }
 
 export interface Session {
@@ -39,6 +40,46 @@ export interface Session {
   title: string
   updatedAt: string
   unreadCount: number
+}
+
+export interface TerminalSession {
+  id: string
+  title: string
+  updatedAt: string
+}
+
+export interface HistoryEntry {
+  sessionId: string
+  title: string
+  updatedAt: string
+  messages: Message[]
+}
+
+/* ── 历史记录持久化 ──────────────────────────────────────── */
+
+const HISTORY_KEY = 'cb-chat-history'
+const HISTORY_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000 // 14 天
+const HISTORY_MAX_COUNT = 10
+
+function loadHistory(): HistoryEntry[] {
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY)
+    if (!raw) return []
+    const data = JSON.parse(raw) as HistoryEntry[]
+    const cutoff = Date.now() - HISTORY_MAX_AGE_MS
+    return data
+      .filter((e) => new Date(e.updatedAt).getTime() > cutoff)
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+      .slice(0, HISTORY_MAX_COUNT)
+  } catch {
+    return []
+  }
+}
+
+function saveHistory(entries: HistoryEntry[]): void {
+  try {
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(entries))
+  } catch { /* storage full or unavailable */ }
 }
 
 interface AppState {
@@ -53,6 +94,18 @@ interface AppState {
   balances: BalanceInfo[]
   showMidPanel: boolean
   showSearch: boolean
+
+  /* 分屏终端 */
+  splitSessions: TerminalSession[]
+  activeSplitId: string | null
+
+  /* 历史记录 */
+  historyEntries: HistoryEntry[]
+
+  /* 自动更新 */
+  updateStatus: 'idle' | 'checking' | 'available' | 'not-available' | 'downloading' | 'downloaded' | 'error'
+  updateProgress: number
+  updateError: string | null
 
   setTheme: (theme: ThemeId) => void
   setMidPanelView: (view: MidPanelView) => void
@@ -70,6 +123,21 @@ interface AppState {
   toggleSearch: () => void
   setSearch: (show: boolean) => void
   updateMessage: (id: string, updates: Partial<Message>) => void
+
+  /* 分屏终端 actions */
+  addSplitSession: (session: TerminalSession) => void
+  removeSplitSession: (id: string) => void
+  setActiveSplitId: (id: string | null) => void
+
+  /* 历史记录 actions */
+  saveSessionToHistory: (sessionId: string, title: string) => void
+  loadHistorySession: (entry: HistoryEntry) => void
+  refreshHistory: () => void
+
+  /* 自动更新 actions */
+  setUpdateStatus: (status: AppState['updateStatus']) => void
+  setUpdateProgress: (progress: number) => void
+  setUpdateError: (error: string | null) => void
 }
 
 const defaultModels: ModelConfig[] = [
@@ -150,6 +218,12 @@ export const useAppStore = create<AppState>((set) => ({
   balances: [...defaultBalances],
   showMidPanel: true,
   showSearch: false,
+  splitSessions: [],
+  activeSplitId: null,
+  historyEntries: loadHistory(),
+  updateStatus: 'idle',
+  updateProgress: 0,
+  updateError: null,
 
   setTheme: (theme) => {
     try {
@@ -169,7 +243,35 @@ export const useAppStore = create<AppState>((set) => ({
   setActiveSessionId: (id) => set({ activeSessionId: id }),
 
   addMessage: (message) =>
-    set((state) => ({ messages: [...state.messages, message] })),
+    set((state) => {
+      const newMessages = [...state.messages, message]
+
+      // Auto-persist to history if sessionId is present
+      if (message.sessionId) {
+        const existing = state.historyEntries.find((e) => e.sessionId === message.sessionId)
+        const now = new Date().toISOString()
+        const updated: HistoryEntry = existing
+          ? { ...existing, updatedAt: now, messages: [...existing.messages, message] }
+          : {
+              sessionId: message.sessionId!,
+              title: `会话 ${state.historyEntries.length + 1}`,
+              updatedAt: now,
+              messages: [message]
+            }
+
+        const entries = [
+          updated,
+          ...state.historyEntries.filter((e) => e.sessionId !== message.sessionId)
+        ]
+          .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+          .slice(0, HISTORY_MAX_COUNT)
+
+        saveHistory(entries)
+        return { messages: newMessages, historyEntries: entries }
+      }
+
+      return { messages: newMessages }
+    }),
 
   setMessages: (messages) => set({ messages }),
 
@@ -198,5 +300,57 @@ export const useAppStore = create<AppState>((set) => ({
 
   toggleSearch: () => set((state) => ({ showSearch: !state.showSearch })),
 
-  setSearch: (show) => set({ showSearch: show })
+  setSearch: (show) => set({ showSearch: show }),
+
+  /* 分屏终端 */
+  addSplitSession: (session) =>
+    set((state) => ({
+      splitSessions: [...state.splitSessions, session],
+      activeSplitId: session.id
+    })),
+
+  removeSplitSession: (id) =>
+    set((state) => ({
+      splitSessions: state.splitSessions.filter((s) => s.id !== id),
+      activeSplitId:
+        state.activeSplitId === id
+          ? state.splitSessions.find((s) => s.id !== id)?.id ?? null
+          : state.activeSplitId
+    })),
+
+  setActiveSplitId: (id) => set({ activeSplitId: id }),
+
+  /* 历史记录 */
+  saveSessionToHistory: (sessionId, title) =>
+    set((state) => {
+      const existing = state.historyEntries.find((e) => e.sessionId === sessionId)
+      const now = new Date().toISOString()
+      const updated: HistoryEntry = existing
+        ? { ...existing, title, updatedAt: now }
+        : { sessionId, title, updatedAt: now, messages: [] }
+
+      const entries = [
+        updated,
+        ...state.historyEntries.filter((e) => e.sessionId !== sessionId)
+      ]
+        .filter((e) => e.messages.length > 0 || e.sessionId === sessionId)
+        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+        .slice(0, HISTORY_MAX_COUNT)
+
+      saveHistory(entries)
+      return { historyEntries: entries }
+    }),
+
+  loadHistorySession: (entry) =>
+    set({
+      messages: entry.messages,
+      activeSessionId: entry.sessionId
+    }),
+
+  refreshHistory: () => set({ historyEntries: loadHistory() }),
+
+  /* 自动更新 */
+  setUpdateStatus: (status) => set({ updateStatus: status }),
+  setUpdateProgress: (progress) => set({ updateProgress: progress }),
+  setUpdateError: (error) => set({ updateError: error })
 }))

@@ -64,6 +64,8 @@ menu.addEventListener('click', (e) => {
   const action = target.dataset.action
   if (action === 'show') {
     window.electronAPI?.showMainWindow()
+  } else if (action === 'hide') {
+    window.electronAPI?.hideFloatBall()
   } else if (action === 'quit') {
     window.electronAPI?.quitApp()
   }

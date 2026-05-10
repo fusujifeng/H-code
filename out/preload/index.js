@@ -13,10 +13,12 @@ const electronAPI = {
   /* 托盘 / 悬浮球 */
   showMainWindow: () => electron.ipcRenderer.invoke("show-main-window"),
   quitApp: () => electron.ipcRenderer.invoke("quit-app"),
+  hideFloatBall: () => electron.ipcRenderer.invoke("hide-float-ball"),
+  showFloatBall: () => electron.ipcRenderer.invoke("show-float-ball"),
   floatBallMoveStart: () => electron.ipcRenderer.invoke("float-ball-move-start"),
   floatBallMove: (x, y) => electron.ipcRenderer.invoke("float-ball-move", x, y),
   /* Claude Code CLI */
-  sendToClaude: (prompt, cwd) => electron.ipcRenderer.invoke("send-to-claude", prompt, cwd),
+  sendToClaude: (prompt, permission, cwd) => electron.ipcRenderer.invoke("send-to-claude", prompt, permission, cwd),
   onClaudeOutput: (callback) => {
     const listener = (_event, data) => callback(data);
     electron.ipcRenderer.on("claude-output", listener);
@@ -37,20 +39,41 @@ const electronAPI = {
     electron.ipcRenderer.on("claude-task-start", listener);
     return () => electron.ipcRenderer.removeListener("claude-task-start", listener);
   },
-  /* PTY 终端会话 */
-  createPty: (cwd) => electron.ipcRenderer.invoke("create-pty", cwd),
-  writePty: (data) => electron.ipcRenderer.invoke("write-pty", data),
-  resizePty: (cols, rows) => electron.ipcRenderer.invoke("resize-pty", cols, rows),
-  killPty: () => electron.ipcRenderer.invoke("kill-pty"),
+  /* PTY 终端会话（多会话支持） */
+  createPty: (sessionId, permission, cwd) => electron.ipcRenderer.invoke("create-pty", sessionId, permission, cwd),
+  writePty: (sessionId, data) => electron.ipcRenderer.invoke("write-pty", sessionId, data),
+  resizePty: (sessionId, cols, rows) => electron.ipcRenderer.invoke("resize-pty", sessionId, cols, rows),
+  killPty: (sessionId) => electron.ipcRenderer.invoke("kill-pty", sessionId),
+  changePtyPermission: (sessionId, permission) => electron.ipcRenderer.invoke("change-pty-permission", sessionId, permission),
   onPtyData: (callback) => {
-    const listener = (_event, data) => callback(data);
+    const listener = (_event, sessionId, data) => callback(sessionId, data);
     electron.ipcRenderer.on("pty-data", listener);
     return () => electron.ipcRenderer.removeListener("pty-data", listener);
   },
   onPtyExit: (callback) => {
-    const listener = (_event, code) => callback(code);
+    const listener = (_event, sessionId, code) => callback(sessionId, code);
     electron.ipcRenderer.on("pty-exit", listener);
     return () => electron.ipcRenderer.removeListener("pty-exit", listener);
+  },
+  /* 自动更新 */
+  checkUpdate: () => electron.ipcRenderer.invoke("check-update"),
+  downloadUpdate: () => electron.ipcRenderer.invoke("download-update"),
+  installUpdate: () => electron.ipcRenderer.invoke("install-update"),
+  getUpdateDownloaded: () => electron.ipcRenderer.invoke("get-update-downloaded"),
+  onUpdateStatus: (callback) => {
+    const listener = (_event, status) => callback(status);
+    electron.ipcRenderer.on("update-status", listener);
+    return () => electron.ipcRenderer.removeListener("update-status", listener);
+  },
+  onUpdateProgress: (callback) => {
+    const listener = (_event, percent) => callback(percent);
+    electron.ipcRenderer.on("update-progress", listener);
+    return () => electron.ipcRenderer.removeListener("update-progress", listener);
+  },
+  onUpdateError: (callback) => {
+    const listener = (_event, err) => callback(err);
+    electron.ipcRenderer.on("update-error", listener);
+    return () => electron.ipcRenderer.removeListener("update-error", listener);
   }
 };
 electron.contextBridge.exposeInMainWorld("electronAPI", electronAPI);

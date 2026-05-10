@@ -3,7 +3,7 @@ import { useAppStore } from '../stores/app-store'
 import PermissionToggle from './PermissionToggle'
 import { SendOutlined, PictureOutlined, AudioOutlined } from '@ant-design/icons'
 
-export default function InputArea({ useTerminal }: { useTerminal: boolean }) {
+export default function InputArea({ useTerminal, sessionId }: { useTerminal: boolean; sessionId: string }) {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const addMessage = useAppStore((s) => s.addMessage)
@@ -17,7 +17,7 @@ export default function InputArea({ useTerminal }: { useTerminal: boolean }) {
     if (useTerminal) {
       setInput('')
       try {
-        const result = await window.electronAPI?.writePty(trimmed + '\r')
+        const result = await window.electronAPI?.writePty(sessionId, trimmed + '\r')
         if (!result?.success) {
           console.error('[InputArea] writePty failed:', result)
         }
@@ -32,7 +32,8 @@ export default function InputArea({ useTerminal }: { useTerminal: boolean }) {
       id: Date.now().toString(),
       role: 'user',
       content: trimmed,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      sessionId
     })
 
     setInput('')
@@ -44,7 +45,8 @@ export default function InputArea({ useTerminal }: { useTerminal: boolean }) {
       role: 'assistant',
       content: '',
       timestamp: new Date().toISOString(),
-      model: 'Claude Code CLI'
+      model: 'Claude Code CLI',
+      sessionId
     })
 
     let fullContent = ''
