@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Float Ball</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: transparent;
+        user-select: none;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+      #ball {
+        width: 46px;
+        height: 46px;
+        margin: 4px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.95);
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: transform 0.2s;
+      }
+      #ball:hover {
+        transform: scale(1.08);
+      }
+      #ball:active {
+        transform: scale(0.95);
+      }
+      #menu {
+        display: none;
+        position: absolute;
+        background: #fff;
+        border: 1px solid #e8e8e8;
+        border-radius: 8px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        padding: 4px 0;
+        min-width: 130px;
+        font-size: 13px;
+        z-index: 10;
+        overflow: hidden;
+      }
+      #menu .item {
+        padding: 9px 16px;
+        cursor: pointer;
+        color: #333;
+        transition: background 0.1s;
+      }
+      #menu .item:hover {
+        background: #f5f5f5;
+      }
+      #menu .item.danger {
+        color: #e81123;
+      }
+      #menu .item.danger:hover {
+        background: #fde2e2;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="ball" title="双击打开主界面">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2L13.5 8.5L12 10L10.5 8.5L12 2Z" fill="#f5a623" />
+        <path d="M12 14L13.5 20.5L12 22L10.5 20.5L12 14Z" fill="#f5a623" />
+        <path d="M2 12L8.5 10.5L10 12L8.5 13.5L2 12Z" fill="#f5a623" />
+        <path d="M14 12L20.5 10.5L22 12L20.5 13.5L14 12Z" fill="#f5a623" />
+        <circle cx="12" cy="12" r="2.5" fill="#f5a623" />
+      </svg>
+    </div>
+    <div id="menu">
+      <div class="item" data-action="show">打开主界面</div>
+      <div class="item danger" data-action="quit">退出</div>
+    </div>
+    <script type="module" src="./float-ball.ts"></script>
+  </body>
+</html>
