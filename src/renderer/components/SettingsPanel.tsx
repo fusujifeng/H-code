@@ -25,13 +25,13 @@ const themeCards: ThemeCard[] = [
     id: 'vscode',
     name: 'VS Code',
     description: '经典深色编辑器风格',
-    image: '../assets/moyjtptb-image.png'
+    image: '../assets/moyjqbvz-image.png'
   },
   {
     id: 'claude',
     name: 'Claude Code',
     description: '温暖橙色，纸质感',
-    image: '../assets/moyjqbvz-image.png'
+    image: '../assets/moyjtptb-image.png'
   },
   {
     id: 'trae',

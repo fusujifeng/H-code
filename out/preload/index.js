@@ -1,19 +1,19 @@
 "use strict";
 const electron = require("electron");
 const electronAPI = {
-  getTheme: () => electron.ipcRenderer.invoke("get-theme"),
-  setTheme: (theme) => electron.ipcRenderer.invoke("set-theme", theme),
-  sendMessage: (message) => electron.ipcRenderer.invoke("send-message", message),
-  getConversations: () => electron.ipcRenderer.invoke("get-conversations"),
-  getMessages: (conversationId, limit, offset) => electron.ipcRenderer.invoke("get-messages", conversationId, limit, offset),
-  createConversation: (title) => electron.ipcRenderer.invoke("create-conversation", title),
-  deleteConversation: (id) => electron.ipcRenderer.invoke("delete-conversation", id),
-  pauseTask: (taskId) => electron.ipcRenderer.invoke("pause-task", taskId),
-  resumeTask: (taskId) => electron.ipcRenderer.invoke("resume-task", taskId),
-  cancelTask: (taskId) => electron.ipcRenderer.invoke("cancel-task", taskId),
-  getFileChangeSummary: () => electron.ipcRenderer.invoke("get-file-change-summary"),
-  checkBalance: () => electron.ipcRenderer.invoke("check-balance"),
-  getSettings: () => electron.ipcRenderer.invoke("get-settings"),
-  updateSettings: (settings) => electron.ipcRenderer.invoke("update-settings", settings)
+  windowMinimize: () => electron.ipcRenderer.invoke("window-minimize"),
+  windowMaximize: () => electron.ipcRenderer.invoke("window-maximize"),
+  windowClose: () => electron.ipcRenderer.invoke("window-close"),
+  windowIsMaximized: () => electron.ipcRenderer.invoke("window-is-maximized"),
+  onWindowMaximized: (callback) => {
+    const listener = (_event, value) => callback(value);
+    electron.ipcRenderer.on("window-maximized", listener);
+    return () => electron.ipcRenderer.removeListener("window-maximized", listener);
+  },
+  /* 托盘 / 悬浮球 */
+  showMainWindow: () => electron.ipcRenderer.invoke("show-main-window"),
+  quitApp: () => electron.ipcRenderer.invoke("quit-app"),
+  floatBallMoveStart: () => electron.ipcRenderer.invoke("float-ball-move-start"),
+  floatBallMove: (x, y) => electron.ipcRenderer.invoke("float-ball-move", x, y)
 };
 electron.contextBridge.exposeInMainWorld("electronAPI", electronAPI);

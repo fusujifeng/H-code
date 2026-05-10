@@ -2,13 +2,16 @@ import { useState } from 'react'
 import { useAppStore } from '../stores/app-store'
 import PermissionToggle from './PermissionToggle'
 import { SendOutlined, PictureOutlined, AudioOutlined } from '@ant-design/icons'
+import { streamChat, AIError } from '../api/ai-client'
 
 export default function InputArea() {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const addMessage = useAppStore((s) => s.addMessage)
+  const updateMessage = useAppStore((s) => s.updateMessage)
+  const enabledModel = useAppStore((s) => s.models.find((m) => m.enabled))
 
-  const handleSend = () => {
+  const handleSend = async () => {
     const trimmed = input.trim()
     if (!trimmed) return
 
@@ -22,18 +25,29 @@ export default function InputArea() {
     setInput('')
     setLoading(true)
 
-    // Simulate AI response
-    setTimeout(() => {
-      addMessage({
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content:
-          '收到你的消息！这是一个模拟的 AI 回复。在实际应用中，这里会通过 CLI 管理器调用 AI 模型生成回复。',
-        timestamp: new Date().toISOString(),
-        model: 'Claude 3.5 Sonnet'
+    const assistantId = (Date.now() + 1).toString()
+    addMessage({
+      id: assistantId,
+      role: 'assistant',
+      content: '',
+      timestamp: new Date().toISOString(),
+      model: enabledModel?.name || 'AI'
+    })
+
+    try {
+      let fullContent = ''
+      for await (const chunk of streamChat(trimmed)) {
+        fullContent += chunk
+        updateMessage(assistantId, { content: fullContent })
+      }
+    } catch (err) {
+      const msg = err instanceof AIError ? err.message : String(err)
+      updateMessage(assistantId, {
+        content: `❌ 调用失败：${msg}`
       })
+    } finally {
       setLoading(false)
-    }, 1500)
+    }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -204,11 +218,11 @@ export default function InputArea() {
               width: 7,
               height: 7,
               borderRadius: '50%',
-              background: 'var(--blue)'
+              background: enabledModel ? 'var(--green)' : 'var(--text-tertiary)'
             }}
           />
           <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-            Claude 3.5 Sonnet
+            {enabledModel?.name || '未选择模型'}
           </span>
         </div>
       </div>

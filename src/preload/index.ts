@@ -1,24 +1,21 @@
 import { contextBridge, ipcRenderer } from 'electron'
 
 const electronAPI = {
-  getTheme: () => ipcRenderer.invoke('get-theme'),
-  setTheme: (theme: string) => ipcRenderer.invoke('set-theme', theme),
-  sendMessage: (message: string) => ipcRenderer.invoke('send-message', message),
-  getConversations: () => ipcRenderer.invoke('get-conversations'),
-  getMessages: (conversationId: string, limit?: number, offset?: number) =>
-    ipcRenderer.invoke('get-messages', conversationId, limit, offset),
-  createConversation: (title: string) => ipcRenderer.invoke('create-conversation', title),
-  deleteConversation: (id: string) => ipcRenderer.invoke('delete-conversation', id),
-  pauseTask: (taskId: number) => ipcRenderer.invoke('pause-task', taskId),
-  resumeTask: (taskId: number) => ipcRenderer.invoke('resume-task', taskId),
-  cancelTask: (taskId: number) => ipcRenderer.invoke('cancel-task', taskId),
-  getFileChangeSummary: () => ipcRenderer.invoke('get-file-change-summary'),
-  checkBalance: () => ipcRenderer.invoke('check-balance'),
-  getSettings: () => ipcRenderer.invoke('get-settings'),
-  updateSettings: (settings: Record<string, unknown>) =>
-    ipcRenderer.invoke('update-settings', settings)
+  windowMinimize: () => ipcRenderer.invoke('window-minimize'),
+  windowMaximize: () => ipcRenderer.invoke('window-maximize'),
+  windowClose: () => ipcRenderer.invoke('window-close'),
+  windowIsMaximized: () => ipcRenderer.invoke('window-is-maximized'),
+  onWindowMaximized: (callback: (maximized: boolean) => void) => {
+    const listener = (_event: unknown, value: boolean) => callback(value)
+    ipcRenderer.on('window-maximized', listener)
+    return () => ipcRenderer.removeListener('window-maximized', listener)
+  },
+
+  /* 托盘 / 悬浮球 */
+  showMainWindow: () => ipcRenderer.invoke('show-main-window'),
+  quitApp: () => ipcRenderer.invoke('quit-app'),
+  floatBallMoveStart: () => ipcRenderer.invoke('float-ball-move-start'),
+  floatBallMove: (x: number, y: number) => ipcRenderer.invoke('float-ball-move', x, y)
 }
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI)
-
-export type ElectronAPI = typeof electronAPI

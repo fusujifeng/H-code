@@ -52,6 +52,7 @@ interface AppState {
   models: ModelConfig[]
   balances: BalanceInfo[]
   showMidPanel: boolean
+  showSearch: boolean
 
   setTheme: (theme: ThemeId) => void
   setMidPanelView: (view: MidPanelView) => void
@@ -66,25 +67,46 @@ interface AppState {
   setBalances: (balances: BalanceInfo[]) => void
   updateBalance: (id: string, updates: Partial<BalanceInfo>) => void
   toggleMidPanel: () => void
+  toggleSearch: () => void
+  setSearch: (show: boolean) => void
+  updateMessage: (id: string, updates: Partial<Message>) => void
 }
 
 const defaultModels: ModelConfig[] = [
-  { id: '1', name: 'GPT-4o', provider: 'OpenAI', enabled: true },
-  { id: '2', name: 'Claude 3.5 Sonnet', provider: 'Anthropic', enabled: true },
-  { id: '3', name: 'Gemini 1.5 Pro', provider: 'Google', enabled: false },
-  { id: '4', name: 'Mistral Large', provider: 'Mistral', enabled: true },
   {
-    id: '5',
-    name: 'DeepSeek-V3',
+    id: '1',
+    name: 'DeepSeek-V4-Pro',
     provider: 'DeepSeek',
-    enabled: false,
-    baseUrl: 'https://api.deepseek.com/v1'
+    enabled: true,
+    baseUrl: 'https://api.deepseek.com/anthropic'
+  },
+  {
+    id: '2',
+    name: 'GPT-4o',
+    provider: 'OpenAI',
+    enabled: false
+  },
+  {
+    id: '3',
+    name: '小米MIMO',
+    provider: '小米',
+    enabled: false
   }
 ]
 
 const defaultBalances: BalanceInfo[] = [
   {
     id: '1',
+    modelName: 'DeepSeek-V4-Pro',
+    provider: 'DeepSeek',
+    keyMask: 'sk-...****',
+    lastUpdated: '2026-05-10 10:30',
+    amount: '¥5.80',
+    currency: 'CNY',
+    status: 'ok'
+  },
+  {
+    id: '2',
     modelName: 'GPT-4o',
     provider: 'OpenAI',
     keyMask: 'sk-...****',
@@ -94,44 +116,14 @@ const defaultBalances: BalanceInfo[] = [
     status: 'ok'
   },
   {
-    id: '2',
-    modelName: 'Claude 3.5 Sonnet',
-    provider: 'Anthropic',
-    keyMask: 'sk-ant-...****',
-    lastUpdated: '2026-05-10 10:30',
-    amount: '$8.20',
-    currency: 'USD',
-    status: 'ok'
-  },
-  {
     id: '3',
-    modelName: 'Gemini 1.5 Pro',
-    provider: 'Google',
-    keyMask: 'AIza...****',
+    modelName: '小米MIMO',
+    provider: '小米',
+    keyMask: 'xm-...****',
     lastUpdated: '2026-05-10 09:15',
     amount: '--',
-    currency: 'USD',
-    status: 'failed'
-  },
-  {
-    id: '4',
-    modelName: 'Mistral Large',
-    provider: 'Mistral',
-    keyMask: 'ms-...****',
-    lastUpdated: '2026-05-10 10:30',
-    amount: '€3.15',
-    currency: 'EUR',
-    status: 'ok'
-  },
-  {
-    id: '5',
-    modelName: 'DeepSeek-V3',
-    provider: 'DeepSeek',
-    keyMask: 'sk-...****',
-    lastUpdated: '2026-05-10 08:00',
-    amount: '¥5.80',
     currency: 'CNY',
-    status: 'ok'
+    status: 'loading'
   }
 ]
 
@@ -156,6 +148,7 @@ export const useAppStore = create<AppState>((set) => ({
   models: [...defaultModels],
   balances: [...defaultBalances],
   showMidPanel: true,
+  showSearch: false,
 
   setTheme: (theme) => {
     try {
@@ -179,6 +172,11 @@ export const useAppStore = create<AppState>((set) => ({
 
   setMessages: (messages) => set({ messages }),
 
+  updateMessage: (id: string, updates: Partial<Message>) =>
+    set((state) => ({
+      messages: state.messages.map((m) => (m.id === id ? { ...m, ...updates } : m))
+    })),
+
   setSessions: (sessions) => set({ sessions }),
 
   setModels: (models) => set({ models }),
@@ -195,5 +193,9 @@ export const useAppStore = create<AppState>((set) => ({
       balances: state.balances.map((b) => (b.id === id ? { ...b, ...updates } : b))
     })),
 
-  toggleMidPanel: () => set((state) => ({ showMidPanel: !state.showMidPanel }))
+  toggleMidPanel: () => set((state) => ({ showMidPanel: !state.showMidPanel })),
+
+  toggleSearch: () => set((state) => ({ showSearch: !state.showSearch })),
+
+  setSearch: (show) => set({ showSearch: show })
 }))

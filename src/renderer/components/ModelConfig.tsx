@@ -21,11 +21,11 @@ export default function ModelConfig() {
 
   const handleDeepSeekQuick = () => {
     const dsModel: ModelConfigType = {
-      id: '5',
-      name: 'DeepSeek-V3',
+      id: 'deepseek-' + Date.now(),
+      name: 'DeepSeek-V4-Pro',
       provider: 'DeepSeek',
-      enabled: false,
-      baseUrl: 'https://api.deepseek.com/v1'
+      enabled: true,
+      baseUrl: 'https://api.deepseek.com/anthropic'
     }
     setEditingModel(dsModel)
     setShowForm(true)
@@ -57,7 +57,8 @@ export default function ModelConfig() {
       Google: '#4285f4',
       Mistral: '#f59e0b',
       DeepSeek: '#4e9fdf',
-      Cohere: '#6b4ce6'
+      Cohere: '#6b4ce6',
+      小米: '#ff6900'
     }
     return (
       <div
@@ -269,6 +270,37 @@ function ModelFormModal({
   model: ModelConfigType | null
   onClose: () => void
 }) {
+  const models = useAppStore((s) => s.models)
+  const setModels = useAppStore((s) => s.setModels)
+
+  const [name, setName] = useState(model?.name || '')
+  const [provider, setProvider] = useState(model?.provider || 'OpenAI')
+  const [apiKey, setApiKey] = useState(model?.apiKey || '')
+  const [baseUrl, setBaseUrl] = useState(model?.baseUrl || '')
+
+  const handleSave = () => {
+    const trimmedName = name.trim()
+    if (!trimmedName) return
+
+    const newModel: ModelConfigType = {
+      id: model?.id || 'model-' + Date.now(),
+      name: trimmedName,
+      provider,
+      apiKey: apiKey.trim() || undefined,
+      baseUrl: baseUrl.trim() || undefined,
+      enabled: model?.enabled ?? false
+    }
+
+    if (model) {
+      // 编辑：替换原有模型
+      setModels(models.map((m) => (m.id === model.id ? newModel : m)))
+    } else {
+      // 新增：追加到列表
+      setModels([...models, newModel])
+    }
+    onClose()
+  }
+
   return (
     <>
       <div
@@ -311,14 +343,19 @@ function ModelFormModal({
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <FormField label="模型名称">
             <input
-              defaultValue={model?.name || ''}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               placeholder="输入模型名称"
               style={inputStyle}
             />
           </FormField>
           <FormField label="Provider">
-            <select defaultValue={model?.provider || 'OpenAI'} style={inputStyle}>
-              {['OpenAI', 'Anthropic', 'Google', 'DeepSeek', 'Cohere', 'Mistral', '本地', '其他'].map(
+            <select
+              value={provider}
+              onChange={(e) => setProvider(e.target.value)}
+              style={inputStyle}
+            >
+              {['OpenAI', 'Anthropic', 'Google', 'DeepSeek', 'Cohere', 'Mistral', '小米', '本地', '其他'].map(
                 (p) => (
                   <option key={p} value={p}>
                     {p}
@@ -330,15 +367,17 @@ function ModelFormModal({
           <FormField label="API Key">
             <input
               type="password"
-              defaultValue={model?.apiKey || ''}
-              placeholder="输入 API Key (可选)"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              placeholder="输入 API Key"
               style={inputStyle}
             />
           </FormField>
           <FormField label="Base URL">
             <input
-              defaultValue={model?.baseUrl || ''}
-              placeholder="输入 Base URL (可选)"
+              value={baseUrl}
+              onChange={(e) => setBaseUrl(e.target.value)}
+              placeholder="输入 Base URL"
               style={inputStyle}
             />
           </FormField>
@@ -354,7 +393,7 @@ function ModelFormModal({
           <button onClick={onClose} style={secondaryBtnStyle}>
             取消
           </button>
-          <button onClick={onClose} style={primaryBtnStyle}>
+          <button onClick={handleSave} style={primaryBtnStyle}>
             保存
           </button>
         </div>
