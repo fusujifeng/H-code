@@ -29,12 +29,14 @@ export default function FloatBall() {
 
   const currentColor = stateColors[floatStatus]
   const currentAnim = stateAnimations[floatStatus]
+  console.log('[FloatBall] render, floatStatus:', floatStatus, 'color:', currentColor, 'anim:', currentAnim)
 
-  const cycleState = () => {
-    const states: FloatStatus[] = ['idle', 'running', 'success', 'confirm', 'error']
-    const idx = states.indexOf(floatStatus)
-    setFloatStatus(states[(idx + 1) % states.length])
+  const handleClick = () => {
+    console.log('[FloatBall] clicked, current status:', floatStatus)
     setShowMenu(false)
+    // 点击恢复 idle，避免状态卡住
+    setFloatStatus('idle')
+    console.log('[FloatBall] set to idle')
   }
 
   const handleContextMenu = (e: React.MouseEvent) => {
@@ -80,7 +82,7 @@ export default function FloatBall() {
     <>
       <div
         ref={ballRef}
-        onClick={cycleState}
+        onClick={handleClick}
         onContextMenu={handleContextMenu}
         onMouseDown={handleMouseDown}
         style={{
