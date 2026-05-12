@@ -521,6 +521,21 @@ const pendingKillTimers = /* @__PURE__ */ new Map();
 const ptyCreateTime = /* @__PURE__ */ new Map();
 const ptyOutputHistory = /* @__PURE__ */ new Map();
 let floatBallVisible = true;
+let autoExpandFloatBall = false;
+let pendingAutoExpandTimer = null;
+const ptyConfirmBuffers = /* @__PURE__ */ new Map();
+const ptyConfirmDetected = /* @__PURE__ */ new Map();
+const ptyTaskDoneBuffers = /* @__PURE__ */ new Map();
+let floatBallPosition = null;
+function showMainWindowFn() {
+  if (pendingAutoExpandTimer) {
+    clearTimeout(pendingAutoExpandTimer);
+    pendingAutoExpandTimer = null;
+  }
+  mainWindow?.show();
+  mainWindow?.restore();
+  floatWindow?.hide();
+}
 function getPermissionFlags(mode) {
   switch (mode) {
     case "yolo":
@@ -590,11 +605,15 @@ function createMainWindow() {
 function createFloatWindow() {
   if (floatWindow && !floatWindow.isDestroyed()) return;
   const { width: screenW, height: screenH } = electron.screen.getPrimaryDisplay().workAreaSize;
+  const defaultX = screenW - 74;
+  const defaultY = Math.round((screenH - 54) / 2);
+  const x = floatBallPosition?.x ?? defaultX;
+  const y = floatBallPosition?.y ?? defaultY;
   floatWindow = new electron.BrowserWindow({
     width: 54,
     height: 54,
-    x: screenW - 74,
-    y: screenH - 74,
+    x,
+    y,
     frame: false,
     transparent: true,
     alwaysOnTop: true,
@@ -681,11 +700,69 @@ function createTray() {
   tray.setToolTip("ClaudeBridge");
   rebuildTrayMenu();
   tray.on("click", () => {
-    mainWindow?.show();
-    floatWindow?.hide();
+    showMainWindowFn();
   });
 }
 function registerIPC() {
+  function scheduleAutoExpand() {
+    console.log("[Main] scheduleAutoExpand called, autoExpandFloatBall:", autoExpandFloatBall);
+    if (!autoExpandFloatBall) return;
+    if (pendingAutoExpandTimer) {
+      clearTimeout(pendingAutoExpandTimer);
+    }
+    pendingAutoExpandTimer = setTimeout(() => {
+      pendingAutoExpandTimer = null;
+      console.log("[Main] scheduleAutoExpand: timer fired, showing main window");
+      showMainWindowFn();
+    }, 2400);
+  }
+  function checkNeedConfirm(sessionId, data) {
+    if (ptyConfirmDetected.get(sessionId)) return false;
+    let buffer = ptyConfirmBuffers.get(sessionId) || "";
+    buffer += data;
+    if (buffer.length > 2e3) buffer = buffer.slice(-2e3);
+    ptyConfirmBuffers.set(sessionId, buffer);
+    const text = buffer.replace(/\x1b\[[0-9;]*m/g, "").replace(/\x00/g, "");
+    const patterns = [
+      /Allow (edit|create|delete|command)\b/i,
+      /Would you like me to/i,
+      /Press Enter to continue/i,
+      /\(\s*Y\s*\/\s*n\s*\)/i,
+      /\(\s*y\s*\/\s*N\s*\)/i
+    ];
+    if (patterns.some((p) => p.test(text))) {
+      ptyConfirmDetected.set(sessionId, true);
+      ptyConfirmBuffers.delete(sessionId);
+      return true;
+    }
+    return false;
+  }
+  function checkTaskDone(sessionId, data) {
+    let buffer = ptyTaskDoneBuffers.get(sessionId) || "";
+    buffer += data;
+    if (buffer.length > 8e3) buffer = buffer.slice(-8e3);
+    ptyTaskDoneBuffers.set(sessionId, buffer);
+    const text = buffer.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, "").replace(/\x00/g, "");
+    if (/Brewed for [\d.]+s?/i.test(text) || /Thinking for [\d.]+s?/i.test(text)) {
+      console.log("[Main] checkTaskDone: time-marker detected, session:", sessionId);
+      ptyTaskDoneBuffers.delete(sessionId);
+      return true;
+    }
+    const normalized = text.replace(/\r/g, "");
+    if (/\n>\s*$/.test(normalized) || /\n>\s*\n$/.test(normalized)) {
+      console.log("[Main] checkTaskDone: prompt detected, session:", sessionId);
+      ptyTaskDoneBuffers.delete(sessionId);
+      return true;
+    }
+    return false;
+  }
+  function broadcastClaudeConfirmNeeded() {
+    electron.BrowserWindow.getAllWindows().forEach((win) => {
+      if (!win.isDestroyed()) {
+        win.webContents.send("claude-confirm-needed");
+      }
+    });
+  }
   electron.ipcMain.handle("window-minimize", () => {
     mainWindow?.minimize();
   });
@@ -707,9 +784,7 @@ function registerIPC() {
     mainWindow?.webContents.send("window-maximized", maximized);
   });
   electron.ipcMain.handle("show-main-window", () => {
-    mainWindow?.show();
-    mainWindow?.restore();
-    floatWindow?.hide();
+    showMainWindowFn();
   });
   electron.ipcMain.handle("quit-app", () => {
     electron.app.exit(0);
@@ -733,9 +808,7 @@ function registerIPC() {
       {
         label: "显示应用",
         click: () => {
-          mainWindow?.show();
-          mainWindow?.restore();
-          floatWindow?.hide();
+          showMainWindowFn();
         }
       },
       { type: "separator" },
@@ -747,6 +820,9 @@ function registerIPC() {
       }
     ]);
     contextMenu.popup({ window: floatWindow ?? void 0 });
+  });
+  electron.ipcMain.handle("set-auto-expand-float-ball", (_event, enabled) => {
+    autoExpandFloatBall = enabled;
   });
   electron.ipcMain.handle("check-update", async () => {
     await checkForUpdatesAndNotify();
@@ -766,6 +842,7 @@ function registerIPC() {
   });
   electron.ipcMain.handle("float-ball-move", (_event, x, y) => {
     floatWindow?.setPosition(x, y, true);
+    floatBallPosition = { x, y };
   });
   function sendPtyData(sessionId, data) {
     electron.BrowserWindow.getAllWindows().forEach((win) => {
@@ -817,9 +894,19 @@ function registerIPC() {
       const history = ptyOutputHistory.get(sessionId) || "";
       ptyOutputHistory.set(sessionId, history + data);
       sendPtyData(sessionId, data);
+      if (checkNeedConfirm(sessionId, data)) {
+        broadcastClaudeConfirmNeeded();
+        scheduleAutoExpand();
+      }
+      if (checkTaskDone(sessionId, data)) {
+        scheduleAutoExpand();
+      }
     });
     pty.onExit(({ exitCode }) => {
       console.log("[PTY] session exited:", sessionId, "code:", exitCode);
+      ptyConfirmDetected.delete(sessionId);
+      ptyConfirmBuffers.delete(sessionId);
+      ptyTaskDoneBuffers.delete(sessionId);
       const currentPty = ptySessions.get(sessionId);
       if (currentPty === pty) {
         ptySessions.delete(sessionId);
@@ -827,6 +914,9 @@ function registerIPC() {
         ptyCreateTime.delete(sessionId);
         ptyOutputHistory.delete(sessionId);
         sendPtyExit(sessionId, exitCode ?? -1);
+        if (exitCode === 0 || exitCode === null) {
+          scheduleAutoExpand();
+        }
       } else {
         console.log("[PTY] session already replaced, ignoring exit for", sessionId);
       }
@@ -840,6 +930,9 @@ function registerIPC() {
       return { success: false, error: "PTY session not found: " + sessionId };
     }
     pty.write(data);
+    if (data.includes("\r") || data.includes("\n")) {
+      ptyTaskDoneBuffers.delete(sessionId);
+    }
     return { success: true };
   });
   electron.ipcMain.handle("resize-pty", (_event, sessionId, cols, rows) => {
@@ -970,6 +1063,8 @@ function registerIPC() {
       env: process.env
     });
     currentClaudePty = pty;
+    ptyConfirmDetected.set("legacy", false);
+    ptyConfirmBuffers.set("legacy", "");
     console.log("[Main] sending claude-task-start to", electron.BrowserWindow.getAllWindows().length, "windows");
     electron.BrowserWindow.getAllWindows().forEach((win) => {
       if (!win.isDestroyed()) {
@@ -984,12 +1079,18 @@ function registerIPC() {
       electron.BrowserWindow.getAllWindows().forEach((win) => {
         if (!win.isDestroyed()) win.webContents.send("claude-output", data);
       });
+      if (checkNeedConfirm("legacy", data)) {
+        broadcastClaudeConfirmNeeded();
+        scheduleAutoExpand();
+      }
     });
     pty.onExit(({ exitCode }) => {
       clearTimeout(timeoutId);
       if (currentClaudePty === pty) {
         currentClaudePty = null;
       }
+      ptyConfirmDetected.delete("legacy");
+      ptyConfirmBuffers.delete("legacy");
       console.log("[Main] sending claude-close", exitCode, "to", electron.BrowserWindow.getAllWindows().length, "windows");
       electron.BrowserWindow.getAllWindows().forEach((win) => {
         if (!win.isDestroyed()) {
@@ -997,6 +1098,9 @@ function registerIPC() {
           win.webContents.send("claude-close", exitCode);
         }
       });
+      if (exitCode === 0 || exitCode === null) {
+        scheduleAutoExpand();
+      }
     });
     return { success: true };
   });

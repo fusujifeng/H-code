@@ -129,6 +129,22 @@ const pendingKillTimers = new Map<string, ReturnType<typeof setTimeout>>()
 const ptyCreateTime = new Map<string, number>()
 const ptyOutputHistory = new Map<string, string>()
 let floatBallVisible = true
+let autoExpandFloatBall = false
+let pendingAutoExpandTimer: ReturnType<typeof setTimeout> | null = null
+const ptyConfirmBuffers = new Map<string, string>()
+const ptyConfirmDetected = new Map<string, boolean>()
+const ptyTaskDoneBuffers = new Map<string, string>()
+let floatBallPosition: { x: number; y: number } | null = null
+
+function showMainWindowFn() {
+  if (pendingAutoExpandTimer) {
+    clearTimeout(pendingAutoExpandTimer)
+    pendingAutoExpandTimer = null
+  }
+  mainWindow?.show()
+  mainWindow?.restore()
+  floatWindow?.hide()
+}
 
 /* ── 权限映射 ────────────────────────────────────────────── */
 
@@ -216,11 +232,16 @@ function createFloatWindow() {
 
   const { width: screenW, height: screenH } = screen.getPrimaryDisplay().workAreaSize
 
+  const defaultX = screenW - 74
+  const defaultY = Math.round((screenH - 54) / 2)
+  const x = floatBallPosition?.x ?? defaultX
+  const y = floatBallPosition?.y ?? defaultY
+
   floatWindow = new BrowserWindow({
     width: 54,
     height: 54,
-    x: screenW - 74,
-    y: screenH - 74,
+    x,
+    y,
     frame: false,
     transparent: true,
     alwaysOnTop: true,
@@ -326,14 +347,86 @@ function createTray() {
   rebuildTrayMenu()
 
   tray.on('click', () => {
-    mainWindow?.show()
-    floatWindow?.hide()
+    showMainWindowFn()
   })
 }
 
 /* ── IPC ─────────────────────────────────────────────────── */
 
 function registerIPC() {
+  function scheduleAutoExpand() {
+    console.log('[Main] scheduleAutoExpand called, autoExpandFloatBall:', autoExpandFloatBall)
+    if (!autoExpandFloatBall) return
+    if (pendingAutoExpandTimer) {
+      clearTimeout(pendingAutoExpandTimer)
+    }
+    pendingAutoExpandTimer = setTimeout(() => {
+      pendingAutoExpandTimer = null
+      console.log('[Main] scheduleAutoExpand: timer fired, showing main window')
+      showMainWindowFn()
+    }, 2400)
+  }
+
+  function checkNeedConfirm(sessionId: string, data: string): boolean {
+    if (ptyConfirmDetected.get(sessionId)) return false
+
+    let buffer = ptyConfirmBuffers.get(sessionId) || ''
+    buffer += data
+    if (buffer.length > 2000) buffer = buffer.slice(-2000)
+    ptyConfirmBuffers.set(sessionId, buffer)
+
+    const text = buffer.replace(/\x1b\[[0-9;]*m/g, '').replace(/\x00/g, '')
+    const patterns = [
+      /Allow (edit|create|delete|command)\b/i,
+      /Would you like me to/i,
+      /Press Enter to continue/i,
+      /\(\s*Y\s*\/\s*n\s*\)/i,
+      /\(\s*y\s*\/\s*N\s*\)/i,
+    ]
+    if (patterns.some(p => p.test(text))) {
+      ptyConfirmDetected.set(sessionId, true)
+      ptyConfirmBuffers.delete(sessionId)
+      return true
+    }
+    return false
+  }
+
+  function checkTaskDone(sessionId: string, data: string): boolean {
+    let buffer = ptyTaskDoneBuffers.get(sessionId) || ''
+    buffer += data
+    if (buffer.length > 8000) buffer = buffer.slice(-8000)
+    ptyTaskDoneBuffers.set(sessionId, buffer)
+
+    // 更彻底地去除 ANSI escape 序列
+    const text = buffer.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, '').replace(/\x00/g, '')
+
+    // 模式1: Claude Code CLI 完成任务后输出 "Brewed for Xs" / "Thinking for Xs"
+    if (/Brewed for [\d.]+s?/i.test(text) || /Thinking for [\d.]+s?/i.test(text)) {
+      console.log('[Main] checkTaskDone: time-marker detected, session:', sessionId)
+      ptyTaskDoneBuffers.delete(sessionId)
+      return true
+    }
+
+    // 模式2: 检测到回到命令提示符 (> 在空行后面)
+    // 去除所有 \r 后检查末尾是否包含 \n> 或 \n>\n
+    const normalized = text.replace(/\r/g, '')
+    if (/\n>\s*$/.test(normalized) || /\n>\s*\n$/.test(normalized)) {
+      console.log('[Main] checkTaskDone: prompt detected, session:', sessionId)
+      ptyTaskDoneBuffers.delete(sessionId)
+      return true
+    }
+
+    return false
+  }
+
+  function broadcastClaudeConfirmNeeded() {
+    BrowserWindow.getAllWindows().forEach((win) => {
+      if (!win.isDestroyed()) {
+        win.webContents.send('claude-confirm-needed')
+      }
+    })
+  }
+
   /* 窗口控制 */
   ipcMain.handle('window-minimize', () => {
     mainWindow?.minimize()
@@ -362,9 +455,7 @@ function registerIPC() {
 
   /* 托盘 / 悬浮球 */
   ipcMain.handle('show-main-window', () => {
-    mainWindow?.show()
-    mainWindow?.restore()
-    floatWindow?.hide()
+    showMainWindowFn()
   })
 
   ipcMain.handle('quit-app', () => {
@@ -392,9 +483,7 @@ function registerIPC() {
       {
         label: '显示应用',
         click: () => {
-          mainWindow?.show()
-          mainWindow?.restore()
-          floatWindow?.hide()
+          showMainWindowFn()
         }
       },
       { type: 'separator' },
@@ -406,6 +495,10 @@ function registerIPC() {
       }
     ])
     contextMenu.popup({ window: floatWindow ?? undefined })
+  })
+
+  ipcMain.handle('set-auto-expand-float-ball', (_event, enabled: boolean) => {
+    autoExpandFloatBall = enabled
   })
 
   /* 自动更新 */
@@ -433,6 +526,7 @@ function registerIPC() {
 
   ipcMain.handle('float-ball-move', (_event, x: number, y: number) => {
     floatWindow?.setPosition(x, y, true)
+    floatBallPosition = { x, y }
   })
 
   /* ── PTY 终端会话（给 xterm.js 用，支持多会话）─────────── */
@@ -497,17 +591,32 @@ function registerIPC() {
       const history = ptyOutputHistory.get(sessionId) || ''
       ptyOutputHistory.set(sessionId, history + data)
       sendPtyData(sessionId, data)
+
+      if (checkNeedConfirm(sessionId, data)) {
+        broadcastClaudeConfirmNeeded()
+        scheduleAutoExpand()
+      }
+
+      if (checkTaskDone(sessionId, data)) {
+        scheduleAutoExpand()
+      }
     })
 
     pty.onExit(({ exitCode }) => {
       console.log('[PTY] session exited:', sessionId, 'code:', exitCode)
+      ptyConfirmDetected.delete(sessionId)
+      ptyConfirmBuffers.delete(sessionId)
+      ptyTaskDoneBuffers.delete(sessionId)
       const currentPty = ptySessions.get(sessionId)
       if (currentPty === pty) {
         ptySessions.delete(sessionId)
         pendingKillTimers.delete(sessionId)
         ptyCreateTime.delete(sessionId)
-      ptyOutputHistory.delete(sessionId)
+        ptyOutputHistory.delete(sessionId)
         sendPtyExit(sessionId, exitCode ?? -1)
+        if (exitCode === 0 || exitCode === null) {
+          scheduleAutoExpand()
+        }
       } else {
         console.log('[PTY] session already replaced, ignoring exit for', sessionId)
       }
@@ -523,6 +632,10 @@ function registerIPC() {
       return { success: false, error: 'PTY session not found: ' + sessionId }
     }
     pty.write(data)
+    // 用户按回车输入新问题时，清空任务完成检测缓冲区
+    if (data.includes('\r') || data.includes('\n')) {
+      ptyTaskDoneBuffers.delete(sessionId)
+    }
     return { success: true }
   })
 
@@ -688,6 +801,8 @@ function registerIPC() {
       env: process.env as { [key: string]: string }
     })
     currentClaudePty = pty
+    ptyConfirmDetected.set('legacy', false)
+    ptyConfirmBuffers.set('legacy', '')
 
     console.log('[Main] sending claude-task-start to', BrowserWindow.getAllWindows().length, 'windows')
     BrowserWindow.getAllWindows().forEach((win) => {
@@ -705,6 +820,10 @@ function registerIPC() {
       BrowserWindow.getAllWindows().forEach((win) => {
         if (!win.isDestroyed()) win.webContents.send('claude-output', data)
       })
+      if (checkNeedConfirm('legacy', data)) {
+        broadcastClaudeConfirmNeeded()
+        scheduleAutoExpand()
+      }
     })
 
     pty.onExit(({ exitCode }) => {
@@ -712,6 +831,8 @@ function registerIPC() {
       if (currentClaudePty === pty) {
         currentClaudePty = null
       }
+      ptyConfirmDetected.delete('legacy')
+      ptyConfirmBuffers.delete('legacy')
       console.log('[Main] sending claude-close', exitCode, 'to', BrowserWindow.getAllWindows().length, 'windows')
       BrowserWindow.getAllWindows().forEach((win) => {
         if (!win.isDestroyed()) {
@@ -719,6 +840,9 @@ function registerIPC() {
           win.webContents.send('claude-close', exitCode)
         }
       })
+      if (exitCode === 0 || exitCode === null) {
+        scheduleAutoExpand()
+      }
     })
 
     return { success: true }

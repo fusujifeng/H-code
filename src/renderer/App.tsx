@@ -17,6 +17,7 @@ export default function App() {
   const setFloatStatus = useAppStore((s) => s.setFloatStatus)
   const activeSessionId = useAppStore((s) => s.activeSessionId)
   const fileWatcherEnabled = useAppStore((s) => s.fileWatcherEnabled)
+  const autoExpandFloatBall = useAppStore((s) => s.autoExpandFloatBall)
   const currentTaskIdRef = useRef<number | null>(null)
   const assistantIdRef = useRef<string | null>(null)
   const fullContentRef = useRef('')
@@ -182,6 +183,16 @@ export default function App() {
   useEffect(() => {
     window.electronAPI?.toggleFileWatcher?.(fileWatcherEnabled)
   }, [fileWatcherEnabled])
+
+  // 同步悬浮球自动展开设置到主进程
+  useEffect(() => {
+    window.electronAPI?.setAutoExpandFloatBall?.(autoExpandFloatBall)
+  }, [autoExpandFloatBall])
+
+  // 初始化时同步一次悬浮球自动展开设置
+  useEffect(() => {
+    window.electronAPI?.setAutoExpandFloatBall?.(autoExpandFloatBall)
+  }, [])
 
   return (
     <div

@@ -362,6 +362,8 @@ export default function SettingsPanel() {
   const setFunnyMode = useAppStore((s) => s.setFunnyMode)
   const fileWatcherEnabled = useAppStore((s) => s.fileWatcherEnabled)
   const setFileWatcherEnabled = useAppStore((s) => s.setFileWatcherEnabled)
+  const autoExpandFloatBall = useAppStore((s) => s.autoExpandFloatBall)
+  const setAutoExpandFloatBall = useAppStore((s) => s.setAutoExpandFloatBall)
 
   return (
     <div style={{ height: '100%', overflowY: 'auto' }}>
@@ -522,6 +524,53 @@ export default function SettingsPanel() {
               onChange={(v) => {
                 setFileWatcherEnabled(v)
                 window.electronAPI?.toggleFileWatcher?.(v)
+              }}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Section: Float Ball */}
+      <div style={{ padding: '12px 16px' }}>
+        <div
+          style={{
+            fontSize: 12,
+            fontWeight: 600,
+            color: 'var(--text-secondary)',
+            textTransform: 'uppercase',
+            marginBottom: 10,
+            letterSpacing: 0.5
+          }}
+        >
+          悬浮球
+        </div>
+        <div
+          style={{
+            background: 'var(--surface)',
+            borderRadius: 10,
+            border: '1px solid var(--border)',
+            overflow: 'hidden'
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '10px 14px'
+            }}
+          >
+            <div>
+              <div style={{ fontSize: 13, color: 'var(--text)' }}>完成任务后自动展开到桌面</div>
+              <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>
+                任务完成或需要确认时，自动展开主窗口
+              </div>
+            </div>
+            <ToggleSwitch
+              checked={autoExpandFloatBall}
+              onChange={(v) => {
+                setAutoExpandFloatBall(v)
+                window.electronAPI?.setAutoExpandFloatBall?.(v)
               }}
             />
           </div>

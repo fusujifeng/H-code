@@ -58,9 +58,9 @@ let statusTimer: ReturnType<typeof setTimeout> | null = null
 let thinkingTimer: ReturnType<typeof setTimeout> | null = null
 let wasRunning = false
 
-function setBallStatus(status: 'running' | 'success' | 'error' | 'none') {
+function setBallStatus(status: 'running' | 'success' | 'error' | 'confirm' | 'none') {
   console.log('[FloatBall] setBallStatus:', status)
-  ball.classList.remove('status-running', 'status-success', 'status-error')
+  ball.classList.remove('status-running', 'status-success', 'status-error', 'status-confirm')
   if (statusTimer) {
     clearTimeout(statusTimer)
     statusTimer = null
@@ -68,10 +68,10 @@ function setBallStatus(status: 'running' | 'success' | 'error' | 'none') {
   if (status !== 'none') {
     ball.classList.add(`status-${status}`)
   }
-  if (status === 'success' || status === 'error') {
+  if (status === 'success' || status === 'error' || status === 'confirm') {
     statusTimer = setTimeout(() => {
       ball.classList.remove(`status-${status}`)
-    }, 3000)
+    }, 2400)
   }
 }
 
@@ -86,6 +86,16 @@ window.electronAPI?.onPtyData(() => {
       ball.classList.remove('status-running')
     }
   }, 2000)
+})
+
+// PTY 会话退出：任务完成/失败 → 显示状态
+window.electronAPI?.onPtyExit((_sessionId, code) => {
+  console.log('[FloatBall] onPtyExit:', _sessionId, code)
+  if (code === 0 || code === null) {
+    setBallStatus('success')
+  } else {
+    setBallStatus('error')
+  }
 })
 
 // 直接调用 Claude 的任务
@@ -112,9 +122,13 @@ window.electronAPI?.onQueueStatus((status) => {
   } else if (wasRunning && status.active === 0) {
     wasRunning = false
     setBallStatus('success')
-    // 任务完成后恢复主窗口
-    window.electronAPI?.showMainWindow?.()
   }
+})
+
+// 需要用户确认时
+window.electronAPI?.onClaudeConfirmNeeded(() => {
+  console.log('[FloatBall] onClaudeConfirmNeeded')
+  setBallStatus('confirm')
 })
 
 // 点击打开主窗口时清除状态

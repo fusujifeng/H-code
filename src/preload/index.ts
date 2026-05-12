@@ -19,6 +19,7 @@ const electronAPI = {
   floatBallMoveStart: () => ipcRenderer.invoke('float-ball-move-start'),
   floatBallMove: (x: number, y: number) => ipcRenderer.invoke('float-ball-move', x, y),
   showFloatBallContextMenu: () => ipcRenderer.invoke('show-float-ball-context-menu'),
+  setAutoExpandFloatBall: (enabled: boolean) => ipcRenderer.invoke('set-auto-expand-float-ball', enabled),
 
   /* Claude Code CLI */
   sendToClaude: (prompt: string, permission?: string, cwd?: string) =>
@@ -46,6 +47,12 @@ const electronAPI = {
     const listener = () => callback()
     ipcRenderer.on('claude-task-start', listener)
     return () => ipcRenderer.removeListener('claude-task-start', listener)
+  },
+
+  onClaudeConfirmNeeded: (callback: () => void) => {
+    const listener = () => callback()
+    ipcRenderer.on('claude-confirm-needed', listener)
+    return () => ipcRenderer.removeListener('claude-confirm-needed', listener)
   },
 
   /* PTY 终端会话（多会话支持） */

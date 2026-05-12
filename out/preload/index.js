@@ -18,6 +18,7 @@ const electronAPI = {
   floatBallMoveStart: () => electron.ipcRenderer.invoke("float-ball-move-start"),
   floatBallMove: (x, y) => electron.ipcRenderer.invoke("float-ball-move", x, y),
   showFloatBallContextMenu: () => electron.ipcRenderer.invoke("show-float-ball-context-menu"),
+  setAutoExpandFloatBall: (enabled) => electron.ipcRenderer.invoke("set-auto-expand-float-ball", enabled),
   /* Claude Code CLI */
   sendToClaude: (prompt, permission, cwd) => electron.ipcRenderer.invoke("send-to-claude", prompt, permission, cwd),
   onClaudeOutput: (callback) => {
@@ -39,6 +40,11 @@ const electronAPI = {
     const listener = () => callback();
     electron.ipcRenderer.on("claude-task-start", listener);
     return () => electron.ipcRenderer.removeListener("claude-task-start", listener);
+  },
+  onClaudeConfirmNeeded: (callback) => {
+    const listener = () => callback();
+    electron.ipcRenderer.on("claude-confirm-needed", listener);
+    return () => electron.ipcRenderer.removeListener("claude-confirm-needed", listener);
   },
   /* PTY 终端会话（多会话支持） */
   createPty: (sessionId, permission, cwd) => electron.ipcRenderer.invoke("create-pty", sessionId, permission, cwd),

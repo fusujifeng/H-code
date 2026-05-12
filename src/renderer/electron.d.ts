@@ -16,6 +16,7 @@ declare global {
       floatBallMoveStart: () => Promise<[number, number]>
       floatBallMove: (x: number, y: number) => Promise<void>
       showFloatBallContextMenu: () => Promise<void>
+      setAutoExpandFloatBall: (enabled: boolean) => Promise<void>
 
       /* Claude Code CLI */
       sendToClaude: (prompt: string, permission?: string, cwd?: string) => Promise<{ success: boolean }>
@@ -23,6 +24,7 @@ declare global {
       onClaudeError: (cb: (err: string) => void) => () => void
       onClaudeClose: (cb: (code: number | null) => void) => () => void
       onClaudeTaskStart: (cb: () => void) => () => void
+      onClaudeConfirmNeeded: (cb: () => void) => () => void
 
       /* PTY 终端会话（多会话支持） */
       createPty: (sessionId: string, permission?: string, cwd?: string) => Promise<{ success: boolean; sessionId: string }>

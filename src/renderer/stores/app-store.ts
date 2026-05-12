@@ -146,6 +146,9 @@ interface AppState {
   /* 文件感知 */
   fileWatcherEnabled: boolean
 
+  /* 悬浮球自动展开 */
+  autoExpandFloatBall: boolean
+
   setTheme: (theme: ThemeId) => void
   setMidPanelView: (view: MidPanelView) => void
   setPermission: (mode: PermissionMode) => void
@@ -193,6 +196,9 @@ interface AppState {
 
   /* 文件感知 */
   setFileWatcherEnabled: (enabled: boolean) => void
+
+  /* 悬浮球自动展开 */
+  setAutoExpandFloatBall: (enabled: boolean) => void
 }
 
 const defaultModels: ModelConfig[] = [
@@ -297,6 +303,7 @@ export const useAppStore = create<AppState>((set) => ({
   currentTaskId: null,
   funnyMode: loadSetting('cb-funny-mode', false),
   fileWatcherEnabled: loadSetting('cb-file-watcher', false),
+  autoExpandFloatBall: loadSetting('cb-auto-expand-float-ball', false),
 
   setTheme: (theme) => {
     try {
@@ -518,5 +525,11 @@ export const useAppStore = create<AppState>((set) => ({
   setFileWatcherEnabled: (enabled) => {
     saveSetting('cb-file-watcher', enabled)
     set({ fileWatcherEnabled: enabled })
+  },
+
+  /* 悬浮球自动展开 */
+  setAutoExpandFloatBall: (enabled) => {
+    saveSetting('cb-auto-expand-float-ball', enabled)
+    set({ autoExpandFloatBall: enabled })
   }
 }))
