@@ -387,6 +387,27 @@ function registerIPC() {
     rebuildTrayMenu()
   })
 
+  ipcMain.handle('show-float-ball-context-menu', () => {
+    const contextMenu = Menu.buildFromTemplate([
+      {
+        label: '显示应用',
+        click: () => {
+          mainWindow?.show()
+          mainWindow?.restore()
+          floatWindow?.hide()
+        }
+      },
+      { type: 'separator' },
+      {
+        label: '退出',
+        click: () => {
+          app.exit(0)
+        }
+      }
+    ])
+    contextMenu.popup({ window: floatWindow ?? undefined })
+  })
+
   /* 自动更新 */
   ipcMain.handle('check-update', async () => {
     await checkForUpdatesAndNotify()

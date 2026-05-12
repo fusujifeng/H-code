@@ -17,6 +17,7 @@ const electronAPI = {
   showFloatBall: () => electron.ipcRenderer.invoke("show-float-ball"),
   floatBallMoveStart: () => electron.ipcRenderer.invoke("float-ball-move-start"),
   floatBallMove: (x, y) => electron.ipcRenderer.invoke("float-ball-move", x, y),
+  showFloatBallContextMenu: () => electron.ipcRenderer.invoke("show-float-ball-context-menu"),
   /* Claude Code CLI */
   sendToClaude: (prompt, permission, cwd) => electron.ipcRenderer.invoke("send-to-claude", prompt, permission, cwd),
   onClaudeOutput: (callback) => {

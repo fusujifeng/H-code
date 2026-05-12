@@ -1,7 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useAppStore } from './stores/app-store'
 import MainLayout from './components/MainLayout'
-import FloatBall from './components/FloatBall'
 
 export default function App() {
   const theme = useAppStore((s) => s.theme)
@@ -196,7 +195,6 @@ export default function App() {
       }}
     >
       <MainLayout />
-      <FloatBall />
     </div>
   )
 }

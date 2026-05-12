@@ -728,6 +728,26 @@ function registerIPC() {
     floatBallVisible = true;
     rebuildTrayMenu();
   });
+  electron.ipcMain.handle("show-float-ball-context-menu", () => {
+    const contextMenu = electron.Menu.buildFromTemplate([
+      {
+        label: "显示应用",
+        click: () => {
+          mainWindow?.show();
+          mainWindow?.restore();
+          floatWindow?.hide();
+        }
+      },
+      { type: "separator" },
+      {
+        label: "退出",
+        click: () => {
+          electron.app.exit(0);
+        }
+      }
+    ]);
+    contextMenu.popup({ window: floatWindow ?? void 0 });
+  });
   electron.ipcMain.handle("check-update", async () => {
     await checkForUpdatesAndNotify();
   });

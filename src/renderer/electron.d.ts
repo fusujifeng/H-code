@@ -15,6 +15,7 @@ declare global {
       showFloatBall: () => Promise<void>
       floatBallMoveStart: () => Promise<[number, number]>
       floatBallMove: (x: number, y: number) => Promise<void>
+      showFloatBallContextMenu: () => Promise<void>
 
       /* Claude Code CLI */
       sendToClaude: (prompt: string, permission?: string, cwd?: string) => Promise<{ success: boolean }>

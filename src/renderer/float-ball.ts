@@ -45,38 +45,17 @@ ball.addEventListener('click', () => {
   }
 })
 
-/* ── 右键菜单 ───────────────────────────────────────── */
+/* ── 右键菜单（调用主进程原生菜单） ─────────────────── */
 
 ball.addEventListener('contextmenu', (e) => {
   e.preventDefault()
-  const rect = ball.getBoundingClientRect()
-  menu.style.display = 'block'
-  menu.style.left = rect.left + 'px'
-  menu.style.top = rect.bottom + 4 + 'px'
-})
-
-document.addEventListener('click', (e) => {
-  if (!(e.target as HTMLElement).closest('#menu')) {
-    menu.style.display = 'none'
-  }
-})
-
-menu.addEventListener('click', (e) => {
-  const target = e.target as HTMLElement
-  const action = target.dataset.action
-  if (action === 'show') {
-    window.electronAPI?.showMainWindow()
-  } else if (action === 'hide') {
-    window.electronAPI?.hideFloatBall()
-  } else if (action === 'quit') {
-    window.electronAPI?.quitApp()
-  }
-  menu.style.display = 'none'
+  window.electronAPI?.showFloatBallContextMenu?.()
 })
 
 /* ── CLI 任务状态感知 ─────────────────────────────────── */
 
 let statusTimer: ReturnType<typeof setTimeout> | null = null
+let thinkingTimer: ReturnType<typeof setTimeout> | null = null
 let wasRunning = false
 
 function setBallStatus(status: 'running' | 'success' | 'error' | 'none') {
@@ -95,6 +74,19 @@ function setBallStatus(status: 'running' | 'success' | 'error' | 'none') {
     }, 3000)
   }
 }
+
+// PTY 数据监听：有输出 → 思考中（蓝色跳动）
+window.electronAPI?.onPtyData(() => {
+  if (!ball.classList.contains('status-running')) {
+    setBallStatus('running')
+  }
+  if (thinkingTimer) clearTimeout(thinkingTimer)
+  thinkingTimer = setTimeout(() => {
+    if (ball.classList.contains('status-running')) {
+      ball.classList.remove('status-running')
+    }
+  }, 2000)
+})
 
 // 直接调用 Claude 的任务
 window.electronAPI?.onClaudeTaskStart(() => {
