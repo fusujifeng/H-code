@@ -34,6 +34,7 @@ export interface Message {
   timestamp: string
   model?: string
   sessionId?: string
+  tokenUsage?: number
 }
 
 export interface Session {
@@ -47,6 +48,7 @@ export interface TerminalSession {
   id: string
   title: string
   updatedAt: string
+  closed?: boolean
 }
 
 export interface HistoryEntry {
@@ -164,12 +166,15 @@ interface AppState {
   /* 分屏终端 actions */
   addSplitSession: (session: TerminalSession) => void
   removeSplitSession: (id: string) => void
+  closeSplitSession: (id: string) => void
+  openSplitSession: (id: string) => void
   setActiveSplitId: (id: string | null) => void
 
   /* 历史记录 actions */
   saveSessionToHistory: (sessionId: string, title: string) => void
   loadHistorySession: (entry: HistoryEntry) => void
   refreshHistory: () => void
+  setHistoryEntries: (entries: HistoryEntry[]) => void
 
   /* 自动更新 actions */
   setUpdateStatus: (status: AppState['updateStatus']) => void
@@ -179,6 +184,7 @@ interface AppState {
   /* 任务队列 actions */
   setTasks: (tasks: TaskItem[]) => void
   updateTask: (task: TaskItem) => void
+  removeTask: (taskId: number) => void
   setQueueStatus: (status: { total: number; active: number }) => void
   setCurrentTaskId: (id: number | null) => void
 
@@ -195,8 +201,7 @@ const defaultModels: ModelConfig[] = [
     name: 'DeepSeek-V4-Pro',
     provider: 'DeepSeek',
     enabled: true,
-    baseUrl: 'https://api.deepseek.com/anthropic',
-    apiKey: 'sk-443cf9d14c654a2baac2e7e2f2058334'
+    baseUrl: 'https://api.deepseek.com/anthropic'
   },
   {
     id: '2',
@@ -211,6 +216,20 @@ const defaultModels: ModelConfig[] = [
     enabled: false
   }
 ]
+
+function loadModels(): ModelConfig[] {
+  try {
+    const raw = localStorage.getItem('cb-models')
+    if (raw) return JSON.parse(raw) as ModelConfig[]
+  } catch { /* ignore */ }
+  return [...defaultModels]
+}
+
+function saveModels(models: ModelConfig[]): void {
+  try {
+    localStorage.setItem('cb-models', JSON.stringify(models))
+  } catch { /* ignore */ }
+}
 
 const defaultBalances: BalanceInfo[] = [
   {
@@ -263,7 +282,7 @@ export const useAppStore = create<AppState>((set) => ({
   activeSessionId: null,
   sessions: [],
   messages: [],
-  models: [...defaultModels],
+  models: loadModels(),
   balances: [...defaultBalances],
   showMidPanel: true,
   showSearch: false,
@@ -292,7 +311,10 @@ export const useAppStore = create<AppState>((set) => ({
 
   setPermission: (permission) => set({ permission }),
 
-  setFloatStatus: (floatStatus) => set({ floatStatus }),
+  setFloatStatus: (floatStatus) => {
+    console.log('[AppStore] setFloatStatus:', floatStatus)
+    set({ floatStatus })
+  },
 
   setActiveSessionId: (id) => set({ activeSessionId: id }),
 
@@ -321,6 +343,21 @@ export const useAppStore = create<AppState>((set) => ({
           .slice(0, HISTORY_MAX_COUNT)
 
         saveHistory(entries)
+
+        // 同步到 SQLite 数据库（fire-and-forget）
+        try {
+          const isFirst = !state.historyEntries.some((e) => e.sessionId === message.sessionId)
+          if (isFirst) {
+            window.electronAPI?.createConversation?.(message.sessionId, updated.title).catch(() => {})
+          }
+          window.electronAPI?.addMessage?.(message.sessionId, {
+            role: message.role,
+            content: message.content,
+            model: message.model,
+            tokenUsage: message.tokenUsage
+          }).catch(() => {})
+        } catch { /* ignore */ }
+
         return { messages: newMessages, historyEntries: entries }
       }
 
@@ -330,18 +367,39 @@ export const useAppStore = create<AppState>((set) => ({
   setMessages: (messages) => set({ messages }),
 
   updateMessage: (id: string, updates: Partial<Message>) =>
-    set((state) => ({
-      messages: state.messages.map((m) => (m.id === id ? { ...m, ...updates } : m))
-    })),
+    set((state) => {
+      const newMessages = state.messages.map((m) => (m.id === id ? { ...m, ...updates } : m))
+
+      // 同步更新 historyEntries 中同一条消息的内容
+      const updatedMsg = newMessages.find((m) => m.id === id)
+      let newHistoryEntries = state.historyEntries
+      if (updatedMsg?.sessionId) {
+        newHistoryEntries = state.historyEntries.map((entry) => {
+          if (entry.sessionId !== updatedMsg.sessionId) return entry
+          const msgIndex = entry.messages.findIndex((m) => m.id === id)
+          if (msgIndex === -1) return entry
+          const newEntryMessages = [...entry.messages]
+          newEntryMessages[msgIndex] = { ...newEntryMessages[msgIndex], ...updates }
+          return { ...entry, messages: newEntryMessages }
+        })
+      }
+
+      return { messages: newMessages, historyEntries: newHistoryEntries }
+    }),
 
   setSessions: (sessions) => set({ sessions }),
 
-  setModels: (models) => set({ models }),
+  setModels: (models) => {
+    saveModels(models)
+    set({ models })
+  },
 
   toggleModel: (id) =>
-    set((state) => ({
-      models: state.models.map((m) => (m.id === id ? { ...m, enabled: !m.enabled } : m))
-    })),
+    set((state) => {
+      const updated = state.models.map((m) => (m.id === id ? { ...m, enabled: !m.enabled } : m))
+      saveModels(updated)
+      return { models: updated }
+    }),
 
   setBalances: (balances) => set({ balances }),
 
@@ -370,6 +428,25 @@ export const useAppStore = create<AppState>((set) => ({
         state.activeSplitId === id
           ? state.splitSessions.find((s) => s.id !== id)?.id ?? null
           : state.activeSplitId
+    })),
+
+  closeSplitSession: (id) =>
+    set((state) => ({
+      splitSessions: state.splitSessions.map((s) =>
+        s.id === id ? { ...s, closed: true } : s
+      ),
+      activeSplitId:
+        state.activeSplitId === id
+          ? state.splitSessions.find((s) => s.id !== id && !s.closed)?.id ?? null
+          : state.activeSplitId
+    })),
+
+  openSplitSession: (id) =>
+    set((state) => ({
+      splitSessions: state.splitSessions.map((s) =>
+        s.id === id ? { ...s, closed: false } : s
+      ),
+      activeSplitId: id
     })),
 
   setActiveSplitId: (id) => set({ activeSplitId: id }),
@@ -402,6 +479,10 @@ export const useAppStore = create<AppState>((set) => ({
     }),
 
   refreshHistory: () => set({ historyEntries: loadHistory() }),
+  setHistoryEntries: (entries) => {
+    saveHistory(entries)
+    set({ historyEntries: entries })
+  },
 
   /* 自动更新 */
   setUpdateStatus: (status) => set({ updateStatus: status }),
@@ -420,6 +501,10 @@ export const useAppStore = create<AppState>((set) => ({
       }
       return { tasks: [task, ...state.tasks] }
     }),
+  removeTask: (taskId) =>
+    set((state) => ({
+      tasks: state.tasks.filter((t) => t.id !== taskId)
+    })),
   setQueueStatus: (queueStatus) => set({ queueStatus }),
   setCurrentTaskId: (id) => set({ currentTaskId: id }),
 

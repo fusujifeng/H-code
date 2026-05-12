@@ -23511,6 +23511,7 @@ const terminalThemes = {
   trae: { background: "#0d1117", foreground: "#c9d1d9", cursor: "#3ecf8e" },
   idea: { background: "#1e1e2e", foreground: "#d4d4d4", cursor: "#4fc1ff" }
 };
+const ptyHistoryMap = /* @__PURE__ */ new Map();
 function XtermTerminal({ sessionId }) {
   const containerRef = reactExports.useRef(null);
   const termRef = reactExports.useRef(null);
@@ -23531,6 +23532,10 @@ function XtermTerminal({ sessionId }) {
     const fit = new o();
     term.loadAddon(fit);
     term.open(containerRef.current);
+    const history = ptyHistoryMap.get(sessionId);
+    if (history) {
+      term.write(history);
+    }
     requestAnimationFrame(() => {
       fit.fit();
       term.focus();
@@ -23564,10 +23569,18 @@ function XtermTerminal({ sessionId }) {
     };
     document.addEventListener("keydown", keyHandler);
     const unsub = window.electronAPI?.onPtyData((id2, data) => {
-      if (id2 === sessionId) term.write(data);
+      if (id2 === sessionId) {
+        term.write(data);
+        const current = ptyHistoryMap.get(id2) || "";
+        ptyHistoryMap.set(id2, current + data);
+      }
     });
-    const unsubHistory = window.electronAPI?.onPtyHistory((id2, history) => {
-      if (id2 === sessionId) term.write(history);
+    const unsubHistory = window.electronAPI?.onPtyHistory((id2, historyData) => {
+      if (id2 === sessionId) {
+        term.write(historyData);
+        const current = ptyHistoryMap.get(id2) || "";
+        ptyHistoryMap.set(id2, current + historyData);
+      }
     });
     termRef.current = term;
     fitRef.current = fit;

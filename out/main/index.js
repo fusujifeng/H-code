@@ -2,6 +2,8 @@
 const electron = require("electron");
 const nodePty = require("node-pty");
 const path = require("path");
+const fs = require("fs");
+const os = require("os");
 const electronUpdater = require("electron-updater");
 const https = require("https");
 const Database = require("better-sqlite3");
@@ -155,6 +157,11 @@ class SessionStore {
       id
     );
   }
+  resetRunningTasks() {
+    this.db.prepare(
+      "UPDATE tasks SET status = 'queued', finished_at = NULL WHERE status = 'running'"
+    ).run();
+  }
   deleteTask(id) {
     this.db.prepare("DELETE FROM snapshots WHERE task_id = ?").run(id);
     this.db.prepare("DELETE FROM tasks WHERE id = ?").run(id);
@@ -193,6 +200,20 @@ class TaskQueue {
   queue = [];
   isProcessing = false;
   currentTaskId = null;
+  constructor() {
+    this.restoreFromDb();
+  }
+  restoreFromDb() {
+    sessionStore.resetRunningTasks();
+    const dbTasks = sessionStore.getTasks();
+    this.queue = dbTasks.filter(
+      (t) => t.status === "queued" || t.status === "paused"
+    );
+    if (this.queue.length > 0) {
+      this.broadcastQueueStatus();
+      this.process();
+    }
+  }
   enqueue(conversationId, prompt, pipelineConfig) {
     const task = sessionStore.createTask(conversationId, prompt, pipelineConfig);
     this.queue.push(task);
@@ -244,6 +265,7 @@ class TaskQueue {
       this.isProcessing = false;
     }
     this.broadcast("task-updated", task);
+    this.removeFromQueue(taskId);
     this.broadcastQueueStatus();
     if (wasRunning) {
       this.process();
@@ -259,6 +281,7 @@ class TaskQueue {
     this.currentTaskId = null;
     this.isProcessing = false;
     this.broadcast("task-updated", task);
+    this.removeFromQueue(taskId);
     this.broadcastQueueStatus();
     this.process();
     return true;
@@ -272,8 +295,19 @@ class TaskQueue {
     this.currentTaskId = null;
     this.isProcessing = false;
     this.broadcast("task-updated", task);
+    this.removeFromQueue(taskId);
     this.broadcastQueueStatus();
     this.process();
+    return true;
+  }
+  deleteTask(taskId) {
+    sessionStore.deleteTask(taskId);
+    const existed = this.queue.some((t) => t.id === taskId);
+    this.removeFromQueue(taskId);
+    if (existed) {
+      this.broadcastQueueStatus();
+    }
+    this.broadcast("task-deleted", { taskId });
     return true;
   }
   getTasks() {
@@ -287,6 +321,9 @@ class TaskQueue {
   }
   getCurrentTaskId() {
     return this.currentTaskId;
+  }
+  removeFromQueue(taskId) {
+    this.queue = this.queue.filter((t) => t.id !== taskId);
   }
   process() {
     if (this.isProcessing) return;
@@ -387,6 +424,7 @@ ${lines.join("\n")}`;
   }
 }
 const fileWatcher = new FileWatcher();
+let currentClaudePty = null;
 function getIconPath() {
   if (electron.app.isPackaged) {
     return path.join(process.resourcesPath, "appIcon.png");
@@ -535,6 +573,13 @@ function createMainWindow() {
   }
   mainWindow.once("ready-to-show", () => {
     mainWindow?.show();
+    floatWindow?.hide();
+  });
+  mainWindow.on("minimize", () => {
+    floatWindow?.showInactive();
+  });
+  mainWindow.on("restore", () => {
+    floatWindow?.hide();
   });
   mainWindow.on("close", (e) => {
     e.preventDefault();
@@ -575,6 +620,9 @@ function createFloatWindow() {
   floatWindow.webContents.on("did-finish-load", () => {
     console.log("[FloatWindow] did-finish-load");
   });
+  if (!electron.app.isPackaged) {
+    floatWindow.webContents.openDevTools({ mode: "detach" });
+  }
   floatWindow.webContents.on("console-message", (_event, level, message) => {
     console.log(`[FloatWindow console] ${level} ${message}`);
   });
@@ -660,6 +708,7 @@ function registerIPC() {
   });
   electron.ipcMain.handle("show-main-window", () => {
     mainWindow?.show();
+    mainWindow?.restore();
     floatWindow?.hide();
   });
   electron.ipcMain.handle("quit-app", () => {
@@ -722,16 +771,13 @@ function registerIPC() {
       console.log("[PTY] cancelled pending kill for", sessionId);
     }
     if (ptySessions.has(sessionId)) {
-      console.log("[PTY] reusing existing session", sessionId);
-      const history = ptyOutputHistory.get(sessionId) || "";
-      if (history) {
-        electron.BrowserWindow.getAllWindows().forEach((win) => {
-          if (!win.isDestroyed()) {
-            win.webContents.send("pty-history", sessionId, history);
-          }
-        });
-      }
-      return { success: true, sessionId };
+      console.log("[PTY] killing existing session before recreate:", sessionId);
+      const oldPty = ptySessions.get(sessionId);
+      setTimeout(() => oldPty?.kill(), 300);
+      ptySessions.delete(sessionId);
+      pendingKillTimers.delete(sessionId);
+      ptyCreateTime.delete(sessionId);
+      ptyOutputHistory.delete(sessionId);
     }
     const shell = isWin ? "cmd.exe" : "claude";
     const claudeCmd = ["claude", ...permFlags].join(" ");
@@ -826,6 +872,9 @@ function registerIPC() {
   electron.ipcMain.handle("fail-task", (_event, taskId, error) => {
     return taskQueue.fail(taskId, error);
   });
+  electron.ipcMain.handle("delete-task", (_event, taskId) => {
+    return taskQueue.deleteTask(taskId);
+  });
   electron.ipcMain.handle("get-tasks", () => {
     return taskQueue.getTasks();
   });
@@ -856,6 +905,22 @@ function registerIPC() {
       fileWatcher.stop();
     }
   });
+  electron.ipcMain.handle("kill-claude", () => {
+    if (currentClaudePty) {
+      currentClaudePty.kill();
+    }
+  });
+  electron.ipcMain.handle("read-claude-config", () => {
+    try {
+      const configPath = path.join(os.homedir(), ".claude", "settings.json");
+      if (!fs.existsSync(configPath)) return null;
+      const content = fs.readFileSync(configPath, "utf-8");
+      return JSON.parse(content);
+    } catch (e) {
+      console.error("[ClaudeConfig] read failed:", e);
+      return null;
+    }
+  });
   electron.ipcMain.handle("send-to-claude", (_event, prompt, permission, cwd) => {
     const workDir = cwd || process.cwd();
     const isWin = process.platform === "win32";
@@ -873,6 +938,10 @@ function registerIPC() {
     const shell = isWin ? "cmd.exe" : "claude";
     const claudeCmd = ["claude", ...permFlags].join(" ");
     const args = isWin ? ["/c", claudeCmd] : permFlags;
+    if (currentClaudePty) {
+      currentClaudePty.kill();
+      currentClaudePty = null;
+    }
     const pty = nodePty.spawn(shell, args, {
       name: "xterm-256color",
       cols: 120,
@@ -880,8 +949,13 @@ function registerIPC() {
       cwd: workDir,
       env: process.env
     });
+    currentClaudePty = pty;
+    console.log("[Main] sending claude-task-start to", electron.BrowserWindow.getAllWindows().length, "windows");
     electron.BrowserWindow.getAllWindows().forEach((win) => {
-      if (!win.isDestroyed()) win.webContents.send("claude-task-start");
+      if (!win.isDestroyed()) {
+        console.log("[Main] sending claude-task-start to window", win.id);
+        win.webContents.send("claude-task-start");
+      }
     });
     setTimeout(() => {
       pty.write(prompt + "\r");
@@ -893,8 +967,15 @@ function registerIPC() {
     });
     pty.onExit(({ exitCode }) => {
       clearTimeout(timeoutId);
+      if (currentClaudePty === pty) {
+        currentClaudePty = null;
+      }
+      console.log("[Main] sending claude-close", exitCode, "to", electron.BrowserWindow.getAllWindows().length, "windows");
       electron.BrowserWindow.getAllWindows().forEach((win) => {
-        if (!win.isDestroyed()) win.webContents.send("claude-close", exitCode);
+        if (!win.isDestroyed()) {
+          console.log("[Main] sending claude-close to window", win.id);
+          win.webContents.send("claude-close", exitCode);
+        }
       });
     });
     return { success: true };

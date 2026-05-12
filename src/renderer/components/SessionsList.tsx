@@ -1,10 +1,20 @@
+import { useState } from 'react'
 import { useAppStore } from '../stores/app-store'
-import { SearchOutlined } from '@ant-design/icons'
+import { SearchOutlined, DownOutlined, UpOutlined } from '@ant-design/icons'
 
 export default function SessionsList() {
-  const sessions = useAppStore((s) => s.sessions)
-  const activeSessionId = useAppStore((s) => s.activeSessionId)
-  const setActiveSessionId = useAppStore((s) => s.setActiveSessionId)
+  const splitSessions = useAppStore((s) => s.splitSessions)
+  const activeSplitId = useAppStore((s) => s.activeSplitId)
+  const setActiveSplitId = useAppStore((s) => s.setActiveSplitId)
+  const openSplitSession = useAppStore((s) => s.openSplitSession)
+  const historyEntries = useAppStore((s) => s.historyEntries)
+  const loadHistorySession = useAppStore((s) => s.loadHistorySession)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+
+  // 只显示有对话记录的项目
+  const visibleSessions = splitSessions.filter((s) =>
+    historyEntries.some((e) => e.sessionId === s.id)
+  )
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -24,13 +34,13 @@ export default function SessionsList() {
           }}
         >
           <SearchOutlined />
-          <span>搜索会话...</span>
+          <span>搜索项目...</span>
         </div>
       </div>
 
-      {/* Session list */}
+      {/* Project + Session combined list */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '0 8px' }}>
-        {sessions.length === 0 ? (
+        {visibleSessions.length === 0 ? (
           <div
             style={{
               padding: '32px 16px',
@@ -39,73 +49,132 @@ export default function SessionsList() {
               fontSize: 13
             }}
           >
-            暂无会话，点击下方按钮创建
+            暂无项目，开始对话后会自动保存
           </div>
         ) : (
-          sessions.map((session) => (
-            <div
-              key={session.id}
-              onClick={() => setActiveSessionId(session.id)}
-              style={{
-                padding: '10px 12px',
-                borderRadius: 8,
-                marginBottom: 2,
-                cursor: 'pointer',
-                background:
-                  session.id === activeSessionId ? 'var(--blue-light)' : 'transparent',
-                transition: 'background 0.15s'
-              }}
-              onMouseEnter={(e) => {
-                if (session.id !== activeSessionId)
-                  e.currentTarget.style.background = 'var(--surface-hover)'
-              }}
-              onMouseLeave={(e) => {
-                if (session.id !== activeSessionId)
-                  e.currentTarget.style.background = 'transparent'
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center'
-                }}
-              >
-                <span
+          visibleSessions.map((session) => {
+            const history = historyEntries.find((e) => e.sessionId === session.id)
+            const msgCount = history?.messages.length ?? 0
+            const isClosed = session.closed
+            const isActive = session.id === activeSplitId && !isClosed
+            const isExpanded = expandedId === session.id
+
+            return (
+              <div key={session.id} style={{ marginBottom: 2 }}>
+                {/* Project header */}
+                <div
+                  onClick={() => {
+                    if (isClosed) {
+                      openSplitSession(session.id)
+                    } else {
+                      setActiveSplitId(session.id)
+                    }
+                  }}
                   style={{
-                    fontSize: 13,
-                    fontWeight: session.id === activeSessionId ? 600 : 400,
-                    color: 'var(--text)',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                    flex: 1
+                    padding: '10px 12px',
+                    borderRadius: 8,
+                    cursor: 'pointer',
+                    background: isActive ? 'var(--blue-light)' : 'transparent',
+                    opacity: isClosed ? 0.6 : 1,
+                    transition: 'background 0.15s, opacity 0.15s'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isActive) e.currentTarget.style.background = 'var(--surface-hover)'
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isActive) e.currentTarget.style.background = 'transparent'
                   }}
                 >
-                  {session.title}
-                </span>
-                {session.unreadCount > 0 && (
-                  <span
-                    style={{
-                      background: 'var(--blue)',
-                      color: '#fff',
-                      fontSize: 11,
-                      padding: '0 6px',
-                      borderRadius: 10,
-                      minWidth: 18,
-                      textAlign: 'center',
-                      fontWeight: 600
-                    }}
-                  >
-                    {session.unreadCount}
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span
+                      style={{
+                        fontSize: 13,
+                        fontWeight: isActive ? 600 : 400,
+                        color: 'var(--text)',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        flex: 1
+                      }}
+                    >
+                      {session.title}
+                      {isClosed && '（已关闭）'}
+                    </span>
+                    {history && history.messages.length > 0 && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setExpandedId(isExpanded ? null : session.id)
+                        }}
+                        style={{
+                          border: 'none',
+                          background: 'transparent',
+                          color: 'var(--text-tertiary)',
+                          cursor: 'pointer',
+                          padding: '2px 4px',
+                          fontSize: 10
+                        }}
+                      >
+                        {isExpanded ? <UpOutlined /> : <DownOutlined />}
+                      </button>
+                    )}
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>
+                    {history ? `${history.updatedAt} · ${msgCount} 条消息` : session.updatedAt}
+                  </div>
+                </div>
+
+                {/* Expanded session messages */}
+                {isExpanded && history && (
+                  <div style={{ padding: '4px 4px 4px 20px' }}>
+                    {history.messages.slice(-5).map((msg) => (
+                      <div
+                        key={msg.id}
+                        onClick={() => loadHistorySession(history)}
+                        style={{
+                          padding: '6px 8px',
+                          borderRadius: 6,
+                          marginBottom: 2,
+                          cursor: 'pointer',
+                          fontSize: 12,
+                          color: msg.role === 'user' ? 'var(--text)' : 'var(--text-secondary)',
+                          background: 'var(--bg)',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.background = 'var(--surface-hover)'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.background = 'var(--bg)'
+                        }}
+                        title={msg.content}
+                      >
+                        <span style={{ fontWeight: 500, marginRight: 4 }}>
+                          {msg.role === 'user' ? '我:' : 'AI:'}
+                        </span>
+                        {msg.content.slice(0, 40)}
+                        {msg.content.length > 40 ? '...' : ''}
+                      </div>
+                    ))}
+                    {history.messages.length > 5 && (
+                      <div
+                        style={{
+                          fontSize: 11,
+                          color: 'var(--text-tertiary)',
+                          padding: '4px 8px',
+                          textAlign: 'center'
+                        }}
+                      >
+                        ...还有 {history.messages.length - 5} 条消息
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
-              <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>
-                {session.updatedAt}
-              </div>
-            </div>
-          ))
+            )
+          })
         )}
       </div>
     </div>

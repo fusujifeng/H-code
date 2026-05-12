@@ -1,12 +1,16 @@
 import { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage, screen, dialog } from 'electron'
 import { spawn as spawnPty } from 'node-pty'
 import path from 'path'
+import fs from 'fs'
+import os from 'os'
 import { autoUpdater } from 'electron-updater'
 import https from 'https'
 import { sessionStore } from './session-store'
 import { taskQueue } from './task-queue'
 import { fileWatcher } from './file-watcher'
 import { snapshotManager } from './snapshot-manager'
+
+let currentClaudePty: ReturnType<typeof spawnPty> | null = null
 
 function getIconPath(): string {
   if (app.isPackaged) {
@@ -189,6 +193,15 @@ function createMainWindow() {
 
   mainWindow.once('ready-to-show', () => {
     mainWindow?.show()
+    floatWindow?.hide()
+  })
+
+  mainWindow.on('minimize', () => {
+    floatWindow?.showInactive()
+  })
+
+  mainWindow.on('restore', () => {
+    floatWindow?.hide()
   })
 
   mainWindow.on('close', (e) => {
@@ -237,6 +250,11 @@ function createFloatWindow() {
   floatWindow.webContents.on('did-finish-load', () => {
     console.log('[FloatWindow] did-finish-load')
   })
+
+  // 开发模式下打开悬浮球窗口的 DevTools，方便调试
+  if (!app.isPackaged) {
+    floatWindow.webContents.openDevTools({ mode: 'detach' })
+  }
 
   floatWindow.webContents.on('console-message', (_event, level, message) => {
     console.log(`[FloatWindow console] ${level} ${message}`)
@@ -345,6 +363,7 @@ function registerIPC() {
   /* 托盘 / 悬浮球 */
   ipcMain.handle('show-main-window', () => {
     mainWindow?.show()
+    mainWindow?.restore()
     floatWindow?.hide()
   })
 
@@ -425,16 +444,14 @@ function registerIPC() {
     }
 
     if (ptySessions.has(sessionId)) {
-      console.log('[PTY] reusing existing session', sessionId)
-      const history = ptyOutputHistory.get(sessionId) || ''
-      if (history) {
-        BrowserWindow.getAllWindows().forEach((win) => {
-          if (!win.isDestroyed()) {
-            win.webContents.send('pty-history', sessionId, history)
-          }
-        })
-      }
-      return { success: true, sessionId }
+      console.log('[PTY] killing existing session before recreate:', sessionId)
+      const oldPty = ptySessions.get(sessionId)
+      // 延迟 kill 旧 PTY，避免 Windows 上 AttachConsole 冲突
+      setTimeout(() => oldPty?.kill(), 300)
+      ptySessions.delete(sessionId)
+      pendingKillTimers.delete(sessionId)
+      ptyCreateTime.delete(sessionId)
+      ptyOutputHistory.delete(sessionId)
     }
 
     const shell = isWin ? 'cmd.exe' : 'claude'
@@ -550,6 +567,10 @@ function registerIPC() {
     return taskQueue.fail(taskId, error)
   })
 
+  ipcMain.handle('delete-task', (_event, taskId: number) => {
+    return taskQueue.deleteTask(taskId)
+  })
+
   ipcMain.handle('get-tasks', () => {
     return taskQueue.getTasks()
   })
@@ -592,6 +613,26 @@ function registerIPC() {
     }
   })
 
+  ipcMain.handle('kill-claude', () => {
+    if (currentClaudePty) {
+      currentClaudePty.kill()
+    }
+  })
+
+  /* ── 读取 Claude Code CLI 配置 ───────────────────────────── */
+
+  ipcMain.handle('read-claude-config', () => {
+    try {
+      const configPath = path.join(os.homedir(), '.claude', 'settings.json')
+      if (!fs.existsSync(configPath)) return null
+      const content = fs.readFileSync(configPath, 'utf-8')
+      return JSON.parse(content)
+    } catch (e) {
+      console.error('[ClaudeConfig] read failed:', e)
+      return null
+    }
+  })
+
   /* 保留旧的 CLI 流式接口（供 InputArea 用） */
   ipcMain.handle('send-to-claude', (_event, prompt: string, permission?: UIPermission, cwd?: string) => {
     const workDir = cwd || process.cwd()
@@ -613,6 +654,11 @@ function registerIPC() {
     const claudeCmd = ['claude', ...permFlags].join(' ')
     const args = isWin ? ['/c', claudeCmd] : permFlags
 
+    if (currentClaudePty) {
+      currentClaudePty.kill()
+      currentClaudePty = null
+    }
+
     const pty = spawnPty(shell, args, {
       name: 'xterm-256color',
       cols: 120,
@@ -620,9 +666,14 @@ function registerIPC() {
       cwd: workDir,
       env: process.env as { [key: string]: string }
     })
+    currentClaudePty = pty
 
+    console.log('[Main] sending claude-task-start to', BrowserWindow.getAllWindows().length, 'windows')
     BrowserWindow.getAllWindows().forEach((win) => {
-      if (!win.isDestroyed()) win.webContents.send('claude-task-start')
+      if (!win.isDestroyed()) {
+        console.log('[Main] sending claude-task-start to window', win.id)
+        win.webContents.send('claude-task-start')
+      }
     })
 
     setTimeout(() => {
@@ -637,8 +688,15 @@ function registerIPC() {
 
     pty.onExit(({ exitCode }) => {
       clearTimeout(timeoutId)
+      if (currentClaudePty === pty) {
+        currentClaudePty = null
+      }
+      console.log('[Main] sending claude-close', exitCode, 'to', BrowserWindow.getAllWindows().length, 'windows')
       BrowserWindow.getAllWindows().forEach((win) => {
-        if (!win.isDestroyed()) win.webContents.send('claude-close', exitCode)
+        if (!win.isDestroyed()) {
+          console.log('[Main] sending claude-close to window', win.id)
+          win.webContents.send('claude-close', exitCode)
+        }
       })
     })
 

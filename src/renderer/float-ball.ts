@@ -1,3 +1,5 @@
+console.log('[FloatBallWindow] script loaded, electronAPI:', typeof window.electronAPI)
+
 const ball = document.getElementById('ball')!
 const menu = document.getElementById('menu')!
 
@@ -75,8 +77,10 @@ menu.addEventListener('click', (e) => {
 /* ── CLI 任务状态感知 ─────────────────────────────────── */
 
 let statusTimer: ReturnType<typeof setTimeout> | null = null
+let wasRunning = false
 
 function setBallStatus(status: 'running' | 'success' | 'error' | 'none') {
+  console.log('[FloatBall] setBallStatus:', status)
   ball.classList.remove('status-running', 'status-success', 'status-error')
   if (statusTimer) {
     clearTimeout(statusTimer)
@@ -92,15 +96,32 @@ function setBallStatus(status: 'running' | 'success' | 'error' | 'none') {
   }
 }
 
+// 直接调用 Claude 的任务
 window.electronAPI?.onClaudeTaskStart(() => {
+  console.log('[FloatBall] onClaudeTaskStart')
   setBallStatus('running')
 })
 
 window.electronAPI?.onClaudeClose((code) => {
+  console.log('[FloatBall] onClaudeClose:', code)
   if (code === 0) {
     setBallStatus('success')
   } else {
     setBallStatus('error')
+  }
+})
+
+// 任务队列状态监听
+window.electronAPI?.onQueueStatus((status) => {
+  console.log('[FloatBall] onQueueStatus:', status)
+  if (status.active > 0) {
+    wasRunning = true
+    setBallStatus('running')
+  } else if (wasRunning && status.active === 0) {
+    wasRunning = false
+    setBallStatus('success')
+    // 任务完成后恢复主窗口
+    window.electronAPI?.showMainWindow?.()
   }
 })
 

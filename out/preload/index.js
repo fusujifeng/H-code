@@ -87,6 +87,7 @@ const electronAPI = {
   cancelTask: (taskId) => electron.ipcRenderer.invoke("cancel-task", taskId),
   completeTask: (taskId, result) => electron.ipcRenderer.invoke("complete-task", taskId, result),
   failTask: (taskId, error) => electron.ipcRenderer.invoke("fail-task", taskId, error),
+  deleteTask: (taskId) => electron.ipcRenderer.invoke("delete-task", taskId),
   getTasks: () => electron.ipcRenderer.invoke("get-tasks"),
   onTaskUpdated: (callback) => {
     const listener = (_event, task) => callback(task);
@@ -103,6 +104,12 @@ const electronAPI = {
     electron.ipcRenderer.on("queue-status", listener);
     return () => electron.ipcRenderer.removeListener("queue-status", listener);
   },
+  onTaskDeleted: (callback) => {
+    const listener = (_event, payload) => callback(payload);
+    electron.ipcRenderer.on("task-deleted", listener);
+    return () => electron.ipcRenderer.removeListener("task-deleted", listener);
+  },
+  killClaude: () => electron.ipcRenderer.invoke("kill-claude"),
   /* ── SQLite 会话存储 ───────────────────────────────────── */
   createConversation: (id, title) => electron.ipcRenderer.invoke("create-conversation", id, title),
   getConversations: () => electron.ipcRenderer.invoke("get-conversations"),
@@ -111,6 +118,8 @@ const electronAPI = {
   getMessages: (conversationId, limit, offset) => electron.ipcRenderer.invoke("get-messages", conversationId, limit, offset),
   /* ── 文件变动感知 ──────────────────────────────────────── */
   getFileChangeSummary: () => electron.ipcRenderer.invoke("get-file-change-summary"),
-  toggleFileWatcher: (enabled) => electron.ipcRenderer.invoke("toggle-file-watcher", enabled)
+  toggleFileWatcher: (enabled) => electron.ipcRenderer.invoke("toggle-file-watcher", enabled),
+  /* ── Claude Code CLI 配置读取 ──────────────────────────── */
+  readClaudeConfig: () => electron.ipcRenderer.invoke("read-claude-config")
 };
 electron.contextBridge.exposeInMainWorld("electronAPI", electronAPI);

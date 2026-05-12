@@ -213,6 +213,12 @@ class SessionStore {
     )
   }
 
+  resetRunningTasks() {
+    this.db.prepare(
+      "UPDATE tasks SET status = 'queued', finished_at = NULL WHERE status = 'running'"
+    ).run()
+  }
+
   deleteTask(id: number) {
     this.db.prepare('DELETE FROM snapshots WHERE task_id = ?').run(id)
     this.db.prepare('DELETE FROM tasks WHERE id = ?').run(id)

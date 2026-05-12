@@ -33,13 +33,27 @@ export default function WelcomeArea({ sessionId }: { sessionId: string }) {
   const addMessage = useAppStore((s) => s.addMessage)
 
   const handleSuggestionClick = (suggestion: (typeof suggestions)[0]) => {
+    const userId = Date.now().toString()
+    const assistantId = (Date.now() + 1).toString()
+
     addMessage({
-      id: Date.now().toString(),
+      id: userId,
       role: 'user',
       content: suggestion.description,
       timestamp: new Date().toISOString(),
       sessionId
     })
+
+    addMessage({
+      id: assistantId,
+      role: 'assistant',
+      content: '',
+      timestamp: new Date().toISOString(),
+      model: 'Claude Code CLI',
+      sessionId
+    })
+
+    window.electronAPI?.sendToClaude?.(suggestion.description)
   }
 
   return (

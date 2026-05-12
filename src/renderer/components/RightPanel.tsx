@@ -137,7 +137,7 @@ export default function RightPanel() {
   const splitSessions = useAppStore((s) => s.splitSessions)
   const activeSplitId = useAppStore((s) => s.activeSplitId)
   const addSplitSession = useAppStore((s) => s.addSplitSession)
-  const removeSplitSession = useAppStore((s) => s.removeSplitSession)
+  const closeSplitSession = useAppStore((s) => s.closeSplitSession)
   const setActiveSplitId = useAppStore((s) => s.setActiveSplitId)
   const initialized = useRef(false)
 
@@ -166,9 +166,9 @@ export default function RightPanel() {
   const handleCloseSession = useCallback(
     (id: string) => {
       window.electronAPI?.killPty(id)
-      removeSplitSession(id)
+      closeSplitSession(id)
     },
-    [removeSplitSession]
+    [closeSplitSession]
   )
 
   return (
@@ -212,7 +212,7 @@ export default function RightPanel() {
           </button>
         </div>
         <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>
-          {splitSessions.length > 1 ? '分屏模式' : '单窗口模式'}
+          {splitSessions.filter((s) => !s.closed).length > 1 ? '分屏模式' : '单窗口模式'}
         </span>
       </div>
 
@@ -225,7 +225,7 @@ export default function RightPanel() {
           display: 'flex'
         }}
       >
-        {splitSessions.length === 0 ? (
+        {splitSessions.filter((s) => !s.closed).length === 0 ? (
           <div
             style={{
               flex: 1,
@@ -236,19 +236,21 @@ export default function RightPanel() {
               fontSize: 14
             }}
           >
-            点击「+ 新建会话」开始
+            点击左侧项目重新打开，或「+ 新建会话」创建新项目
           </div>
         ) : (
-          splitSessions.map((session) => (
-            <TerminalPane
-              key={session.id}
-              session={session}
-              isActive={session.id === activeSplitId}
-              onClick={() => setActiveSplitId(session.id)}
-              onClose={() => handleCloseSession(session.id)}
-              canClose={splitSessions.length > 1}
-            />
-          ))
+          splitSessions
+            .filter((s) => !s.closed)
+            .map((session) => (
+              <TerminalPane
+                key={session.id}
+                session={session}
+                isActive={session.id === activeSplitId}
+                onClick={() => setActiveSplitId(session.id)}
+                onClose={() => handleCloseSession(session.id)}
+                canClose={splitSessions.filter((s) => !s.closed).length > 1}
+              />
+            ))
         )}
       </div>
 

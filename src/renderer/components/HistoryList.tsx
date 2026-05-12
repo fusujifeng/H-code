@@ -1,12 +1,76 @@
-import { useAppStore } from '../stores/app-store'
+import { useEffect } from 'react'
+import { useAppStore, type HistoryEntry } from '../stores/app-store'
 import { DeleteOutlined, ReloadOutlined } from '@ant-design/icons'
+
+function loadLocalHistory(): HistoryEntry[] {
+  try {
+    const raw = localStorage.getItem('cb-chat-history')
+    if (!raw) return []
+    return JSON.parse(raw) as HistoryEntry[]
+  } catch {
+    return []
+  }
+}
 
 export default function HistoryList() {
   const historyEntries = useAppStore((s) => s.historyEntries)
   const loadHistorySession = useAppStore((s) => s.loadHistorySession)
   const refreshHistory = useAppStore((s) => s.refreshHistory)
+  const setHistoryEntries = useAppStore((s) => s.setHistoryEntries)
 
-  const handleDelete = (sessionId: string) => {
+  // 挂载时从数据库加载，与 localStorage 合并
+  useEffect(() => {
+    const loadFromDb = async () => {
+      try {
+        const conversations = await window.electronAPI?.getConversations?.()
+        if (!conversations || !Array.isArray(conversations) || conversations.length === 0) return
+
+        const dbEntries: HistoryEntry[] = []
+        for (const conv of conversations as { id: string; title?: string; updatedAt?: string; createdAt?: string }[]) {
+          const messages = await window.electronAPI?.getMessages?.(conv.id)
+          dbEntries.push({
+            sessionId: conv.id,
+            title: conv.title || `会话 ${dbEntries.length + 1}`,
+            updatedAt: conv.updatedAt || conv.createdAt || new Date().toISOString(),
+            messages: (messages || []).map((m: unknown) => ({
+              id: String((m as { id: number }).id),
+              role: (m as { role: 'user' | 'assistant' | 'system' }).role,
+              content: (m as { content: string }).content,
+              timestamp: (m as { timestamp: string }).timestamp,
+              model: (m as { model?: string }).model,
+              sessionId: conv.id
+            }))
+          })
+        }
+
+        const currentEntries = useAppStore.getState().historyEntries
+        const mergedMap = new Map<string, HistoryEntry>()
+
+        // 优先保留消息更多的版本（本地可能包含最新数据）
+        for (const entry of currentEntries) {
+          mergedMap.set(entry.sessionId, entry)
+        }
+        for (const entry of dbEntries) {
+          const local = mergedMap.get(entry.sessionId)
+          if (!local || entry.messages.length > local.messages.length) {
+            mergedMap.set(entry.sessionId, entry)
+          }
+        }
+
+        const merged = Array.from(mergedMap.values())
+          .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+
+        if (merged.length > 0 || currentEntries.length === 0) {
+          setHistoryEntries(merged)
+        }
+      } catch (e) {
+        console.error('Load history from db failed:', e)
+      }
+    }
+    loadFromDb()
+  }, [setHistoryEntries])
+
+  const handleDelete = async (sessionId: string) => {
     try {
       const raw = localStorage.getItem('cb-chat-history')
       if (raw) {
@@ -14,6 +78,9 @@ export default function HistoryList() {
         const updated = entries.filter((e: { sessionId: string }) => e.sessionId !== sessionId)
         localStorage.setItem('cb-chat-history', JSON.stringify(updated))
       }
+    } catch { /* ignore */ }
+    try {
+      await window.electronAPI?.deleteConversation?.(sessionId)
     } catch { /* ignore */ }
     refreshHistory()
   }

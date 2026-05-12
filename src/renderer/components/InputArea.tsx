@@ -13,7 +13,7 @@ export default function InputArea({ useTerminal, sessionId }: { useTerminal: boo
     const trimmed = input.trim()
     if (!trimmed) return
 
-    // 终端模式：直接写给 PTY，不存消息列表
+    // 终端模式：直接写给 PTY
     if (useTerminal) {
       setInput('')
       try {
@@ -24,6 +24,15 @@ export default function InputArea({ useTerminal, sessionId }: { useTerminal: boo
       } catch (err) {
         console.error('[InputArea] writePty error:', err)
       }
+
+      // 终端命令也保存到历史记录（只存用户输入）
+      addMessage({
+        id: Date.now().toString(),
+        role: 'user',
+        content: trimmed,
+        timestamp: new Date().toISOString(),
+        sessionId
+      })
       return
     }
 
@@ -188,6 +197,7 @@ export default function InputArea({ useTerminal, sessionId }: { useTerminal: boo
               <ToolBtn icon={<AudioOutlined />} label="语音输入" />
               {loading && (
                 <button
+                  onClick={() => window.electronAPI?.killClaude?.()}
                   style={{
                     border: 'none',
                     background: 'var(--red-light)',

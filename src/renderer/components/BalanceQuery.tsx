@@ -4,26 +4,50 @@ import { ReloadOutlined } from '@ant-design/icons'
 
 export default function BalanceQuery() {
   const balances = useAppStore((s) => s.balances)
+  const models = useAppStore((s) => s.models)
   const updateBalance = useAppStore((s) => s.updateBalance)
   const [refreshing, setRefreshing] = useState(false)
   const deepseekIcon = '../assets/moymelr2-image.png'
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setRefreshing(true)
     balances.forEach((b) => {
       updateBalance(b.id, { status: 'loading', amount: '...' })
     })
 
-    setTimeout(() => {
-      balances.forEach((b) => {
-        if (b.id === '3') {
-          updateBalance(b.id, { status: 'failed', amount: '--' })
-        } else {
-          const randomAmount = (Math.random() * 15 + 2).toFixed(2)
-          const symbol = b.currency === 'EUR' ? '€' : b.currency === 'CNY' ? '¥' : '$'
-          updateBalance(b.id, {
+    // DeepSeek 真实余额查询
+    const deepseekModel = models.find((m) => m.provider === 'DeepSeek' && m.enabled)
+    let apiKey = deepseekModel?.apiKey
+
+    // 如果模型配置中没有 Key，尝试从 Claude Code CLI 配置读取
+    if (!apiKey) {
+      try {
+        const claudeConfig = await window.electronAPI?.readClaudeConfig?.()
+        if (claudeConfig?.env?.ANTHROPIC_AUTH_TOKEN) {
+          apiKey = claudeConfig.env.ANTHROPIC_AUTH_TOKEN
+        } else if (claudeConfig?.env?.ANTHROPIC_API_KEY) {
+          apiKey = claudeConfig.env.ANTHROPIC_API_KEY
+        }
+      } catch { /* ignore */ }
+    }
+
+    if (apiKey) {
+      try {
+        const res = await fetch('https://api.deepseek.com/user/balance', {
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            Accept: 'application/json'
+          }
+        })
+        const data = await res.json()
+        if (data.is_available && data.balance_infos?.length > 0) {
+          const info = data.balance_infos[0]
+          const mask = apiKey.length > 8 ? `${apiKey.slice(0, 4)}...${apiKey.slice(-4)}` : '****'
+          updateBalance('1', {
             status: 'ok',
-            amount: `${symbol}${randomAmount}`,
+            amount: `¥${info.total_balance}`,
+            keyMask: mask,
+            currency: info.currency || 'CNY',
             lastUpdated: new Date().toLocaleString('zh-CN', {
               month: '2-digit',
               day: '2-digit',
@@ -31,10 +55,31 @@ export default function BalanceQuery() {
               minute: '2-digit'
             })
           })
+        } else {
+          updateBalance('1', { status: 'failed', amount: '查询失败' })
         }
+      } catch (e) {
+        updateBalance('1', { status: 'failed', amount: '网络错误' })
+      }
+    } else {
+      updateBalance('1', { status: 'failed', amount: '未配置 API Key' })
+    }
+
+    // 其他模型保持模拟（暂无真实接口）
+    setTimeout(() => {
+      updateBalance('2', {
+        status: 'ok',
+        amount: '$12.45',
+        lastUpdated: new Date().toLocaleString('zh-CN', {
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        })
       })
+      updateBalance('3', { status: 'failed', amount: '--' })
       setRefreshing(false)
-    }, 1200)
+    }, 600)
   }
 
   const getStatusLabel = (status: BalanceInfo['status']) => {
@@ -134,51 +179,52 @@ export default function BalanceQuery() {
                 background: 'var(--surface)',
                 border: '1px solid var(--border)',
                 marginBottom: 8,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 10,
                 boxShadow: 'var(--shadow)'
               }}
             >
-              {getModelIcon(balance)}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
-                  {balance.modelName}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                {getModelIcon(balance)}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>
+                    {balance.modelName}
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>
+                    {balance.provider} · {balance.keyMask} · {balance.lastUpdated}
+                  </div>
                 </div>
-                <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>
-                  {balance.provider} · {balance.keyMask} · {balance.lastUpdated}
+                <div style={{ textAlign: 'right' }}>
+                  <div
+                    style={{
+                      fontSize: 16,
+                      fontWeight: 700,
+                      color:
+                        balance.status === 'ok'
+                          ? 'var(--green)'
+                          : balance.status === 'failed'
+                            ? 'var(--red)'
+                            : 'var(--text-tertiary)'
+                    }}
+                  >
+                    {balance.amount}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: 10,
+                      padding: '2px 7px',
+                      borderRadius: 4,
+                      background: status.bg,
+                      color: status.color,
+                      fontWeight: 600,
+                      display: 'inline-block',
+                      marginTop: 2
+                    }}
+                  >
+                    {status.text}
+                  </div>
                 </div>
               </div>
-              <div style={{ textAlign: 'right' }}>
-                <div
-                  style={{
-                    fontSize: 16,
-                    fontWeight: 700,
-                    color:
-                      balance.status === 'ok'
-                        ? 'var(--green)'
-                        : balance.status === 'failed'
-                          ? 'var(--red)'
-                          : 'var(--text-tertiary)'
-                  }}
-                >
-                  {balance.amount}
-                </div>
-                <div
-                  style={{
-                    fontSize: 10,
-                    padding: '2px 7px',
-                    borderRadius: 4,
-                    background: status.bg,
-                    color: status.color,
-                    fontWeight: 600,
-                    display: 'inline-block',
-                    marginTop: 2
-                  }}
-                >
-                  {status.text}
-                </div>
-              </div>
+
+
             </div>
           )
         })}

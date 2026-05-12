@@ -14,6 +14,9 @@ const terminalThemes: Record<ThemeId, { background: string; foreground: string; 
   idea:      { background: '#1e1e2e', foreground: '#d4d4d4',        cursor: '#4fc1ff' },
 }
 
+// 全局 PTY 输出缓存：确保切换 terminal/chat 模式或 StrictMode 双重挂载后仍能恢复历史
+const ptyHistoryMap = new Map<string, string>()
+
 export default function XtermTerminal({ sessionId }: { sessionId: string }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const termRef = useRef<Terminal | null>(null)
@@ -37,6 +40,12 @@ export default function XtermTerminal({ sessionId }: { sessionId: string }) {
     const fit = new FitAddon()
     term.loadAddon(fit)
     term.open(containerRef.current)
+
+    // 恢复历史输出（切换模式或 StrictMode 双重挂载时）
+    const history = ptyHistoryMap.get(sessionId)
+    if (history) {
+      term.write(history)
+    }
 
     requestAnimationFrame(() => {
       fit.fit()
@@ -75,11 +84,20 @@ export default function XtermTerminal({ sessionId }: { sessionId: string }) {
     document.addEventListener('keydown', keyHandler)
 
     const unsub = window.electronAPI?.onPtyData((id, data) => {
-      if (id === sessionId) term.write(data)
+      if (id === sessionId) {
+        term.write(data)
+        // 累积保存到全局 Map
+        const current = ptyHistoryMap.get(id) || ''
+        ptyHistoryMap.set(id, current + data)
+      }
     })
 
-    const unsubHistory = window.electronAPI?.onPtyHistory((id, history) => {
-      if (id === sessionId) term.write(history)
+    const unsubHistory = window.electronAPI?.onPtyHistory((id, historyData) => {
+      if (id === sessionId) {
+        term.write(historyData)
+        const current = ptyHistoryMap.get(id) || ''
+        ptyHistoryMap.set(id, current + historyData)
+      }
     })
 
     termRef.current = term

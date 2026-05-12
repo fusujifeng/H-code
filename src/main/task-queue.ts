@@ -6,6 +6,22 @@ class TaskQueue {
   private isProcessing = false
   private currentTaskId: number | null = null
 
+  constructor() {
+    this.restoreFromDb()
+  }
+
+  private restoreFromDb() {
+    sessionStore.resetRunningTasks()
+    const dbTasks = sessionStore.getTasks()
+    this.queue = dbTasks.filter(
+      (t) => t.status === 'queued' || t.status === 'paused'
+    )
+    if (this.queue.length > 0) {
+      this.broadcastQueueStatus()
+      this.process()
+    }
+  }
+
   enqueue(conversationId: string | null, prompt: string, pipelineConfig?: object): Task {
     const task = sessionStore.createTask(conversationId, prompt, pipelineConfig)
     this.queue.push(task)
@@ -61,6 +77,7 @@ class TaskQueue {
       this.isProcessing = false
     }
     this.broadcast('task-updated', task)
+    this.removeFromQueue(taskId)
     this.broadcastQueueStatus()
     if (wasRunning) {
       this.process()
@@ -77,6 +94,7 @@ class TaskQueue {
     this.currentTaskId = null
     this.isProcessing = false
     this.broadcast('task-updated', task)
+    this.removeFromQueue(taskId)
     this.broadcastQueueStatus()
     this.process()
     return true
@@ -91,8 +109,20 @@ class TaskQueue {
     this.currentTaskId = null
     this.isProcessing = false
     this.broadcast('task-updated', task)
+    this.removeFromQueue(taskId)
     this.broadcastQueueStatus()
     this.process()
+    return true
+  }
+
+  deleteTask(taskId: number): boolean {
+    sessionStore.deleteTask(taskId)
+    const existed = this.queue.some((t) => t.id === taskId)
+    this.removeFromQueue(taskId)
+    if (existed) {
+      this.broadcastQueueStatus()
+    }
+    this.broadcast('task-deleted', { taskId })
     return true
   }
 
@@ -108,6 +138,10 @@ class TaskQueue {
 
   getCurrentTaskId(): number | null {
     return this.currentTaskId
+  }
+
+  private removeFromQueue(taskId: number) {
+    this.queue = this.queue.filter((t) => t.id !== taskId)
   }
 
   private process() {

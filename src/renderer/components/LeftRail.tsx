@@ -49,7 +49,7 @@ export default function LeftRail() {
     {
       key: 'sessions',
       icon: <MessageOutlined style={{ fontSize: 18 }} />,
-      label: '会话',
+      label: '项目',
       badge: 3
     },
     {

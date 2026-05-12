@@ -49,10 +49,13 @@ declare global {
       cancelTask: (taskId: number) => Promise<boolean>
       completeTask: (taskId: number, result?: string) => Promise<boolean>
       failTask: (taskId: number, error?: string) => Promise<boolean>
+      deleteTask: (taskId: number) => Promise<boolean>
       getTasks: () => Promise<unknown[]>
       onTaskUpdated: (cb: (task: unknown) => void) => () => void
       onTaskExecute: (cb: (payload: { taskId: number; conversationId: string | null; prompt: string }) => void) => () => void
       onQueueStatus: (cb: (status: { total: number; active: number }) => void) => () => void
+      onTaskDeleted: (cb: (payload: { taskId: number }) => void) => () => void
+      killClaude: () => Promise<void>
 
       /* SQLite 会话存储 */
       createConversation: (id: string, title: string) => Promise<unknown>
@@ -64,6 +67,18 @@ declare global {
       /* 文件变动感知 */
       getFileChangeSummary: () => Promise<string | null>
       toggleFileWatcher: (enabled: boolean) => Promise<void>
+
+      /* Claude Code CLI 配置读取 */
+      readClaudeConfig: () => Promise<{
+        env?: {
+          ANTHROPIC_BASE_URL?: string
+          ANTHROPIC_AUTH_TOKEN?: string
+          ANTHROPIC_API_KEY?: string
+          ANTHROPIC_MODEL?: string
+          [key: string]: string | undefined
+        }
+        [key: string]: unknown
+      } | null>
     }
   }
 }

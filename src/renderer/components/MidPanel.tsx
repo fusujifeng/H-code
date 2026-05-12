@@ -6,7 +6,7 @@ import BalanceQuery from './BalanceQuery'
 import HistoryList from './HistoryList'
 
 const titles: Record<MidPanelView, string> = {
-  sessions: '会话列表',
+  sessions: '项目列表',
   settings: '设置',
   models: '模型配置',
   balance: '余额查询',
