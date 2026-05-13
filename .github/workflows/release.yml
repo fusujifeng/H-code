@@ -28,6 +28,11 @@ jobs:
         with:
           version: 9
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
       - name: Get pnpm store directory
         shell: bash
         run: |
@@ -42,6 +47,8 @@ jobs:
             ${{ runner.os }}-pnpm-store-
 
       - name: Install dependencies
+        env:
+          npm_config_python: python
         run: pnpm install --frozen-lockfile
 
       - name: Build
@@ -50,4 +57,5 @@ jobs:
       - name: Build & Publish
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          npm_config_python: python
         run: pnpm publish
