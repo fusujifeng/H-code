@@ -1,6 +1,6 @@
 {
   "name": "claude-bridge",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "AI coding assistant desktop app with multi-model support",
   "main": "./out/main/index.js",
   "build": {
