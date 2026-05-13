@@ -150,8 +150,9 @@ async function main() {
   success(`已创建 commit 和 tag v${newVersion}`)
 
   // 5. 推送
+  const currentBranch = run('git branch --show-current', { silent: true }) || 'main'
   info('推送到远程仓库...')
-  run(`git push origin main`)
+  run(`git push origin ${currentBranch}`)
   run(`git push origin v${newVersion}`)
   success('推送完成')
 
