@@ -13992,6 +13992,9 @@ function BalanceQuery() {
   const models = useAppStore((s15) => s15.models);
   const updateBalance = useAppStore((s15) => s15.updateBalance);
   const [refreshing, setRefreshing] = reactExports.useState(false);
+  reactExports.useEffect(() => {
+    handleRefresh();
+  }, []);
   const deepseekIcon = "../assets/moymelr2-image.png";
   const handleRefresh = async () => {
     setRefreshing(true);

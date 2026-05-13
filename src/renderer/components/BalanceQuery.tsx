@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAppStore, type BalanceInfo } from '../stores/app-store'
 import { ReloadOutlined } from '@ant-design/icons'
 
@@ -7,6 +7,12 @@ export default function BalanceQuery() {
   const models = useAppStore((s) => s.models)
   const updateBalance = useAppStore((s) => s.updateBalance)
   const [refreshing, setRefreshing] = useState(false)
+
+  // 进入页面自动查询一次
+  useEffect(() => {
+    handleRefresh()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   const deepseekIcon = '../assets/moymelr2-image.png'
 
   const handleRefresh = async () => {
