@@ -37,7 +37,7 @@
     "dist:win": "electron-builder --win",
     "dist:mac": "electron-builder --mac",
     "dist:linux": "electron-builder --linux",
-    "publish": "electron-builder --publish=always"
+    "release:publish": "electron-builder --publish=always"
   },
   "dependencies": {
     "@ant-design/icons": "^5.5.2",
