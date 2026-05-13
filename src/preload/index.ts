@@ -149,6 +149,12 @@ const electronAPI = {
     return () => ipcRenderer.removeListener('task-deleted', listener)
   },
 
+  onTaskFinished: (callback: () => void) => {
+    const listener = () => callback()
+    ipcRenderer.on('task-finished', listener)
+    return () => ipcRenderer.removeListener('task-finished', listener)
+  },
+
   killClaude: () => ipcRenderer.invoke('kill-claude'),
 
   /* ── SQLite 会话存储 ───────────────────────────────────── */

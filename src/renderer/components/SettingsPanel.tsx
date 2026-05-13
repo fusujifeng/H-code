@@ -1,6 +1,6 @@
 import { useAppStore, type ThemeId } from '../stores/app-store'
 import { ArrowLeftOutlined, DownloadOutlined, SyncOutlined, CheckCircleOutlined, ExclamationCircleOutlined, RedoOutlined } from '@ant-design/icons'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 interface ThemeCard {
   id: ThemeId
@@ -104,8 +104,14 @@ function UpdateSection() {
 
   const handleDownload = () => {
     window.electronAPI?.downloadUpdate()
-    showConfirmDialog()
   }
+
+  // 下载完成后自动弹出安装确认框
+  useEffect(() => {
+    if (updateStatus === 'downloaded') {
+      setShowConfirm(true)
+    }
+  }, [updateStatus])
 
   const handleInstall = () => {
     window.electronAPI?.installUpdate()

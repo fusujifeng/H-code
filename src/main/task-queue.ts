@@ -5,6 +5,7 @@ class TaskQueue {
   private queue: Task[] = []
   private isProcessing = false
   private currentTaskId: number | null = null
+  onTaskFinished?: () => void
 
   constructor() {
     this.restoreFromDb()
@@ -96,6 +97,7 @@ class TaskQueue {
     this.broadcast('task-updated', task)
     this.removeFromQueue(taskId)
     this.broadcastQueueStatus()
+    this.onTaskFinished?.()
     this.process()
     return true
   }
@@ -111,6 +113,7 @@ class TaskQueue {
     this.broadcast('task-updated', task)
     this.removeFromQueue(taskId)
     this.broadcastQueueStatus()
+    this.onTaskFinished?.()
     this.process()
     return true
   }

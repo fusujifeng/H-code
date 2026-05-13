@@ -1,5 +1,6 @@
+console.log("[FloatBallWindow] script loaded, electronAPI:", typeof window.electronAPI);
 const ball = document.getElementById("ball");
-const menu = document.getElementById("menu");
+document.getElementById("menu");
 let dragging = false;
 let dragStart = { x: 0, y: 0 };
 let winStart = { x: 0, y: 0 };
@@ -32,31 +33,14 @@ ball.addEventListener("click", () => {
 });
 ball.addEventListener("contextmenu", (e) => {
   e.preventDefault();
-  const rect = ball.getBoundingClientRect();
-  menu.style.display = "block";
-  menu.style.left = rect.left + "px";
-  menu.style.top = rect.bottom + 4 + "px";
-});
-document.addEventListener("click", (e) => {
-  if (!e.target.closest("#menu")) {
-    menu.style.display = "none";
-  }
-});
-menu.addEventListener("click", (e) => {
-  const target = e.target;
-  const action = target.dataset.action;
-  if (action === "show") {
-    window.electronAPI?.showMainWindow();
-  } else if (action === "hide") {
-    window.electronAPI?.hideFloatBall();
-  } else if (action === "quit") {
-    window.electronAPI?.quitApp();
-  }
-  menu.style.display = "none";
+  window.electronAPI?.showFloatBallContextMenu?.();
 });
 let statusTimer = null;
+let thinkingTimer = null;
+let wasRunning = false;
 function setBallStatus(status) {
-  ball.classList.remove("status-running", "status-success", "status-error");
+  console.log("[FloatBall] setBallStatus:", status);
+  ball.classList.remove("status-running", "status-success", "status-error", "status-confirm");
   if (statusTimer) {
     clearTimeout(statusTimer);
     statusTimer = null;
@@ -64,21 +48,60 @@ function setBallStatus(status) {
   if (status !== "none") {
     ball.classList.add(`status-${status}`);
   }
-  if (status === "success" || status === "error") {
+  if (status === "success" || status === "error" || status === "confirm") {
     statusTimer = setTimeout(() => {
       ball.classList.remove(`status-${status}`);
-    }, 3e3);
+    }, 2400);
   }
 }
+window.electronAPI?.onPtyData(() => {
+  if (!ball.classList.contains("status-running")) {
+    setBallStatus("running");
+  }
+  if (thinkingTimer) clearTimeout(thinkingTimer);
+  thinkingTimer = setTimeout(() => {
+    if (ball.classList.contains("status-running")) {
+      ball.classList.remove("status-running");
+    }
+  }, 2e3);
+});
+window.electronAPI?.onPtyExit((_sessionId, code) => {
+  console.log("[FloatBall] onPtyExit:", _sessionId, code);
+  if (code === 0 || code === null) {
+    setBallStatus("success");
+  } else {
+    setBallStatus("error");
+  }
+});
 window.electronAPI?.onClaudeTaskStart(() => {
+  console.log("[FloatBall] onClaudeTaskStart");
   setBallStatus("running");
 });
 window.electronAPI?.onClaudeClose((code) => {
+  console.log("[FloatBall] onClaudeClose:", code);
   if (code === 0) {
     setBallStatus("success");
   } else {
     setBallStatus("error");
   }
+});
+window.electronAPI?.onQueueStatus((status) => {
+  console.log("[FloatBall] onQueueStatus:", status);
+  if (status.active > 0) {
+    wasRunning = true;
+    setBallStatus("running");
+  } else if (wasRunning && status.active === 0) {
+    wasRunning = false;
+    setBallStatus("success");
+  }
+});
+window.electronAPI?.onClaudeConfirmNeeded(() => {
+  console.log("[FloatBall] onClaudeConfirmNeeded");
+  setBallStatus("confirm");
+});
+window.electronAPI?.onTaskFinished(() => {
+  console.log("[FloatBall] onTaskFinished");
+  setBallStatus("success");
 });
 ball.addEventListener("click", () => {
   if (!hasDragged) {

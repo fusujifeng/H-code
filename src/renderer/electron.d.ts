@@ -58,6 +58,7 @@ declare global {
       onTaskExecute: (cb: (payload: { taskId: number; conversationId: string | null; prompt: string }) => void) => () => void
       onQueueStatus: (cb: (status: { total: number; active: number }) => void) => () => void
       onTaskDeleted: (cb: (payload: { taskId: number }) => void) => () => void
+      onTaskFinished: (cb: () => void) => () => void
       killClaude: () => Promise<void>
 
       /* SQLite 会话存储 */

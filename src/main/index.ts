@@ -146,6 +146,28 @@ function showMainWindowFn() {
   floatWindow?.hide()
 }
 
+function scheduleAutoExpand() {
+  console.log('[Main] scheduleAutoExpand called, autoExpandFloatBall:', autoExpandFloatBall)
+  if (!autoExpandFloatBall) return
+  if (pendingAutoExpandTimer) {
+    clearTimeout(pendingAutoExpandTimer)
+  }
+  pendingAutoExpandTimer = setTimeout(() => {
+    pendingAutoExpandTimer = null
+    console.log('[Main] scheduleAutoExpand: timer fired, showing main window')
+    showMainWindowFn()
+  }, 2400)
+}
+
+function notifyTaskFinished() {
+  BrowserWindow.getAllWindows().forEach((win) => {
+    if (!win.isDestroyed()) {
+      win.webContents.send('task-finished')
+    }
+  })
+  scheduleAutoExpand()
+}
+
 /* ── 权限映射 ────────────────────────────────────────────── */
 
 type UIPermission = 'yolo' | 'trust-edit' | 'plan' | 'manual'
@@ -354,18 +376,7 @@ function createTray() {
 /* ── IPC ─────────────────────────────────────────────────── */
 
 function registerIPC() {
-  function scheduleAutoExpand() {
-    console.log('[Main] scheduleAutoExpand called, autoExpandFloatBall:', autoExpandFloatBall)
-    if (!autoExpandFloatBall) return
-    if (pendingAutoExpandTimer) {
-      clearTimeout(pendingAutoExpandTimer)
-    }
-    pendingAutoExpandTimer = setTimeout(() => {
-      pendingAutoExpandTimer = null
-      console.log('[Main] scheduleAutoExpand: timer fired, showing main window')
-      showMainWindowFn()
-    }, 2400)
-  }
+  taskQueue.onTaskFinished = notifyTaskFinished
 
   function checkNeedConfirm(sessionId: string, data: string): boolean {
     if (ptyConfirmDetected.get(sessionId)) return false
@@ -404,15 +415,25 @@ function registerIPC() {
     if (/Brewed for [\d.]+s?/i.test(text) || /Thinking for [\d.]+s?/i.test(text)) {
       console.log('[Main] checkTaskDone: time-marker detected, session:', sessionId)
       ptyTaskDoneBuffers.delete(sessionId)
+      notifyTaskFinished()
       return true
     }
 
-    // 模式2: 检测到回到命令提示符 (> 在空行后面)
+    // 模式2: Done / Completed 标记（新版 Claude Code）
+    if (/[✓✔]\s*(Done|Completed|Finished)/i.test(text) || /Task completed/i.test(text)) {
+      console.log('[Main] checkTaskDone: done-marker detected, session:', sessionId)
+      ptyTaskDoneBuffers.delete(sessionId)
+      notifyTaskFinished()
+      return true
+    }
+
+    // 模式3: 检测到回到命令提示符 (> 在空行后面)
     // 去除所有 \r 后检查末尾是否包含 \n> 或 \n>\n
     const normalized = text.replace(/\r/g, '')
     if (/\n>\s*$/.test(normalized) || /\n>\s*\n$/.test(normalized)) {
       console.log('[Main] checkTaskDone: prompt detected, session:', sessionId)
       ptyTaskDoneBuffers.delete(sessionId)
+      notifyTaskFinished()
       return true
     }
 
@@ -529,6 +550,30 @@ function registerIPC() {
     floatBallPosition = { x, y }
   })
 
+  /* ── PTY 辅助函数 ───────────────────────────────────────── */
+
+  // 分块写入 PTY，避免长文本被输入缓冲区截断导致需要额外回车
+  function writePtyChunks(pty: ReturnType<typeof spawnPty>, data: string, onDone?: () => void) {
+    const CHUNK_SIZE = 512
+    if (data.length <= CHUNK_SIZE) {
+      pty.write(data)
+      onDone?.()
+      return
+    }
+    let offset = 0
+    const writeNext = () => {
+      const chunk = data.slice(offset, offset + CHUNK_SIZE)
+      pty.write(chunk)
+      offset += CHUNK_SIZE
+      if (offset < data.length) {
+        setTimeout(writeNext, 15)
+      } else {
+        onDone?.()
+      }
+    }
+    writeNext()
+  }
+
   /* ── PTY 终端会话（给 xterm.js 用，支持多会话）─────────── */
 
   function sendPtyData(sessionId: string, data: string) {
@@ -615,7 +660,7 @@ function registerIPC() {
         ptyOutputHistory.delete(sessionId)
         sendPtyExit(sessionId, exitCode ?? -1)
         if (exitCode === 0 || exitCode === null) {
-          scheduleAutoExpand()
+          notifyTaskFinished()
         }
       } else {
         console.log('[PTY] session already replaced, ignoring exit for', sessionId)
@@ -626,16 +671,17 @@ function registerIPC() {
   })
 
   ipcMain.handle('write-pty', (_event, sessionId: string, data: string) => {
-    console.log('[PTY] write, session:', sessionId, 'data:', JSON.stringify(data))
+    console.log('[PTY] write, session:', sessionId, 'data length:', data.length)
     const pty = ptySessions.get(sessionId)
     if (!pty) {
       return { success: false, error: 'PTY session not found: ' + sessionId }
     }
-    pty.write(data)
-    // 用户按回车输入新问题时，清空任务完成检测缓冲区
-    if (data.includes('\r') || data.includes('\n')) {
-      ptyTaskDoneBuffers.delete(sessionId)
-    }
+    writePtyChunks(pty, data, () => {
+      // 用户按回车输入新问题时，清空任务完成检测缓冲区
+      if (data.includes('\r') || data.includes('\n')) {
+        ptyTaskDoneBuffers.delete(sessionId)
+      }
+    })
     return { success: true }
   })
 
@@ -813,7 +859,7 @@ function registerIPC() {
     })
 
     setTimeout(() => {
-      pty.write(prompt + '\r')
+      writePtyChunks(pty, prompt + '\r')
     }, isWin ? 1500 : 500)
 
     pty.onData((data) => {
@@ -841,7 +887,7 @@ function registerIPC() {
         }
       })
       if (exitCode === 0 || exitCode === null) {
-        scheduleAutoExpand()
+        notifyTaskFinished()
       }
     })
 

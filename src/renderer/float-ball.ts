@@ -131,6 +131,12 @@ window.electronAPI?.onClaudeConfirmNeeded(() => {
   setBallStatus('confirm')
 })
 
+// 任务完成时
+window.electronAPI?.onTaskFinished(() => {
+  console.log('[FloatBall] onTaskFinished')
+  setBallStatus('success')
+})
+
 // 点击打开主窗口时清除状态
 ball.addEventListener('click', () => {
   if (!hasDragged) {

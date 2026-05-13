@@ -200,6 +200,7 @@ class TaskQueue {
   queue = [];
   isProcessing = false;
   currentTaskId = null;
+  onTaskFinished;
   constructor() {
     this.restoreFromDb();
   }
@@ -283,6 +284,7 @@ class TaskQueue {
     this.broadcast("task-updated", task);
     this.removeFromQueue(taskId);
     this.broadcastQueueStatus();
+    this.onTaskFinished?.();
     this.process();
     return true;
   }
@@ -297,6 +299,7 @@ class TaskQueue {
     this.broadcast("task-updated", task);
     this.removeFromQueue(taskId);
     this.broadcastQueueStatus();
+    this.onTaskFinished?.();
     this.process();
     return true;
   }
@@ -536,6 +539,26 @@ function showMainWindowFn() {
   mainWindow?.restore();
   floatWindow?.hide();
 }
+function scheduleAutoExpand() {
+  console.log("[Main] scheduleAutoExpand called, autoExpandFloatBall:", autoExpandFloatBall);
+  if (!autoExpandFloatBall) return;
+  if (pendingAutoExpandTimer) {
+    clearTimeout(pendingAutoExpandTimer);
+  }
+  pendingAutoExpandTimer = setTimeout(() => {
+    pendingAutoExpandTimer = null;
+    console.log("[Main] scheduleAutoExpand: timer fired, showing main window");
+    showMainWindowFn();
+  }, 2400);
+}
+function notifyTaskFinished() {
+  electron.BrowserWindow.getAllWindows().forEach((win) => {
+    if (!win.isDestroyed()) {
+      win.webContents.send("task-finished");
+    }
+  });
+  scheduleAutoExpand();
+}
 function getPermissionFlags(mode) {
   switch (mode) {
     case "yolo":
@@ -704,18 +727,7 @@ function createTray() {
   });
 }
 function registerIPC() {
-  function scheduleAutoExpand() {
-    console.log("[Main] scheduleAutoExpand called, autoExpandFloatBall:", autoExpandFloatBall);
-    if (!autoExpandFloatBall) return;
-    if (pendingAutoExpandTimer) {
-      clearTimeout(pendingAutoExpandTimer);
-    }
-    pendingAutoExpandTimer = setTimeout(() => {
-      pendingAutoExpandTimer = null;
-      console.log("[Main] scheduleAutoExpand: timer fired, showing main window");
-      showMainWindowFn();
-    }, 2400);
-  }
+  taskQueue.onTaskFinished = notifyTaskFinished;
   function checkNeedConfirm(sessionId, data) {
     if (ptyConfirmDetected.get(sessionId)) return false;
     let buffer = ptyConfirmBuffers.get(sessionId) || "";
@@ -746,12 +758,20 @@ function registerIPC() {
     if (/Brewed for [\d.]+s?/i.test(text) || /Thinking for [\d.]+s?/i.test(text)) {
       console.log("[Main] checkTaskDone: time-marker detected, session:", sessionId);
       ptyTaskDoneBuffers.delete(sessionId);
+      notifyTaskFinished();
+      return true;
+    }
+    if (/[✓✔]\s*(Done|Completed|Finished)/i.test(text) || /Task completed/i.test(text)) {
+      console.log("[Main] checkTaskDone: done-marker detected, session:", sessionId);
+      ptyTaskDoneBuffers.delete(sessionId);
+      notifyTaskFinished();
       return true;
     }
     const normalized = text.replace(/\r/g, "");
     if (/\n>\s*$/.test(normalized) || /\n>\s*\n$/.test(normalized)) {
       console.log("[Main] checkTaskDone: prompt detected, session:", sessionId);
       ptyTaskDoneBuffers.delete(sessionId);
+      notifyTaskFinished();
       return true;
     }
     return false;
@@ -844,6 +864,26 @@ function registerIPC() {
     floatWindow?.setPosition(x, y, true);
     floatBallPosition = { x, y };
   });
+  function writePtyChunks(pty, data, onDone) {
+    const CHUNK_SIZE = 512;
+    if (data.length <= CHUNK_SIZE) {
+      pty.write(data);
+      onDone?.();
+      return;
+    }
+    let offset = 0;
+    const writeNext = () => {
+      const chunk = data.slice(offset, offset + CHUNK_SIZE);
+      pty.write(chunk);
+      offset += CHUNK_SIZE;
+      if (offset < data.length) {
+        setTimeout(writeNext, 15);
+      } else {
+        onDone?.();
+      }
+    };
+    writeNext();
+  }
   function sendPtyData(sessionId, data) {
     electron.BrowserWindow.getAllWindows().forEach((win) => {
       if (!win.isDestroyed()) {
@@ -915,7 +955,7 @@ function registerIPC() {
         ptyOutputHistory.delete(sessionId);
         sendPtyExit(sessionId, exitCode ?? -1);
         if (exitCode === 0 || exitCode === null) {
-          scheduleAutoExpand();
+          notifyTaskFinished();
         }
       } else {
         console.log("[PTY] session already replaced, ignoring exit for", sessionId);
@@ -924,15 +964,16 @@ function registerIPC() {
     return { success: true, sessionId };
   });
   electron.ipcMain.handle("write-pty", (_event, sessionId, data) => {
-    console.log("[PTY] write, session:", sessionId, "data:", JSON.stringify(data));
+    console.log("[PTY] write, session:", sessionId, "data length:", data.length);
     const pty = ptySessions.get(sessionId);
     if (!pty) {
       return { success: false, error: "PTY session not found: " + sessionId };
     }
-    pty.write(data);
-    if (data.includes("\r") || data.includes("\n")) {
-      ptyTaskDoneBuffers.delete(sessionId);
-    }
+    writePtyChunks(pty, data, () => {
+      if (data.includes("\r") || data.includes("\n")) {
+        ptyTaskDoneBuffers.delete(sessionId);
+      }
+    });
     return { success: true };
   });
   electron.ipcMain.handle("resize-pty", (_event, sessionId, cols, rows) => {
@@ -1073,7 +1114,7 @@ function registerIPC() {
       }
     });
     setTimeout(() => {
-      pty.write(prompt + "\r");
+      writePtyChunks(pty, prompt + "\r");
     }, isWin ? 1500 : 500);
     pty.onData((data) => {
       electron.BrowserWindow.getAllWindows().forEach((win) => {
@@ -1099,7 +1140,7 @@ function registerIPC() {
         }
       });
       if (exitCode === 0 || exitCode === null) {
-        scheduleAutoExpand();
+        notifyTaskFinished();
       }
     });
     return { success: true };

@@ -19,6 +19,10 @@ linux:
   target:
     - AppImage
   icon: resources/icon.png
+publish:
+  provider: github
+  owner: fusujifeng
+  repo: H-code
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true

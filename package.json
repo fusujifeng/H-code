@@ -31,7 +31,13 @@
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json",
     "typecheck": "pnpm typecheck:node && pnpm typecheck:web",
     "lint": "eslint . --ext .ts,.tsx --fix",
-    "format": "prettier --write \"src/**/*.{ts,tsx,css,json}\""
+    "format": "prettier --write \"src/**/*.{ts,tsx,css,json}\"",
+    "release": "node scripts/release.js",
+    "dist": "electron-builder",
+    "dist:win": "electron-builder --win",
+    "dist:mac": "electron-builder --mac",
+    "dist:linux": "electron-builder --linux",
+    "publish": "electron-builder --publish=always"
   },
   "dependencies": {
     "@ant-design/icons": "^5.5.2",

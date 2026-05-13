@@ -11906,7 +11906,7 @@ var CloseOutlined = function CloseOutlined2(props, ref) {
     icon: CloseOutlined$1
   }));
 };
-var RefIcon$D = /* @__PURE__ */ reactExports.forwardRef(CloseOutlined);
+var RefIcon$F = /* @__PURE__ */ reactExports.forwardRef(CloseOutlined);
 var RightOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M765.7 486.8L314.9 134.7A7.97 7.97 0 00302 141v77.3c0 4.9 2.3 9.6 6.1 12.6l360 281.1-360 281.1c-3.9 3-6.1 7.7-6.1 12.6V883c0 6.7 7.7 10.4 12.9 6.3l450.8-352.1a31.96 31.96 0 000-50.4z" } }] }, "name": "right", "theme": "outlined" };
 var RightOutlined = function RightOutlined2(props, ref) {
   return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
@@ -11914,7 +11914,15 @@ var RightOutlined = function RightOutlined2(props, ref) {
     icon: RightOutlined$1
   }));
 };
-var RefIcon$C = /* @__PURE__ */ reactExports.forwardRef(RightOutlined);
+var RefIcon$E = /* @__PURE__ */ reactExports.forwardRef(RightOutlined);
+var DownOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M884 256h-75c-5.1 0-9.9 2.5-12.9 6.6L512 654.2 227.9 262.6c-3-4.1-7.8-6.6-12.9-6.6h-75c-6.5 0-10.3 7.4-6.5 12.7l352.6 486.1c12.8 17.6 39 17.6 51.7 0l352.6-486.1c3.9-5.3.1-12.7-6.4-12.7z" } }] }, "name": "down", "theme": "outlined" };
+var DownOutlined = function DownOutlined2(props, ref) {
+  return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
+    ref,
+    icon: DownOutlined$1
+  }));
+};
+var RefIcon$D = /* @__PURE__ */ reactExports.forwardRef(DownOutlined);
 var SearchOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M909.6 854.5L649.9 594.8C690.2 542.7 712 479 712 412c0-80.2-31.3-155.4-87.9-212.1-56.6-56.7-132-87.9-212.1-87.9s-155.5 31.3-212.1 87.9C143.2 256.5 112 331.8 112 412c0 80.1 31.3 155.5 87.9 212.1C256.5 680.8 331.8 712 412 712c67 0 130.6-21.8 182.7-62l259.7 259.6a8.2 8.2 0 0011.6 0l43.6-43.5a8.2 8.2 0 000-11.6zM570.4 570.4C528 612.7 471.8 636 412 636s-116-23.3-158.4-65.6C211.3 528 188 471.8 188 412s23.3-116.1 65.6-158.4C296 211.3 352.2 188 412 188s116.1 23.2 158.4 65.6S636 352.2 636 412s-23.3 116.1-65.6 158.4z" } }] }, "name": "search", "theme": "outlined" };
 var SearchOutlined = function SearchOutlined2(props, ref) {
   return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
@@ -11922,7 +11930,7 @@ var SearchOutlined = function SearchOutlined2(props, ref) {
     icon: SearchOutlined$1
   }));
 };
-var RefIcon$B = /* @__PURE__ */ reactExports.forwardRef(SearchOutlined);
+var RefIcon$C = /* @__PURE__ */ reactExports.forwardRef(SearchOutlined);
 var LeftOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M724 218.3V141c0-6.7-7.7-10.4-12.9-6.3L260.3 486.8a31.86 31.86 0 000 50.3l450.8 352.1c5.3 4.1 12.9.4 12.9-6.3v-77.3c0-4.9-2.3-9.6-6.1-12.6l-360-281 360-281.1c3.8-3 6.1-7.7 6.1-12.6z" } }] }, "name": "left", "theme": "outlined" };
 var LeftOutlined = function LeftOutlined2(props, ref) {
   return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
@@ -11930,7 +11938,7 @@ var LeftOutlined = function LeftOutlined2(props, ref) {
     icon: LeftOutlined$1
   }));
 };
-var RefIcon$A = /* @__PURE__ */ reactExports.forwardRef(LeftOutlined);
+var RefIcon$B = /* @__PURE__ */ reactExports.forwardRef(LeftOutlined);
 var PlusOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M482 152h60q8 0 8 8v704q0 8-8 8h-60q-8 0-8-8V160q0-8 8-8z" } }, { "tag": "path", "attrs": { "d": "M192 474h672q8 0 8 8v60q0 8-8 8H160q-8 0-8-8v-60q0-8 8-8z" } }] }, "name": "plus", "theme": "outlined" };
 var PlusOutlined = function PlusOutlined2(props, ref) {
   return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
@@ -11938,7 +11946,15 @@ var PlusOutlined = function PlusOutlined2(props, ref) {
     icon: PlusOutlined$1
   }));
 };
-var RefIcon$z = /* @__PURE__ */ reactExports.forwardRef(PlusOutlined);
+var RefIcon$A = /* @__PURE__ */ reactExports.forwardRef(PlusOutlined);
+var UpOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M890.5 755.3L537.9 269.2c-12.8-17.6-39-17.6-51.7 0L133.5 755.3A8 8 0 00140 768h75c5.1 0 9.9-2.5 12.9-6.6L512 369.8l284.1 391.6c3 4.1 7.8 6.6 12.9 6.6h75c6.5 0 10.3-7.4 6.5-12.7z" } }] }, "name": "up", "theme": "outlined" };
+var UpOutlined = function UpOutlined2(props, ref) {
+  return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
+    ref,
+    icon: UpOutlined$1
+  }));
+};
+var RefIcon$z = /* @__PURE__ */ reactExports.forwardRef(UpOutlined);
 var SwapOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M847.9 592H152c-4.4 0-8 3.6-8 8v60c0 4.4 3.6 8 8 8h605.2L612.9 851c-4.1 5.2-.4 13 6.3 13h72.5c4.9 0 9.5-2.2 12.6-6.1l168.8-214.1c16.5-21 1.6-51.8-25.2-51.8zM872 356H266.8l144.3-183c4.1-5.2.4-13-6.3-13h-72.5c-4.9 0-9.5 2.2-12.6 6.1L150.9 380.2c-16.5 21-1.6 51.8 25.1 51.8h696c4.4 0 8-3.6 8-8v-60c0-4.4-3.6-8-8-8z" } }] }, "name": "swap", "theme": "outlined" };
 var SwapOutlined = function SwapOutlined2(props, ref) {
   return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
@@ -12074,8 +12090,7 @@ const defaultModels = [
     name: "DeepSeek-V4-Pro",
     provider: "DeepSeek",
     enabled: true,
-    baseUrl: "https://api.deepseek.com/anthropic",
-    apiKey: "sk-443cf9d14c654a2baac2e7e2f2058334"
+    baseUrl: "https://api.deepseek.com/anthropic"
   },
   {
     id: "2",
@@ -12090,6 +12105,20 @@ const defaultModels = [
     enabled: false
   }
 ];
+function loadModels() {
+  try {
+    const raw = localStorage.getItem("cb-models");
+    if (raw) return JSON.parse(raw);
+  } catch {
+  }
+  return [...defaultModels];
+}
+function saveModels(models) {
+  try {
+    localStorage.setItem("cb-models", JSON.stringify(models));
+  } catch {
+  }
+}
 const defaultBalances = [
   {
     id: "1",
@@ -12138,7 +12167,7 @@ const useAppStore = create((set2) => ({
   activeSessionId: null,
   sessions: [],
   messages: [],
-  models: [...defaultModels],
+  models: loadModels(),
   balances: [...defaultBalances],
   showMidPanel: true,
   showSearch: false,
@@ -12153,6 +12182,7 @@ const useAppStore = create((set2) => ({
   currentTaskId: null,
   funnyMode: loadSetting("cb-funny-mode", false),
   fileWatcherEnabled: loadSetting("cb-file-watcher", false),
+  autoExpandFloatBall: loadSetting("cb-auto-expand-float-ball", false),
   setTheme: (theme) => {
     try {
       localStorage.setItem("cb-theme", theme);
@@ -12162,7 +12192,10 @@ const useAppStore = create((set2) => ({
   },
   setMidPanelView: (view) => set2({ midPanelView: view }),
   setPermission: (permission) => set2({ permission }),
-  setFloatStatus: (floatStatus) => set2({ floatStatus }),
+  setFloatStatus: (floatStatus) => {
+    console.log("[AppStore] setFloatStatus:", floatStatus);
+    set2({ floatStatus });
+  },
   setActiveSessionId: (id2) => set2({ activeSessionId: id2 }),
   addMessage: (message) => set2((state) => {
     const newMessages = [...state.messages, message];
@@ -12180,19 +12213,52 @@ const useAppStore = create((set2) => ({
         ...state.historyEntries.filter((e2) => e2.sessionId !== message.sessionId)
       ].sort((a, b2) => new Date(b2.updatedAt).getTime() - new Date(a.updatedAt).getTime()).slice(0, HISTORY_MAX_COUNT);
       saveHistory(entries);
+      try {
+        const isFirst = !state.historyEntries.some((e2) => e2.sessionId === message.sessionId);
+        if (isFirst) {
+          window.electronAPI?.createConversation?.(message.sessionId, updated.title).catch(() => {
+          });
+        }
+        window.electronAPI?.addMessage?.(message.sessionId, {
+          role: message.role,
+          content: message.content,
+          model: message.model,
+          tokenUsage: message.tokenUsage
+        }).catch(() => {
+        });
+      } catch {
+      }
       return { messages: newMessages, historyEntries: entries };
     }
     return { messages: newMessages };
   }),
   setMessages: (messages) => set2({ messages }),
-  updateMessage: (id2, updates) => set2((state) => ({
-    messages: state.messages.map((m2) => m2.id === id2 ? { ...m2, ...updates } : m2)
-  })),
+  updateMessage: (id2, updates) => set2((state) => {
+    const newMessages = state.messages.map((m2) => m2.id === id2 ? { ...m2, ...updates } : m2);
+    const updatedMsg = newMessages.find((m2) => m2.id === id2);
+    let newHistoryEntries = state.historyEntries;
+    if (updatedMsg?.sessionId) {
+      newHistoryEntries = state.historyEntries.map((entry) => {
+        if (entry.sessionId !== updatedMsg.sessionId) return entry;
+        const msgIndex = entry.messages.findIndex((m2) => m2.id === id2);
+        if (msgIndex === -1) return entry;
+        const newEntryMessages = [...entry.messages];
+        newEntryMessages[msgIndex] = { ...newEntryMessages[msgIndex], ...updates };
+        return { ...entry, messages: newEntryMessages };
+      });
+    }
+    return { messages: newMessages, historyEntries: newHistoryEntries };
+  }),
   setSessions: (sessions) => set2({ sessions }),
-  setModels: (models) => set2({ models }),
-  toggleModel: (id2) => set2((state) => ({
-    models: state.models.map((m2) => m2.id === id2 ? { ...m2, enabled: !m2.enabled } : m2)
-  })),
+  setModels: (models) => {
+    saveModels(models);
+    set2({ models });
+  },
+  toggleModel: (id2) => set2((state) => {
+    const updated = state.models.map((m2) => m2.id === id2 ? { ...m2, enabled: !m2.enabled } : m2);
+    saveModels(updated);
+    return { models: updated };
+  }),
   setBalances: (balances) => set2({ balances }),
   updateBalance: (id2, updates) => set2((state) => ({
     balances: state.balances.map((b2) => b2.id === id2 ? { ...b2, ...updates } : b2)
@@ -12208,6 +12274,18 @@ const useAppStore = create((set2) => ({
   removeSplitSession: (id2) => set2((state) => ({
     splitSessions: state.splitSessions.filter((s15) => s15.id !== id2),
     activeSplitId: state.activeSplitId === id2 ? state.splitSessions.find((s15) => s15.id !== id2)?.id ?? null : state.activeSplitId
+  })),
+  closeSplitSession: (id2) => set2((state) => ({
+    splitSessions: state.splitSessions.map(
+      (s15) => s15.id === id2 ? { ...s15, closed: true } : s15
+    ),
+    activeSplitId: state.activeSplitId === id2 ? state.splitSessions.find((s15) => s15.id !== id2 && !s15.closed)?.id ?? null : state.activeSplitId
+  })),
+  openSplitSession: (id2) => set2((state) => ({
+    splitSessions: state.splitSessions.map(
+      (s15) => s15.id === id2 ? { ...s15, closed: false } : s15
+    ),
+    activeSplitId: id2
   })),
   setActiveSplitId: (id2) => set2({ activeSplitId: id2 }),
   /* 历史记录 */
@@ -12227,6 +12305,10 @@ const useAppStore = create((set2) => ({
     activeSessionId: entry.sessionId
   }),
   refreshHistory: () => set2({ historyEntries: loadHistory() }),
+  setHistoryEntries: (entries) => {
+    saveHistory(entries);
+    set2({ historyEntries: entries });
+  },
   /* 自动更新 */
   setUpdateStatus: (status) => set2({ updateStatus: status }),
   setUpdateProgress: (progress) => set2({ updateProgress: progress }),
@@ -12242,6 +12324,9 @@ const useAppStore = create((set2) => ({
     }
     return { tasks: [task, ...state.tasks] };
   }),
+  removeTask: (taskId) => set2((state) => ({
+    tasks: state.tasks.filter((t2) => t2.id !== taskId)
+  })),
   setQueueStatus: (queueStatus) => set2({ queueStatus }),
   setCurrentTaskId: (id2) => set2({ currentTaskId: id2 }),
   /* 趣味模式 */
@@ -12253,6 +12338,11 @@ const useAppStore = create((set2) => ({
   setFileWatcherEnabled: (enabled) => {
     saveSetting("cb-file-watcher", enabled);
     set2({ fileWatcherEnabled: enabled });
+  },
+  /* 悬浮球自动展开 */
+  setAutoExpandFloatBall: (enabled) => {
+    saveSetting("cb-auto-expand-float-ball", enabled);
+    set2({ autoExpandFloatBall: enabled });
   }
 }));
 var AppstoreOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M464 144H160c-8.8 0-16 7.2-16 16v304c0 8.8 7.2 16 16 16h304c8.8 0 16-7.2 16-16V160c0-8.8-7.2-16-16-16zm-52 268H212V212h200v200zm452-268H560c-8.8 0-16 7.2-16 16v304c0 8.8 7.2 16 16 16h304c8.8 0 16-7.2 16-16V160c0-8.8-7.2-16-16-16zm-52 268H612V212h200v200zM464 544H160c-8.8 0-16 7.2-16 16v304c0 8.8 7.2 16 16 16h304c8.8 0 16-7.2 16-16V560c0-8.8-7.2-16-16-16zm-52 268H212V612h200v200zm452-268H560c-8.8 0-16 7.2-16 16v304c0 8.8 7.2 16 16 16h304c8.8 0 16-7.2 16-16V560c0-8.8-7.2-16-16-16zm-52 268H612V612h200v200z" } }] }, "name": "appstore", "theme": "outlined" };
@@ -12498,7 +12588,7 @@ function LeftRail() {
       label: "Code",
       isSection: true
     },
-    { key: "new-session", icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$z, { style: { fontSize: 20 } }), label: "新建会话" },
+    { key: "new-session", icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$A, { style: { fontSize: 20 } }), label: "新建会话" },
     { key: "customize", icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$v, { style: { fontSize: 18 } }), label: "自定义" },
     { key: "more", icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$7, { style: { fontSize: 18 } }), label: "更多" }
   ];
@@ -12506,7 +12596,7 @@ function LeftRail() {
     {
       key: "sessions",
       icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$9, { style: { fontSize: 18 } }),
-      label: "会话",
+      label: "项目",
       badge: 3
     },
     {
@@ -12702,9 +12792,16 @@ function NavIcon({
   );
 }
 function SessionsList() {
-  const sessions = useAppStore((s15) => s15.sessions);
-  const activeSessionId = useAppStore((s15) => s15.activeSessionId);
-  const setActiveSessionId = useAppStore((s15) => s15.setActiveSessionId);
+  const splitSessions = useAppStore((s15) => s15.splitSessions);
+  const activeSplitId = useAppStore((s15) => s15.activeSplitId);
+  const setActiveSplitId = useAppStore((s15) => s15.setActiveSplitId);
+  const openSplitSession = useAppStore((s15) => s15.openSplitSession);
+  const historyEntries = useAppStore((s15) => s15.historyEntries);
+  const loadHistorySession = useAppStore((s15) => s15.loadHistorySession);
+  const [expandedId, setExpandedId] = reactExports.useState(null);
+  const visibleSessions = splitSessions.filter(
+    (s15) => historyEntries.some((e2) => e2.sessionId === s15.id)
+  );
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { height: "100%", display: "flex", flexDirection: "column", overflow: "hidden" }, children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { padding: "12px 16px" }, children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
       "div",
@@ -12721,12 +12818,12 @@ function SessionsList() {
           color: "var(--text-tertiary)"
         },
         children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$B, {}),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "搜索会话..." })
+          /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$C, {}),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "搜索项目..." })
         ]
       }
     ) }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { flex: 1, overflowY: "auto", padding: "0 8px" }, children: sessions.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { flex: 1, overflowY: "auto", padding: "0 8px" }, children: visibleSessions.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx(
       "div",
       {
         style: {
@@ -12735,77 +12832,133 @@ function SessionsList() {
           color: "var(--text-tertiary)",
           fontSize: 13
         },
-        children: "暂无会话，点击下方按钮创建"
+        children: "暂无项目，开始对话后会自动保存"
       }
-    ) : sessions.map((session) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
-      "div",
-      {
-        onClick: () => setActiveSessionId(session.id),
-        style: {
-          padding: "10px 12px",
-          borderRadius: 8,
-          marginBottom: 2,
-          cursor: "pointer",
-          background: session.id === activeSessionId ? "var(--blue-light)" : "transparent",
-          transition: "background 0.15s"
-        },
-        onMouseEnter: (e2) => {
-          if (session.id !== activeSessionId)
-            e2.currentTarget.style.background = "var(--surface-hover)";
-        },
-        onMouseLeave: (e2) => {
-          if (session.id !== activeSessionId)
-            e2.currentTarget.style.background = "transparent";
-        },
-        children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsxs(
-            "div",
-            {
-              style: {
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center"
-              },
-              children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx(
+    ) : visibleSessions.map((session) => {
+      const history = historyEntries.find((e2) => e2.sessionId === session.id);
+      const msgCount = history?.messages.length ?? 0;
+      const isClosed = session.closed;
+      const isActive2 = session.id === activeSplitId && !isClosed;
+      const isExpanded = expandedId === session.id;
+      return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { marginBottom: 2 }, children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "div",
+          {
+            onClick: () => {
+              if (isClosed) {
+                openSplitSession(session.id);
+              } else {
+                setActiveSplitId(session.id);
+              }
+            },
+            style: {
+              padding: "10px 12px",
+              borderRadius: 8,
+              cursor: "pointer",
+              background: isActive2 ? "var(--blue-light)" : "transparent",
+              opacity: isClosed ? 0.6 : 1,
+              transition: "background 0.15s, opacity 0.15s"
+            },
+            onMouseEnter: (e2) => {
+              if (!isActive2) e2.currentTarget.style.background = "var(--surface-hover)";
+            },
+            onMouseLeave: (e2) => {
+              if (!isActive2) e2.currentTarget.style.background = "transparent";
+            },
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between" }, children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs(
                   "span",
                   {
                     style: {
                       fontSize: 13,
-                      fontWeight: session.id === activeSessionId ? 600 : 400,
+                      fontWeight: isActive2 ? 600 : 400,
                       color: "var(--text)",
                       overflow: "hidden",
                       textOverflow: "ellipsis",
                       whiteSpace: "nowrap",
                       flex: 1
                     },
-                    children: session.title
+                    children: [
+                      session.title,
+                      isClosed && "（已关闭）"
+                    ]
                   }
                 ),
-                session.unreadCount > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  "span",
+                history && history.messages.length > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "button",
                   {
-                    style: {
-                      background: "var(--blue)",
-                      color: "#fff",
-                      fontSize: 11,
-                      padding: "0 6px",
-                      borderRadius: 10,
-                      minWidth: 18,
-                      textAlign: "center",
-                      fontWeight: 600
+                    onClick: (e2) => {
+                      e2.stopPropagation();
+                      setExpandedId(isExpanded ? null : session.id);
                     },
-                    children: session.unreadCount
+                    style: {
+                      border: "none",
+                      background: "transparent",
+                      color: "var(--text-tertiary)",
+                      cursor: "pointer",
+                      padding: "2px 4px",
+                      fontSize: 10
+                    },
+                    children: isExpanded ? /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$z, {}) : /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$D, {})
                   }
                 )
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { fontSize: 11, color: "var(--text-tertiary)", marginTop: 2 }, children: history ? `${history.updatedAt} · ${msgCount} 条消息` : session.updatedAt })
+            ]
+          }
+        ),
+        isExpanded && history && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { padding: "4px 4px 4px 20px" }, children: [
+          history.messages.slice(-5).map((msg) => /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "div",
+            {
+              onClick: () => loadHistorySession(history),
+              style: {
+                padding: "6px 8px",
+                borderRadius: 6,
+                marginBottom: 2,
+                cursor: "pointer",
+                fontSize: 12,
+                color: msg.role === "user" ? "var(--text)" : "var(--text-secondary)",
+                background: "var(--bg)",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap"
+              },
+              onMouseEnter: (e2) => {
+                e2.currentTarget.style.background = "var(--surface-hover)";
+              },
+              onMouseLeave: (e2) => {
+                e2.currentTarget.style.background = "var(--bg)";
+              },
+              title: msg.content,
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { fontWeight: 500, marginRight: 4 }, children: msg.role === "user" ? "我:" : "AI:" }),
+                msg.content.slice(0, 40),
+                msg.content.length > 40 ? "..." : ""
+              ]
+            },
+            msg.id
+          )),
+          history.messages.length > 5 && /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "div",
+            {
+              style: {
+                fontSize: 11,
+                color: "var(--text-tertiary)",
+                padding: "4px 8px",
+                textAlign: "center"
+              },
+              children: [
+                "...还有 ",
+                history.messages.length - 5,
+                " 条消息"
               ]
             }
-          ),
-          /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { fontSize: 11, color: "var(--text-tertiary)", marginTop: 2 }, children: session.updatedAt })
-        ]
-      },
-      session.id
-    )) })
+          )
+        ] })
+      ] }, session.id);
+    }) })
   ] });
 }
 const themeCards = [
@@ -12899,13 +13052,14 @@ function UpdateSection() {
   };
   const handleDownload = () => {
     window.electronAPI?.downloadUpdate();
-    showConfirmDialog();
   };
+  reactExports.useEffect(() => {
+    if (updateStatus === "downloaded") {
+      setShowConfirm(true);
+    }
+  }, [updateStatus]);
   const handleInstall = () => {
     window.electronAPI?.installUpdate();
-  };
-  const showConfirmDialog = () => {
-    setShowConfirm(true);
   };
   const handleLater = () => {
     setShowConfirm(false);
@@ -13147,6 +13301,8 @@ function SettingsPanel() {
   const setFunnyMode = useAppStore((s15) => s15.setFunnyMode);
   const fileWatcherEnabled = useAppStore((s15) => s15.fileWatcherEnabled);
   const setFileWatcherEnabled = useAppStore((s15) => s15.setFileWatcherEnabled);
+  const autoExpandFloatBall = useAppStore((s15) => s15.autoExpandFloatBall);
+  const setAutoExpandFloatBall = useAppStore((s15) => s15.setAutoExpandFloatBall);
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { height: "100%", overflowY: "auto" }, children: [
     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { padding: "12px 16px" }, children: [
       /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -13322,6 +13478,60 @@ function SettingsPanel() {
           )
         }
       )
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { padding: "12px 16px" }, children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        "div",
+        {
+          style: {
+            fontSize: 12,
+            fontWeight: 600,
+            color: "var(--text-secondary)",
+            textTransform: "uppercase",
+            marginBottom: 10,
+            letterSpacing: 0.5
+          },
+          children: "悬浮球"
+        }
+      ),
+      /* @__PURE__ */ jsxRuntimeExports.jsx(
+        "div",
+        {
+          style: {
+            background: "var(--surface)",
+            borderRadius: 10,
+            border: "1px solid var(--border)",
+            overflow: "hidden"
+          },
+          children: /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "div",
+            {
+              style: {
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                padding: "10px 14px"
+              },
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { fontSize: 13, color: "var(--text)" }, children: "完成任务后自动展开到桌面" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { fontSize: 11, color: "var(--text-tertiary)", marginTop: 2 }, children: "任务完成或需要确认时，自动展开主窗口" })
+                ] }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  ToggleSwitch$1,
+                  {
+                    checked: autoExpandFloatBall,
+                    onChange: (v2) => {
+                      setAutoExpandFloatBall(v2);
+                      window.electronAPI?.setAutoExpandFloatBall?.(v2);
+                    }
+                  }
+                )
+              ]
+            }
+          )
+        }
+      )
     ] })
   ] });
 }
@@ -13433,7 +13643,7 @@ function ModelConfig() {
             gap: 4
           },
           children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$z, {}),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$A, {}),
             " 添加模型"
           ]
         }
@@ -13779,24 +13989,45 @@ const secondaryBtnStyle = {
 };
 function BalanceQuery() {
   const balances = useAppStore((s15) => s15.balances);
+  const models = useAppStore((s15) => s15.models);
   const updateBalance = useAppStore((s15) => s15.updateBalance);
   const [refreshing, setRefreshing] = reactExports.useState(false);
   const deepseekIcon = "../assets/moymelr2-image.png";
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setRefreshing(true);
     balances.forEach((b2) => {
       updateBalance(b2.id, { status: "loading", amount: "..." });
     });
-    setTimeout(() => {
-      balances.forEach((b2) => {
-        if (b2.id === "3") {
-          updateBalance(b2.id, { status: "failed", amount: "--" });
-        } else {
-          const randomAmount = (Math.random() * 15 + 2).toFixed(2);
-          const symbol = b2.currency === "EUR" ? "€" : b2.currency === "CNY" ? "¥" : "$";
-          updateBalance(b2.id, {
+    const deepseekModel = models.find((m2) => m2.provider === "DeepSeek" && m2.enabled);
+    let apiKey = deepseekModel?.apiKey;
+    if (!apiKey) {
+      try {
+        const claudeConfig = await window.electronAPI?.readClaudeConfig?.();
+        if (claudeConfig?.env?.ANTHROPIC_AUTH_TOKEN) {
+          apiKey = claudeConfig.env.ANTHROPIC_AUTH_TOKEN;
+        } else if (claudeConfig?.env?.ANTHROPIC_API_KEY) {
+          apiKey = claudeConfig.env.ANTHROPIC_API_KEY;
+        }
+      } catch {
+      }
+    }
+    if (apiKey) {
+      try {
+        const res = await fetch("https://api.deepseek.com/user/balance", {
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            Accept: "application/json"
+          }
+        });
+        const data = await res.json();
+        if (data.is_available && data.balance_infos?.length > 0) {
+          const info = data.balance_infos[0];
+          const mask = apiKey.length > 8 ? `${apiKey.slice(0, 4)}...${apiKey.slice(-4)}` : "****";
+          updateBalance("1", {
             status: "ok",
-            amount: `${symbol}${randomAmount}`,
+            amount: `¥${info.total_balance}`,
+            keyMask: mask,
+            currency: info.currency || "CNY",
             lastUpdated: (/* @__PURE__ */ new Date()).toLocaleString("zh-CN", {
               month: "2-digit",
               day: "2-digit",
@@ -13804,10 +14035,29 @@ function BalanceQuery() {
               minute: "2-digit"
             })
           });
+        } else {
+          updateBalance("1", { status: "failed", amount: "查询失败" });
         }
+      } catch (e2) {
+        updateBalance("1", { status: "failed", amount: "网络错误" });
+      }
+    } else {
+      updateBalance("1", { status: "failed", amount: "未配置 API Key" });
+    }
+    setTimeout(() => {
+      updateBalance("2", {
+        status: "ok",
+        amount: "$12.45",
+        lastUpdated: (/* @__PURE__ */ new Date()).toLocaleString("zh-CN", {
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit"
+        })
       });
+      updateBalance("3", { status: "failed", amount: "--" });
       setRefreshing(false);
-    }, 1200);
+    }, 600);
   };
   const getStatusLabel = (status) => {
     switch (status) {
@@ -13893,7 +14143,7 @@ function BalanceQuery() {
     ) }),
     /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { flex: 1, overflowY: "auto", padding: "0 8px 12px" }, children: balances.map((balance) => {
       const status = getStatusLabel(balance.status);
-      return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+      return /* @__PURE__ */ jsxRuntimeExports.jsx(
         "div",
         {
           style: {
@@ -13902,12 +14152,9 @@ function BalanceQuery() {
             background: "var(--surface)",
             border: "1px solid var(--border)",
             marginBottom: 8,
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
             boxShadow: "var(--shadow)"
           },
-          children: [
+          children: /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { display: "flex", alignItems: "center", gap: 10 }, children: [
             getModelIcon(balance),
             /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { flex: 1, minWidth: 0 }, children: [
               /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { fontSize: 13, fontWeight: 600, color: "var(--text)" }, children: balance.modelName }),
@@ -13948,7 +14195,7 @@ function BalanceQuery() {
                 }
               )
             ] })
-          ]
+          ] })
         },
         balance.id
       );
@@ -13960,7 +14207,51 @@ function HistoryList() {
   const historyEntries = useAppStore((s15) => s15.historyEntries);
   const loadHistorySession = useAppStore((s15) => s15.loadHistorySession);
   const refreshHistory = useAppStore((s15) => s15.refreshHistory);
-  const handleDelete = (sessionId) => {
+  const setHistoryEntries = useAppStore((s15) => s15.setHistoryEntries);
+  reactExports.useEffect(() => {
+    const loadFromDb = async () => {
+      try {
+        const conversations = await window.electronAPI?.getConversations?.();
+        if (!conversations || !Array.isArray(conversations) || conversations.length === 0) return;
+        const dbEntries = [];
+        for (const conv of conversations) {
+          const messages = await window.electronAPI?.getMessages?.(conv.id);
+          dbEntries.push({
+            sessionId: conv.id,
+            title: conv.title || `会话 ${dbEntries.length + 1}`,
+            updatedAt: conv.updatedAt || conv.createdAt || (/* @__PURE__ */ new Date()).toISOString(),
+            messages: (messages || []).map((m2) => ({
+              id: String(m2.id),
+              role: m2.role,
+              content: m2.content,
+              timestamp: m2.timestamp,
+              model: m2.model,
+              sessionId: conv.id
+            }))
+          });
+        }
+        const currentEntries = useAppStore.getState().historyEntries;
+        const mergedMap = /* @__PURE__ */ new Map();
+        for (const entry of currentEntries) {
+          mergedMap.set(entry.sessionId, entry);
+        }
+        for (const entry of dbEntries) {
+          const local = mergedMap.get(entry.sessionId);
+          if (!local || entry.messages.length > local.messages.length) {
+            mergedMap.set(entry.sessionId, entry);
+          }
+        }
+        const merged = Array.from(mergedMap.values()).sort((a, b2) => new Date(b2.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+        if (merged.length > 0 || currentEntries.length === 0) {
+          setHistoryEntries(merged);
+        }
+      } catch (e2) {
+        console.error("Load history from db failed:", e2);
+      }
+    };
+    loadFromDb();
+  }, [setHistoryEntries]);
+  const handleDelete = async (sessionId) => {
     try {
       const raw = localStorage.getItem("cb-chat-history");
       if (raw) {
@@ -13968,6 +14259,10 @@ function HistoryList() {
         const updated = entries.filter((e2) => e2.sessionId !== sessionId);
         localStorage.setItem("cb-chat-history", JSON.stringify(updated));
       }
+    } catch {
+    }
+    try {
+      await window.electronAPI?.deleteConversation?.(sessionId);
     } catch {
     }
     refreshHistory();
@@ -14099,7 +14394,7 @@ function HistoryList() {
   ] });
 }
 const titles = {
-  sessions: "会话列表",
+  sessions: "项目列表",
   settings: "设置",
   models: "模型配置",
   balance: "余额查询",
@@ -14196,7 +14491,7 @@ function MessageBubble({ message }) {
                     alignItems: "center",
                     justifyContent: "center"
                   },
-                  children: /* @__PURE__ */ jsxRuntimeExports.jsx(SparkleSvg$1, {})
+                  children: /* @__PURE__ */ jsxRuntimeExports.jsx(SparkleSvg, {})
                 }
               ) : /* @__PURE__ */ jsxRuntimeExports.jsx(
                 "div",
@@ -14356,7 +14651,7 @@ function ActionBtn({
     }
   );
 }
-function SparkleSvg$1() {
+function SparkleSvg() {
   return /* @__PURE__ */ jsxRuntimeExports.jsxs("svg", { width: "14", height: "14", viewBox: "0 0 24 24", fill: "white", children: [
     /* @__PURE__ */ jsxRuntimeExports.jsx("path", { d: "M12 2L13.5 8.5L12 10L10.5 8.5L12 2Z" }),
     /* @__PURE__ */ jsxRuntimeExports.jsx("path", { d: "M12 14L13.5 20.5L12 22L10.5 20.5L12 14Z" }),
@@ -14394,13 +14689,24 @@ const suggestions = [
 function WelcomeArea({ sessionId }) {
   const addMessage = useAppStore((s15) => s15.addMessage);
   const handleSuggestionClick = (suggestion) => {
+    const userId = Date.now().toString();
+    const assistantId = (Date.now() + 1).toString();
     addMessage({
-      id: Date.now().toString(),
+      id: userId,
       role: "user",
       content: suggestion.description,
       timestamp: (/* @__PURE__ */ new Date()).toISOString(),
       sessionId
     });
+    addMessage({
+      id: assistantId,
+      role: "assistant",
+      content: "",
+      timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+      model: "Claude Code CLI",
+      sessionId
+    });
+    window.electronAPI?.sendToClaude?.(suggestion.description);
   };
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(
     "div",
@@ -14719,6 +15025,13 @@ function InputArea({ useTerminal, sessionId }) {
       } catch (err) {
         console.error("[InputArea] writePty error:", err);
       }
+      addMessage({
+        id: Date.now().toString(),
+        role: "user",
+        content: trimmed,
+        timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+        sessionId
+      });
       return;
     }
     addMessage({
@@ -14875,6 +15188,7 @@ function InputArea({ useTerminal, sessionId }) {
                       loading && /* @__PURE__ */ jsxRuntimeExports.jsx(
                         "button",
                         {
+                          onClick: () => window.electronAPI?.killClaude?.(),
                           style: {
                             border: "none",
                             background: "var(--red-light)",
@@ -23717,6 +24031,7 @@ function TaskQueuePanel() {
   const tasks = useAppStore((s15) => s15.tasks);
   const queueStatus = useAppStore((s15) => s15.queueStatus);
   const [collapsed, setCollapsed] = reactExports.useState(false);
+  const [expandedId, setExpandedId] = reactExports.useState(null);
   if (tasks.length === 0) return null;
   const handlePause = (taskId) => {
     window.electronAPI?.pauseTask?.(taskId);
@@ -23726,6 +24041,9 @@ function TaskQueuePanel() {
   };
   const handleCancel = (taskId) => {
     window.electronAPI?.cancelTask?.(taskId);
+  };
+  const handleDelete = (taskId) => {
+    window.electronAPI?.deleteTask?.(taskId);
   };
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(
     "div",
@@ -23776,70 +24094,110 @@ function TaskQueuePanel() {
             ]
           }
         ),
-        !collapsed && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { maxHeight: 180, overflowY: "auto", padding: "0 16px 8px" }, children: tasks.map((task) => {
+        !collapsed && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { maxHeight: 220, overflowY: "auto", padding: "0 16px 8px" }, children: tasks.map((task) => {
           const cfg = statusMap[task.status] || statusMap.queued;
+          const isExpanded = expandedId === task.id;
+          const isTerminal = task.status === "completed" || task.status === "failed" || task.status === "cancelled";
           return /* @__PURE__ */ jsxRuntimeExports.jsxs(
             "div",
             {
               style: {
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
                 padding: "6px 0",
                 borderBottom: "1px solid var(--border)",
                 fontSize: 12
               },
               children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { flex: 1, minWidth: 0, marginRight: 8 }, children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                    "div",
-                    {
-                      style: {
-                        color: "var(--text)",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap"
-                      },
-                      children: [
-                        "#",
-                        task.id,
-                        " ",
-                        task.prompt.slice(0, 40),
-                        task.prompt.length > 40 ? "..." : ""
-                      ]
-                    }
-                  ),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { color: cfg.color, fontSize: 11, marginTop: 2 }, children: cfg.label })
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between" }, children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { flex: 1, minWidth: 0, marginRight: 8 }, children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                      "div",
+                      {
+                        style: {
+                          color: "var(--text)",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap"
+                        },
+                        children: [
+                          "#",
+                          task.id,
+                          " ",
+                          task.prompt.slice(0, 40),
+                          task.prompt.length > 40 ? "..." : ""
+                        ]
+                      }
+                    ),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { color: cfg.color, fontSize: 11, marginTop: 2 }, children: cfg.label })
+                  ] }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { display: "flex", gap: 4, flexShrink: 0 }, children: [
+                    task.status === "queued" && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "button",
+                      {
+                        onClick: () => handlePause(task.id),
+                        style: iconBtnStyle,
+                        title: "暂停",
+                        children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$6, { style: { fontSize: 12 } })
+                      }
+                    ),
+                    task.status === "paused" && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "button",
+                      {
+                        onClick: () => handleResume(task.id),
+                        style: iconBtnStyle,
+                        title: "恢复",
+                        children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$l, { style: { fontSize: 12 } })
+                      }
+                    ),
+                    (task.status === "queued" || task.status === "paused" || task.status === "running") && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "button",
+                      {
+                        onClick: () => handleCancel(task.id),
+                        style: iconBtnStyle,
+                        title: "取消",
+                        children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$F, { style: { fontSize: 12 } })
+                      }
+                    ),
+                    isTerminal && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+                      task.result && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        "button",
+                        {
+                          onClick: () => setExpandedId(isExpanded ? null : task.id),
+                          style: iconBtnStyle,
+                          title: isExpanded ? "收起结果" : "查看结果",
+                          children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { fontSize: 10 }, children: isExpanded ? "▲" : "▼" })
+                        }
+                      ),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        "button",
+                        {
+                          onClick: () => handleDelete(task.id),
+                          style: iconBtnStyle,
+                          title: "删除",
+                          children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$w, { style: { fontSize: 12 } })
+                        }
+                      )
+                    ] })
+                  ] })
                 ] }),
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { display: "flex", gap: 4, flexShrink: 0 }, children: [
-                  task.status === "queued" && /* @__PURE__ */ jsxRuntimeExports.jsx(
-                    "button",
-                    {
-                      onClick: () => handlePause(task.id),
-                      style: iconBtnStyle,
-                      title: "暂停",
-                      children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$6, { style: { fontSize: 12 } })
-                    }
-                  ),
-                  task.status === "paused" && /* @__PURE__ */ jsxRuntimeExports.jsx(
-                    "button",
-                    {
-                      onClick: () => handleResume(task.id),
-                      style: iconBtnStyle,
-                      title: "恢复",
-                      children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$l, { style: { fontSize: 12 } })
-                    }
-                  ),
-                  (task.status === "queued" || task.status === "paused") && /* @__PURE__ */ jsxRuntimeExports.jsx(
-                    "button",
-                    {
-                      onClick: () => handleCancel(task.id),
-                      style: iconBtnStyle,
-                      title: "取消",
-                      children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$D, { style: { fontSize: 12 } })
-                    }
-                  )
-                ] })
+                isExpanded && task.result && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "div",
+                  {
+                    style: {
+                      marginTop: 6,
+                      padding: "6px 8px",
+                      background: "var(--bg)",
+                      borderRadius: 6,
+                      color: "var(--text-secondary)",
+                      fontSize: 11,
+                      maxHeight: 120,
+                      overflowY: "auto",
+                      whiteSpace: "pre-wrap",
+                      wordBreak: "break-word",
+                      lineHeight: 1.5
+                    },
+                    children: task.result
+                  }
+                )
               ]
             },
             task.id
@@ -23973,7 +24331,7 @@ function TerminalPane({
                     alignItems: "center"
                   },
                   title: "关闭此面板",
-                  children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$D, { style: { fontSize: 12 } })
+                  children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$F, { style: { fontSize: 12 } })
                 }
               )
             ]
@@ -23989,7 +24347,7 @@ function RightPanel() {
   const splitSessions = useAppStore((s15) => s15.splitSessions);
   const activeSplitId = useAppStore((s15) => s15.activeSplitId);
   const addSplitSession = useAppStore((s15) => s15.addSplitSession);
-  const removeSplitSession = useAppStore((s15) => s15.removeSplitSession);
+  const closeSplitSession = useAppStore((s15) => s15.closeSplitSession);
   const setActiveSplitId = useAppStore((s15) => s15.setActiveSplitId);
   const initialized = reactExports.useRef(false);
   reactExports.useEffect(() => {
@@ -24014,9 +24372,9 @@ function RightPanel() {
   const handleCloseSession = reactExports.useCallback(
     (id2) => {
       window.electronAPI?.killPty(id2);
-      removeSplitSession(id2);
+      closeSplitSession(id2);
     },
-    [removeSplitSession]
+    [closeSplitSession]
   );
   return /* @__PURE__ */ jsxRuntimeExports.jsxs(
     "div",
@@ -24058,7 +24416,7 @@ function RightPanel() {
                   children: "+ 新建会话"
                 }
               ) }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { fontSize: 11, color: "var(--text-tertiary)" }, children: splitSessions.length > 1 ? "分屏模式" : "单窗口模式" })
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { fontSize: 11, color: "var(--text-tertiary)" }, children: splitSessions.filter((s15) => !s15.closed).length > 1 ? "分屏模式" : "单窗口模式" })
             ]
           }
         ),
@@ -24071,7 +24429,7 @@ function RightPanel() {
               minHeight: 0,
               display: "flex"
             },
-            children: splitSessions.length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+            children: splitSessions.filter((s15) => !s15.closed).length === 0 ? /* @__PURE__ */ jsxRuntimeExports.jsx(
               "div",
               {
                 style: {
@@ -24082,16 +24440,16 @@ function RightPanel() {
                   color: "var(--text-tertiary)",
                   fontSize: 14
                 },
-                children: "点击「+ 新建会话」开始"
+                children: "点击左侧项目重新打开，或「+ 新建会话」创建新项目"
               }
-            ) : splitSessions.map((session) => /* @__PURE__ */ jsxRuntimeExports.jsx(
+            ) : splitSessions.filter((s15) => !s15.closed).map((session) => /* @__PURE__ */ jsxRuntimeExports.jsx(
               TerminalPane,
               {
                 session,
                 isActive: session.id === activeSplitId,
                 onClick: () => setActiveSplitId(session.id),
                 onClose: () => handleCloseSession(session.id),
-                canClose: splitSessions.length > 1
+                canClose: splitSessions.filter((s15) => !s15.closed).length > 1
               },
               session.id
             ))
@@ -24171,10 +24529,10 @@ function TitleBar() {
                 }
               ),
               /* @__PURE__ */ jsxRuntimeExports.jsx(Divider, {}),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(TitleBarIconBtn, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$B, {}), title: "全局搜索 (Ctrl+K)", onClick: toggleSearch }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(TitleBarIconBtn, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$C, {}), title: "全局搜索 (Ctrl+K)", onClick: toggleSearch }),
               /* @__PURE__ */ jsxRuntimeExports.jsx(Divider, {}),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(TitleBarIconBtn, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$A, {}), title: "后退" }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(TitleBarIconBtn, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$C, {}), title: "前进" })
+              /* @__PURE__ */ jsxRuntimeExports.jsx(TitleBarIconBtn, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$B, {}), title: "后退" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(TitleBarIconBtn, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$E, {}), title: "前进" })
             ] })
           }
         ),
@@ -24224,7 +24582,7 @@ function TitleBar() {
           /* @__PURE__ */ jsxRuntimeExports.jsx(
             WinCtrlBtn,
             {
-              icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$D, {}),
+              icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$F, {}),
               onClick: handleClose,
               title: "关闭",
               isClose: true
@@ -24386,7 +24744,7 @@ function GlobalSearch() {
     const base = [
       {
         id: "new-session",
-        icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$z, {}),
+        icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$A, {}),
         title: "新建会话",
         subtitle: "开始一个新的聊天会话",
         action: () => {
@@ -24561,7 +24919,7 @@ function GlobalSearch() {
                   borderBottom: "1px solid var(--border)"
                 },
                 children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$B, { style: { fontSize: 18, color: "var(--text-tertiary)", flexShrink: 0 } }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$C, { style: { fontSize: 18, color: "var(--text-tertiary)", flexShrink: 0 } }),
                   /* @__PURE__ */ jsxRuntimeExports.jsx(
                     "input",
                     {
@@ -24767,202 +25125,6 @@ function MainLayout() {
     }
   );
 }
-const stateColors = {
-  idle: "#9ca3af",
-  running: "#1677ff",
-  success: "#52c41a",
-  confirm: "#faad14",
-  error: "#f5222d"
-};
-const stateAnimations = {
-  idle: "breath 2.5s ease-in-out infinite",
-  running: "bounce-active 0.8s ease-in-out infinite",
-  success: "spin-glow 1.5s ease-in-out infinite",
-  confirm: "pulse-beat 0.8s ease-in-out infinite",
-  error: "shake 0.4s ease-in-out infinite"
-};
-function FloatBall() {
-  const floatStatus = useAppStore((s15) => s15.floatStatus);
-  const setFloatStatus = useAppStore((s15) => s15.setFloatStatus);
-  const [showMenu, setShowMenu] = reactExports.useState(false);
-  const [position2, setPosition] = reactExports.useState({ x: 0, y: 0 });
-  const [dragging, setDragging] = reactExports.useState(false);
-  const dragStart = reactExports.useRef({ x: 0, y: 0 });
-  const posStart = reactExports.useRef({ x: 0, y: 0 });
-  const ballRef = reactExports.useRef(null);
-  const currentColor = stateColors[floatStatus];
-  const currentAnim = stateAnimations[floatStatus];
-  const cycleState = () => {
-    const states = ["idle", "running", "success", "confirm", "error"];
-    const idx = states.indexOf(floatStatus);
-    setFloatStatus(states[(idx + 1) % states.length]);
-    setShowMenu(false);
-  };
-  const handleContextMenu = (e2) => {
-    e2.preventDefault();
-    setShowMenu(!showMenu);
-  };
-  const handleMouseDown = reactExports.useCallback(
-    (e2) => {
-      if (e2.button === 2) return;
-      setDragging(true);
-      dragStart.current = { x: e2.clientX, y: e2.clientY };
-      posStart.current = { x: position2.x, y: position2.y };
-    },
-    [position2]
-  );
-  reactExports.useEffect(() => {
-    if (!dragging) return;
-    const handleMouseMove = (e2) => {
-      const dx = e2.clientX - dragStart.current.x;
-      const dy = e2.clientY - dragStart.current.y;
-      setPosition({
-        x: posStart.current.x + dx,
-        y: posStart.current.y + dy
-      });
-    };
-    const handleMouseUp = () => {
-      setDragging(false);
-    };
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
-    return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, [dragging]);
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx(
-      "div",
-      {
-        ref: ballRef,
-        onClick: cycleState,
-        onContextMenu: handleContextMenu,
-        onMouseDown: handleMouseDown,
-        style: {
-          position: "fixed",
-          bottom: position2.y ? "auto" : 90,
-          right: position2.x ? "auto" : 36,
-          top: position2.y ? position2.y : "auto",
-          left: position2.x ? position2.x : "auto",
-          width: 56,
-          height: 56,
-          borderRadius: "50%",
-          background: "var(--surface)",
-          border: `1px solid var(--border)`,
-          boxShadow: "var(--shadow-lg)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          cursor: dragging ? "grabbing" : "pointer",
-          zIndex: 999,
-          animation: currentAnim,
-          transition: dragging ? "none" : "all 0.3s",
-          userSelect: "none"
-        },
-        children: /* @__PURE__ */ jsxRuntimeExports.jsx(
-          "div",
-          {
-            style: {
-              width: 26,
-              height: 26,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center"
-            },
-            children: /* @__PURE__ */ jsxRuntimeExports.jsx(SparkleSvg, { color: currentColor })
-          }
-        )
-      }
-    ),
-    showMenu && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
-      /* @__PURE__ */ jsxRuntimeExports.jsx(
-        "div",
-        {
-          style: {
-            position: "fixed",
-            inset: 0,
-            zIndex: 998
-          },
-          onClick: () => setShowMenu(false)
-        }
-      ),
-      /* @__PURE__ */ jsxRuntimeExports.jsx(
-        "div",
-        {
-          style: {
-            position: "fixed",
-            bottom: position2.y ? "auto" : 150,
-            right: position2.x ? "auto" : 36,
-            top: position2.y ? position2.y - 60 : "auto",
-            left: position2.x ? position2.x : "auto",
-            background: "var(--surface)",
-            borderRadius: 10,
-            border: "1px solid var(--border)",
-            boxShadow: "var(--shadow-lg)",
-            minWidth: 160,
-            overflow: "hidden",
-            zIndex: 999
-          },
-          children: [
-            { label: "打开主界面", action: () => {
-            } },
-            { label: "暂停所有任务", action: () => setFloatStatus("idle") },
-            { label: "💰 显示余额", action: () => {
-            } },
-            { label: "退出", action: () => {
-            } }
-          ].map((item, i) => /* @__PURE__ */ jsxRuntimeExports.jsx(
-            "div",
-            {
-              onClick: () => {
-                item.action();
-                setShowMenu(false);
-              },
-              style: {
-                padding: "9px 16px",
-                fontSize: 13,
-                color: "var(--text)",
-                cursor: "pointer",
-                borderBottom: i < 3 ? "1px solid var(--border)" : "none",
-                transition: "background 0.1s"
-              },
-              onMouseEnter: (e2) => {
-                e2.currentTarget.style.background = "var(--surface-hover)";
-              },
-              onMouseLeave: (e2) => {
-                e2.currentTarget.style.background = "transparent";
-              },
-              children: item.label
-            },
-            i
-          ))
-        }
-      )
-    ] })
-  ] });
-}
-function SparkleSvg({ color }) {
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs("svg", { width: "24", height: "24", viewBox: "0 0 24 24", fill: "none", children: [
-    /* @__PURE__ */ jsxRuntimeExports.jsx(
-      "path",
-      {
-        d: "M12 2L13.5 8.5L12 10L10.5 8.5L12 2Z",
-        fill: color
-      }
-    ),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("path", { d: "M12 14L13.5 20.5L12 22L10.5 20.5L12 14Z", fill: color }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("path", { d: "M2 12L8.5 10.5L10 12L8.5 13.5L2 12Z", fill: color }),
-    /* @__PURE__ */ jsxRuntimeExports.jsx(
-      "path",
-      {
-        d: "M14 12L20.5 10.5L22 12L20.5 13.5L14 12Z",
-        fill: color
-      }
-    ),
-    /* @__PURE__ */ jsxRuntimeExports.jsx("circle", { cx: "12", cy: "12", r: "2.5", fill: color })
-  ] });
-}
 function App() {
   const theme = useAppStore((s15) => s15.theme);
   const setUpdateStatus = useAppStore((s15) => s15.setUpdateStatus);
@@ -24971,11 +25133,14 @@ function App() {
   const updateTask = useAppStore((s15) => s15.updateTask);
   const setQueueStatus = useAppStore((s15) => s15.setQueueStatus);
   const setTasks = useAppStore((s15) => s15.setTasks);
+  const removeTask = useAppStore((s15) => s15.removeTask);
   const setCurrentTaskId = useAppStore((s15) => s15.setCurrentTaskId);
   const addMessage = useAppStore((s15) => s15.addMessage);
   const updateMessage = useAppStore((s15) => s15.updateMessage);
+  const setFloatStatus = useAppStore((s15) => s15.setFloatStatus);
   const activeSessionId = useAppStore((s15) => s15.activeSessionId);
   const fileWatcherEnabled = useAppStore((s15) => s15.fileWatcherEnabled);
+  const autoExpandFloatBall = useAppStore((s15) => s15.autoExpandFloatBall);
   const currentTaskIdRef = reactExports.useRef(null);
   const assistantIdRef = reactExports.useRef(null);
   const fullContentRef = reactExports.useRef("");
@@ -25015,9 +25180,16 @@ function App() {
     const unsubQueueStatus = window.electronAPI?.onQueueStatus((status) => {
       setQueueStatus(status);
     });
+    const unsubTaskDeleted = window.electronAPI?.onTaskDeleted?.((payload) => {
+      removeTask(payload.taskId);
+    });
+    const unsubClaudeTaskStart = window.electronAPI?.onClaudeTaskStart(() => {
+      setFloatStatus("running");
+    });
     const unsubTaskExecute = window.electronAPI?.onTaskExecute((payload) => {
       currentTaskIdRef.current = payload.taskId;
       setCurrentTaskId(payload.taskId);
+      setFloatStatus("running");
       const sessionId = payload.conversationId || activeSessionIdRef.current || "default";
       addMessage({
         id: `task-user-${payload.taskId}`,
@@ -25043,12 +25215,28 @@ function App() {
       if (assistantIdRef.current) {
         fullContentRef.current += data;
         updateMessage(assistantIdRef.current, { content: fullContentRef.current });
+      } else {
+        const state = useAppStore.getState();
+        const lastAssistant = [...state.messages].reverse().find(
+          (m2) => m2.role === "assistant" && m2.model === "Claude Code CLI"
+        );
+        if (lastAssistant) {
+          updateMessage(lastAssistant.id, { content: lastAssistant.content + data });
+        }
       }
     });
     const unsubError = window.electronAPI?.onClaudeError((err) => {
       if (assistantIdRef.current) {
         fullContentRef.current += err;
         updateMessage(assistantIdRef.current, { content: fullContentRef.current });
+      } else {
+        const state = useAppStore.getState();
+        const lastAssistant = [...state.messages].reverse().find(
+          (m2) => m2.role === "assistant" && m2.model === "Claude Code CLI"
+        );
+        if (lastAssistant) {
+          updateMessage(lastAssistant.id, { content: lastAssistant.content + err });
+        }
       }
     });
     const unsubClaudeClose = window.electronAPI?.onClaudeClose((code) => {
@@ -25061,8 +25249,10 @@ function App() {
             updateMessage(assistantIdRef.current, { content: fullContentRef.current });
           }
           window.electronAPI?.failTask?.(taskId, `退出码: ${code}`);
+          setFloatStatus("error");
         } else {
           window.electronAPI?.completeTask?.(taskId, fullContentRef.current);
+          setFloatStatus("success");
         }
         currentTaskIdRef.current = null;
         assistantIdRef.current = null;
@@ -25070,19 +25260,27 @@ function App() {
         setCurrentTaskId(null);
       }
     });
-    if (fileWatcherEnabled) {
-      window.electronAPI?.toggleFileWatcher?.(true);
-    }
     return () => {
+      unsubClaudeTaskStart?.();
       unsubTaskUpdated?.();
       unsubQueueStatus?.();
+      unsubTaskDeleted?.();
       unsubTaskExecute?.();
       unsubOutput?.();
       unsubError?.();
       unsubClaudeClose?.();
     };
   }, []);
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+  reactExports.useEffect(() => {
+    window.electronAPI?.toggleFileWatcher?.(fileWatcherEnabled);
+  }, [fileWatcherEnabled]);
+  reactExports.useEffect(() => {
+    window.electronAPI?.setAutoExpandFloatBall?.(autoExpandFloatBall);
+  }, [autoExpandFloatBall]);
+  reactExports.useEffect(() => {
+    window.electronAPI?.setAutoExpandFloatBall?.(autoExpandFloatBall);
+  }, []);
+  return /* @__PURE__ */ jsxRuntimeExports.jsx(
     "div",
     {
       style: {
@@ -25093,10 +25291,7 @@ function App() {
         color: "var(--text)",
         overflow: "hidden"
       },
-      children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsx(MainLayout, {}),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(FloatBall, {})
-      ]
+      children: /* @__PURE__ */ jsxRuntimeExports.jsx(MainLayout, {})
     }
   );
 }
