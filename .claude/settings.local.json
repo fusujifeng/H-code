@@ -3,7 +3,10 @@
     "allow": [
       "Bash(npx tsc *)",
       "Bash(npx electron *)",
-      "Bash(npx electron-vite *)"
+      "Bash(npx electron-vite *)",
+      "Bash(gh release *)",
+      "Bash(gh run *)",
+      "WebFetch(domain:github.com)"
     ]
   }
 }
