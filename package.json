@@ -1,6 +1,6 @@
 {
   "name": "claude-bridge",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "AI coding assistant desktop app with multi-model support",
   "main": "./out/main/index.js",
   "build": {
@@ -22,7 +22,9 @@
       "allowToChangeInstallationDirectory": true
     },
     "linux": {
-      "target": ["AppImage"]
+      "target": [
+        "AppImage"
+      ]
     }
   },
   "scripts": {
