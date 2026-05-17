@@ -76,12 +76,14 @@ async function checkForUpdatesSilent() {
   const reachable = await checkGitHubReachable()
   if (!reachable) {
     console.log('[Updater] GitHub not reachable, skipping check')
+    mainWindow?.webContents.send('update-status', 'not-available')
     return
   }
   try {
     await autoUpdater.checkForUpdates()
-  } catch (err) {
+  } catch (err: any) {
     console.error('[Updater] check failed:', err)
+    mainWindow?.webContents.send('update-error', err?.message ?? String(err))
   }
 }
 
@@ -365,7 +367,7 @@ function createTray() {
   const icon = nativeImage.createFromPath(iconPath).resize({ width: 32, height: 32 })
   tray = new Tray(icon)
 
-  tray.setToolTip('ClaudeBridge')
+  tray.setToolTip('H-code')
   rebuildTrayMenu()
 
   tray.on('click', () => {

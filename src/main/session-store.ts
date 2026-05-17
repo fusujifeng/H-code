@@ -43,8 +43,8 @@ class SessionStore {
 
   constructor() {
     const dbPath = app.isPackaged
-      ? path.join(app.getPath('userData'), 'claude-bridge.db')
-      : path.join(process.cwd(), 'claude-bridge.db')
+      ? path.join(app.getPath('userData'), 'h-code.db')
+      : path.join(process.cwd(), 'h-code.db')
 
     this.db = new Database(dbPath)
     this.initTables()

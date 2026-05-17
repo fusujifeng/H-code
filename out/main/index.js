@@ -11,7 +11,7 @@ const chokidar = require("chokidar");
 class SessionStore {
   db;
   constructor() {
-    const dbPath = electron.app.isPackaged ? path.join(electron.app.getPath("userData"), "claude-bridge.db") : path.join(process.cwd(), "claude-bridge.db");
+    const dbPath = electron.app.isPackaged ? path.join(electron.app.getPath("userData"), "h-code.db") : path.join(process.cwd(), "h-code.db");
     this.db = new Database(dbPath);
     this.initTables();
   }
@@ -480,12 +480,14 @@ async function checkForUpdatesSilent() {
   const reachable = await checkGitHubReachable();
   if (!reachable) {
     console.log("[Updater] GitHub not reachable, skipping check");
+    mainWindow?.webContents.send("update-status", "not-available");
     return;
   }
   try {
     await electronUpdater.autoUpdater.checkForUpdates();
   } catch (err) {
     console.error("[Updater] check failed:", err);
+    mainWindow?.webContents.send("update-error", err?.message ?? String(err));
   }
 }
 async function checkForUpdatesAndNotify() {
@@ -720,7 +722,7 @@ function createTray() {
   const iconPath = getIconPath();
   const icon = electron.nativeImage.createFromPath(iconPath).resize({ width: 32, height: 32 });
   tray = new electron.Tray(icon);
-  tray.setToolTip("ClaudeBridge");
+  tray.setToolTip("H-code");
   rebuildTrayMenu();
   tray.on("click", () => {
     showMainWindowFn();

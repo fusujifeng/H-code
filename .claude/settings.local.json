@@ -6,7 +6,11 @@
       "Bash(npx electron-vite *)",
       "Bash(gh release *)",
       "Bash(gh run *)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(taskkill /f /im node.exe)",
+      "Bash(taskkill /f /im electron.exe)",
+      "Bash(ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ pnpm dist:win)",
+      "Bash(ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/ pnpm dist:win)"
     ]
   }
 }

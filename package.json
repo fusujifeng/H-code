@@ -1,11 +1,11 @@
 {
-  "name": "claude-bridge",
+  "name": "h-code",
   "version": "1.0.7",
   "description": "AI coding assistant desktop app with multi-model support",
   "main": "./out/main/index.js",
   "build": {
-    "appId": "com.claudebridge.app",
-    "productName": "ClaudeBridge",
+    "appId": "com.hcode.app",
+    "productName": "H-code",
     "publish": [
       {
         "provider": "github",

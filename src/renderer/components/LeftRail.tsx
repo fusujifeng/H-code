@@ -125,9 +125,9 @@ export default function LeftRail() {
           fontWeight: 700,
           fontSize: 14
         }}
-        title="ClaudeBridge"
+        title="H-code"
       >
-        CB
+        HC
       </div>
 
       {topItems.map((item) => (

@@ -1,5 +1,5 @@
-appId: com.claudebridge.app
-productName: ClaudeBridge
+appId: com.hcode.app
+productName: H-code
 directories:
   buildResources: resources
   output: dist

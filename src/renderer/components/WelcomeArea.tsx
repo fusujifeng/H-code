@@ -106,7 +106,7 @@ export default function WelcomeArea({ sessionId }: { sessionId: string }) {
           textAlign: 'center'
         }}
       >
-        你好，我是 ClaudeBridge
+        你好，我是 H-code
       </h1>
 
       {/* Subtitle */}

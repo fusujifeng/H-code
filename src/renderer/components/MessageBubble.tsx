@@ -69,7 +69,7 @@ export default function MessageBubble({ message }: { message: Message }) {
             color: isAI ? 'var(--blue)' : 'var(--text)'
           }}
         >
-          {isAI ? 'ClaudeBridge' : '你'}
+          {isAI ? 'H-code' : '你'}
         </span>
         <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>
           {new Date(message.timestamp).toLocaleTimeString('zh-CN', {

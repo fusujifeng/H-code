@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * ClaudeBridge 自动发布脚本
+ * H-code 自动发布脚本
  *
  * 用法:
  *   node scripts/release.js           # 交互式选择版本升级类型
@@ -82,7 +82,7 @@ function checkGitStatus() {
 
 // ── 主流程 ────────────────────────────────────────────────
 async function main() {
-  log(`\n${c.bold}ClaudeBridge 自动发布脚本${c.reset}\n`)
+  log(`\n${c.bold}H-code 自动发布脚本${c.reset}\n`)
   info(`当前版本: ${c.bold}${currentVersion}${c.reset}`)
 
   // 1. 解析版本参数
