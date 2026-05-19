@@ -5,8 +5,10 @@ directories:
   output: dist
 files:
   - out/**/*
-  - "!out/renderer/**/*"
 asar: true
+extraResources:
+  - from: src/renderer/assets/appIcon.png
+    to: appIcon.png
 win:
   target:
     - nsis
@@ -14,7 +16,7 @@ win:
 mac:
   target:
     - dmg
-  icon: resources/icon.icns
+  icon: resources/icon.png
 linux:
   target:
     - AppImage

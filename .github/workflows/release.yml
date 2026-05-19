@@ -53,6 +53,9 @@ jobs:
           npm_config_python: python
         run: pnpm install --frozen-lockfile
 
+      - name: Generate icons
+        run: node scripts/generate-icons.js
+
       - name: Build
         run: pnpm build
 

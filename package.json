@@ -3,30 +3,6 @@
   "version": "1.0.9",
   "description": "AI coding assistant desktop app with multi-model support",
   "main": "./out/main/index.js",
-  "build": {
-    "appId": "com.hcode.app",
-    "productName": "H-code",
-    "publish": [
-      {
-        "provider": "github",
-        "owner": "fusujifeng",
-        "repo": "H-code"
-      }
-    ],
-    "win": {
-      "target": "nsis",
-      "icon": "src/renderer/assets/appIcon.png"
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true
-    },
-    "linux": {
-      "target": [
-        "AppImage"
-      ]
-    }
-  },
   "scripts": {
     "dev": "electron-vite dev",
     "build": "electron-vite build",
@@ -38,6 +14,7 @@
     "lint": "eslint . --ext .ts,.tsx --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,css,json}\"",
     "release": "node scripts/release.js",
+    "generate-icons": "node scripts/generate-icons.js",
     "dist": "electron-builder",
     "dist:win": "electron-builder --win",
     "dist:mac": "electron-builder --mac",
