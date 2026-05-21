@@ -2,6 +2,14 @@ import { useAppStore, type ThemeId } from '../stores/app-store'
 import { ArrowLeftOutlined, DownloadOutlined, SyncOutlined, CheckCircleOutlined, ExclamationCircleOutlined, RedoOutlined } from '@ant-design/icons'
 import { useState, useEffect } from 'react'
 
+import themeAntdx from '../assets/moyk5mua-image.png'
+import themeBlackgold from '../assets/moyk03lm-image.png'
+import themeVscode from '../assets/moyjqbvz-image.png'
+import themeClaude from '../assets/moyjtptb-image.png'
+import themeTrae from '../assets/moyk4jfw-image.png'
+import themeQoder from '../assets/moyk7tec-image.png'
+import themeIdea from '../assets/moyk4xi4-image.png'
+
 interface ThemeCard {
   id: ThemeId
   name: string
@@ -14,43 +22,43 @@ const themeCards: ThemeCard[] = [
     id: 'antdx',
     name: '汇川蓝',
     description: '清爽、专业的浅色主题',
-    image: '../assets/moyk5mua-image.png'
+    image: themeAntdx
   },
   {
     id: 'blackgold',
     name: '至臻皮肤',
     description: '黑金配色，高端质感',
-    image: '../assets/moyk03lm-image.png'
+    image: themeBlackgold
   },
   {
     id: 'vscode',
     name: 'VS Code',
     description: '经典深色编辑器风格',
-    image: '../assets/moyjqbvz-image.png'
+    image: themeVscode
   },
   {
     id: 'claude',
     name: 'Claude Code',
     description: '温暖橙色，纸质感',
-    image: '../assets/moyjtptb-image.png'
+    image: themeClaude
   },
   {
     id: 'trae',
     name: 'TRAE',
     description: '黑底绿光，赛博风',
-    image: '../assets/moyk4jfw-image.png'
+    image: themeTrae
   },
   {
     id: 'qoder',
     name: 'Qoder',
     description: '翠绿色主色，自然清新',
-    image: '../assets/moyk7tec-image.png'
+    image: themeQoder
   },
   {
     id: 'idea',
     name: 'IDEA',
     description: '深灰蓝底，亮蓝强调',
-    image: '../assets/moyk4xi4-image.png'
+    image: themeIdea
   }
 ]
 

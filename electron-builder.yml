@@ -9,6 +9,8 @@ asar: true
 extraResources:
   - from: src/renderer/assets/appIcon.png
     to: appIcon.png
+  - from: resources/icon.ico
+    to: icon.ico
 win:
   target:
     - nsis

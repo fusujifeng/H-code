@@ -15,7 +15,11 @@ let currentClaudePty: ReturnType<typeof spawnPty> | null = null
 
 function getIconPath(): string {
   if (app.isPackaged) {
-    return path.join(process.resourcesPath, 'appIcon.png')
+    const isWin = process.platform === 'win32'
+    // Windows 上托盘/任务栏需要 .ico 格式才能正确显示
+    return isWin
+      ? path.join(process.resourcesPath, 'icon.ico')
+      : path.join(process.resourcesPath, 'appIcon.png')
   }
   return path.join(__dirname, '../../src/renderer/assets/appIcon.png')
 }
