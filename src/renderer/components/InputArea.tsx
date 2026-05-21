@@ -15,14 +15,16 @@ export default function InputArea({ useTerminal, sessionId }: { useTerminal: boo
 
     // 终端模式：直接写给 PTY
     if (useTerminal) {
-      setInput('')
       try {
         const result = await window.electronAPI?.writePty(sessionId, trimmed + '\r')
         if (!result?.success) {
           console.error('[InputArea] writePty failed:', result)
+          return
         }
+        setInput('')
       } catch (err) {
         console.error('[InputArea] writePty error:', err)
+        return
       }
 
       // 终端命令也保存到历史记录（只存用户输入）

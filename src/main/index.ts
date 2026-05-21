@@ -672,19 +672,28 @@ function registerIPC() {
     return { success: true, sessionId }
   })
 
-  ipcMain.handle('write-pty', (_event, sessionId: string, data: string) => {
+  ipcMain.handle('write-pty', async (_event, sessionId: string, data: string) => {
     console.log('[PTY] write, session:', sessionId, 'data length:', data.length)
-    const pty = ptySessions.get(sessionId)
-    if (!pty) {
-      return { success: false, error: 'PTY session not found: ' + sessionId }
-    }
-    writePtyChunks(pty, data, () => {
-      // 用户按回车输入新问题时，清空任务完成检测缓冲区
-      if (data.includes('\r') || data.includes('\n')) {
-        ptyTaskDoneBuffers.delete(sessionId)
+
+    // 如果 PTY 会话不存在，重试最多 3 次（可能正在创建中）
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const pty = ptySessions.get(sessionId)
+      if (pty) {
+        writePtyChunks(pty, data, () => {
+          // 用户按回车输入新问题时，清空任务完成检测缓冲区
+          if (data.includes('\r') || data.includes('\n')) {
+            ptyTaskDoneBuffers.delete(sessionId)
+          }
+        })
+        return { success: true }
       }
-    })
-    return { success: true }
+      if (attempt < 2) {
+        console.log('[PTY] session not ready, retrying in 100ms:', sessionId)
+        await new Promise((resolve) => setTimeout(resolve, 100))
+      }
+    }
+
+    return { success: false, error: 'PTY session not found: ' + sessionId }
   })
 
   ipcMain.handle('resize-pty', (_event, sessionId: string, cols: number, rows: number) => {
