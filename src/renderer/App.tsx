@@ -18,6 +18,10 @@ export default function App() {
   const activeSessionId = useAppStore((s) => s.activeSessionId)
   const fileWatcherEnabled = useAppStore((s) => s.fileWatcherEnabled)
   const autoExpandFloatBall = useAppStore((s) => s.autoExpandFloatBall)
+  const setPlanSteps = useAppStore((s) => s.setPlanSteps)
+  const setPlanningPhase = useAppStore((s) => s.setPlanningPhase)
+  const setPlanContext = useAppStore((s) => s.setPlanContext)
+  const setIsMainTaskRunning = useAppStore((s) => s.setIsMainTaskRunning)
   const currentTaskIdRef = useRef<number | null>(null)
   const assistantIdRef = useRef<string | null>(null)
   const fullContentRef = useRef('')
@@ -58,7 +62,11 @@ export default function App() {
   useEffect(() => {
     // 加载已有任务
     window.electronAPI?.getTasks?.().then((tasks) => {
-      setTasks(tasks as unknown as ReturnType<typeof useAppStore.getState>['tasks'])
+      if (tasks && Array.isArray(tasks)) {
+        setTasks(tasks as unknown as ReturnType<typeof useAppStore.getState>['tasks'])
+      }
+    }).catch((err) => {
+      console.error('[App] getTasks failed:', err)
     })
 
     // 监听任务更新
@@ -78,6 +86,7 @@ export default function App() {
     // 监听直接调用 Claude 的任务（非任务队列模式）
     const unsubClaudeTaskStart = window.electronAPI?.onClaudeTaskStart(() => {
       setFloatStatus('running')
+      setIsMainTaskRunning(true)
     })
 
     // 监听任务执行指令，自动创建消息并调用 Claude
@@ -85,6 +94,7 @@ export default function App() {
       currentTaskIdRef.current = payload.taskId
       setCurrentTaskId(payload.taskId)
       setFloatStatus('running')
+      setIsMainTaskRunning(true)
 
       const sessionId = payload.conversationId || activeSessionIdRef.current || 'default'
 
@@ -164,7 +174,28 @@ export default function App() {
         assistantIdRef.current = null
         fullContentRef.current = ''
         setCurrentTaskId(null)
+        setIsMainTaskRunning(false)
+      } else {
+        setIsMainTaskRunning(false)
       }
+    })
+
+    // 监听计划步骤检测（从 PTY 输出中解析）
+    const unsubPlanSteps = window.electronAPI?.onPlanStepsDetected((_sessionId, steps) => {
+      const mapped = steps.map((s) => ({
+        id: s.id,
+        content: s.content,
+        status: s.status as 'pending' | 'in_progress' | 'completed'
+      }))
+      setPlanSteps(mapped)
+      if (mapped.length > 0) {
+        setPlanningPhase('ready')
+      }
+    })
+
+    // 监听任务完成，更新主任务运行状态
+    const unsubTaskFinished = window.electronAPI?.onTaskFinished(() => {
+      setIsMainTaskRunning(false)
     })
 
     return () => {
@@ -176,6 +207,8 @@ export default function App() {
       unsubOutput?.()
       unsubError?.()
       unsubClaudeClose?.()
+      unsubPlanSteps?.()
+      unsubTaskFinished?.()
     }
   }, [])
 

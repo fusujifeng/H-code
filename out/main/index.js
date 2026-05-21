@@ -4,6 +4,7 @@ const nodePty = require("node-pty");
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
+const child_process = require("child_process");
 const electronUpdater = require("electron-updater");
 const https = require("https");
 const Database = require("better-sqlite3");
@@ -936,6 +937,7 @@ function registerIPC() {
       const history = ptyOutputHistory.get(sessionId) || "";
       ptyOutputHistory.set(sessionId, history + data);
       sendPtyData(sessionId, data);
+      parsePlanFromOutput(sessionId, data);
       if (checkNeedConfirm(sessionId, data)) {
         broadcastClaudeConfirmNeeded();
         scheduleAutoExpand();
@@ -949,6 +951,7 @@ function registerIPC() {
       ptyConfirmDetected.delete(sessionId);
       ptyConfirmBuffers.delete(sessionId);
       ptyTaskDoneBuffers.delete(sessionId);
+      planDetectionState.delete(sessionId);
       const currentPty = ptySessions.get(sessionId);
       if (currentPty === pty) {
         ptySessions.delete(sessionId);
@@ -965,18 +968,24 @@ function registerIPC() {
     });
     return { success: true, sessionId };
   });
-  electron.ipcMain.handle("write-pty", (_event, sessionId, data) => {
+  electron.ipcMain.handle("write-pty", async (_event, sessionId, data) => {
     console.log("[PTY] write, session:", sessionId, "data length:", data.length);
-    const pty = ptySessions.get(sessionId);
-    if (!pty) {
-      return { success: false, error: "PTY session not found: " + sessionId };
-    }
-    writePtyChunks(pty, data, () => {
-      if (data.includes("\r") || data.includes("\n")) {
-        ptyTaskDoneBuffers.delete(sessionId);
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const pty = ptySessions.get(sessionId);
+      if (pty) {
+        writePtyChunks(pty, data, () => {
+          if (data.includes("\r") || data.includes("\n")) {
+            ptyTaskDoneBuffers.delete(sessionId);
+          }
+        });
+        return { success: true };
       }
-    });
-    return { success: true };
+      if (attempt < 2) {
+        console.log("[PTY] session not ready, retrying in 100ms:", sessionId);
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+    }
+    return { success: false, error: "PTY session not found: " + sessionId };
   });
   electron.ipcMain.handle("resize-pty", (_event, sessionId, cols, rows) => {
     const pty = ptySessions.get(sessionId);
@@ -1077,6 +1086,253 @@ function registerIPC() {
       return null;
     }
   });
+  electron.ipcMain.handle("get-git-changed-files", (_event, cwd) => {
+    try {
+      const workDir = cwd || process.cwd();
+      const output = child_process.execSync("git status --porcelain", {
+        cwd: workDir,
+        timeout: 5e3,
+        encoding: "utf-8"
+      });
+      const files = output.trim().split("\n").filter(Boolean).map((line) => {
+        const status = line.slice(0, 2).trim();
+        const filePath = line.slice(3).trim();
+        let changeType = "modified";
+        if (status === "??" || status === "A" || status === "AM") changeType = "added";
+        else if (status === "D" || status === "AD") changeType = "deleted";
+        else if (status === "M" || status === "MM" || status.startsWith("R")) changeType = "modified";
+        return { filePath, changeType, status };
+      });
+      return { success: true, files, cwd: workDir };
+    } catch (e) {
+      console.error("[Git] get-git-changed-files failed:", e.message);
+      return { success: false, files: [], error: e.message };
+    }
+  });
+  electron.ipcMain.handle("get-git-diff", (_event, filePath, cwd) => {
+    try {
+      const workDir = cwd || process.cwd();
+      let output = "";
+      try {
+        output = child_process.execSync(`git diff HEAD -- "${filePath}"`, {
+          cwd: workDir,
+          timeout: 5e3,
+          encoding: "utf-8"
+        });
+      } catch {
+        output = child_process.execSync(`git diff -- "${filePath}"`, {
+          cwd: workDir,
+          timeout: 5e3,
+          encoding: "utf-8"
+        });
+      }
+      return { success: true, diff: output, filePath };
+    } catch (e) {
+      console.error("[Git] get-git-diff failed:", e.message);
+      return { success: false, diff: "", error: e.message };
+    }
+  });
+  electron.ipcMain.handle("read-file-content", (_event, filePath) => {
+    try {
+      if (!fs.existsSync(filePath)) {
+        return { success: false, content: "", error: "File not found" };
+      }
+      const content = fs.readFileSync(filePath, "utf-8");
+      return { success: true, content };
+    } catch (e) {
+      return { success: false, content: "", error: e.message };
+    }
+  });
+  const planDetectionState = /* @__PURE__ */ new Map();
+  function parsePlanFromOutput(sessionId, data) {
+    let state = planDetectionState.get(sessionId);
+    if (!state) {
+      state = { buffer: "", steps: [], detected: false };
+      planDetectionState.set(sessionId, state);
+    }
+    if (state.detected) return;
+    const clean = data.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, "").replace(/\x00/g, "");
+    state.buffer += clean;
+    if (state.buffer.length > 2e4) state.buffer = state.buffer.slice(-2e4);
+    const planHeaderPatterns = [
+      /(?:Here'?s?\s*(?:is\s*)?(?:my\s*)?(?:plan|the\s*plan)|Let me (?:plan|outline|break\s*this\s*down))/i,
+      /(?:任务规划|执行计划|实现步骤|Todo|Plan|Outline)/i
+    ];
+    const hasPlanHeader = planHeaderPatterns.some((p) => p.test(clean));
+    if (hasPlanHeader || state.steps.length > 0) {
+      state.detected = true;
+      const stepPatterns = [
+        /(?:^|\n)\s*(\d+)[\.\)、]\s*(.+)/g,
+        /(?:^|\n)\s*[-*]\s*\[([ x])\]\s*(.+)/g,
+        /(?:^|\n)\s*###?\s+(.+)/g
+      ];
+      const newSteps = [];
+      let match;
+      for (const pattern of stepPatterns) {
+        pattern.lastIndex = 0;
+        let idx = 0;
+        while ((match = pattern.exec(state.buffer)) !== null) {
+          const content = match[2] || match[1];
+          if (content && content.trim().length > 3 && !content.includes("```")) {
+            newSteps.push({
+              id: `step-${idx++}`,
+              content: content.trim().slice(0, 120),
+              status: "pending"
+            });
+          }
+        }
+      }
+      if (newSteps.length > 0) {
+        state.steps = newSteps;
+        electron.BrowserWindow.getAllWindows().forEach((win) => {
+          if (!win.isDestroyed()) {
+            win.webContents.send("plan-steps-detected", sessionId, state.steps);
+          }
+        });
+      }
+    }
+  }
+  electron.ipcMain.handle("detect-plan-from-output", (_event, sessionId) => {
+    const state = planDetectionState.get(sessionId);
+    return state?.steps || [];
+  });
+  electron.ipcMain.handle("reset-plan-detection", (_event, sessionId) => {
+    planDetectionState.delete(sessionId);
+    return true;
+  });
+  const planStepPtys = /* @__PURE__ */ new Map();
+  const planStepOutputs = /* @__PURE__ */ new Map();
+  function broadcastPlanStepOutput(stepId, data) {
+    electron.BrowserWindow.getAllWindows().forEach((win) => {
+      if (!win.isDestroyed()) {
+        win.webContents.send("plan-step-output", stepId, data);
+      }
+    });
+  }
+  function broadcastPlanStepComplete(stepId, exitCode, result) {
+    electron.BrowserWindow.getAllWindows().forEach((win) => {
+      if (!win.isDestroyed()) {
+        win.webContents.send("plan-step-complete", stepId, exitCode, result);
+      }
+    });
+  }
+  electron.ipcMain.handle("execute-plan-step", (_event, stepId, stepContent, planContext, cwd) => {
+    const workDir = cwd || process.cwd();
+    const isWin = process.platform === "win32";
+    const oldPty = planStepPtys.get(stepId);
+    if (oldPty) {
+      oldPty.kill();
+      planStepPtys.delete(stepId);
+    }
+    const subAgentPrompt = [
+      "你是一个子 Agent，负责执行大型任务计划中的单个步骤。",
+      "",
+      "## 原始任务",
+      planContext,
+      "",
+      "## 你的任务步骤",
+      stepContent,
+      "",
+      "## 要求",
+      "1. 只专注于执行上述步骤，不要偏离",
+      "2. 完成步骤后，简要总结你的执行结果",
+      "3. 如果步骤产生文件变更，请列出变更的文件路径"
+    ].join("\n");
+    const shell = isWin ? "cmd.exe" : "claude";
+    const args = isWin ? ["/c", "claude"] : [];
+    const pty = nodePty.spawn(shell, args, {
+      name: "xterm-256color",
+      cols: 120,
+      rows: 40,
+      cwd: workDir,
+      env: process.env
+    });
+    planStepPtys.set(stepId, pty);
+    planStepOutputs.set(stepId, "");
+    setTimeout(() => {
+      writePtyChunks(pty, subAgentPrompt + "\r");
+    }, isWin ? 1500 : 500);
+    pty.onData((data) => {
+      const current = planStepOutputs.get(stepId) || "";
+      planStepOutputs.set(stepId, current + data);
+      broadcastPlanStepOutput(stepId, data);
+    });
+    pty.onExit(({ exitCode }) => {
+      const result = planStepOutputs.get(stepId) || "";
+      broadcastPlanStepComplete(stepId, exitCode ?? -1, result);
+      planStepPtys.delete(stepId);
+      planStepOutputs.delete(stepId);
+    });
+    return { success: true, stepId };
+  });
+  electron.ipcMain.handle("cancel-plan-step", (_event, stepId) => {
+    const pty = planStepPtys.get(stepId);
+    if (pty) {
+      pty.kill();
+      planStepPtys.delete(stepId);
+      planStepOutputs.delete(stepId);
+      return { success: true };
+    }
+    return { success: false, error: "No running PTY for step: " + stepId };
+  });
+  electron.ipcMain.handle("review-plan-steps", (_event, stepsJson, planContext, cwd) => {
+    const workDir = cwd || process.cwd();
+    const isWin = process.platform === "win32";
+    const steps = JSON.parse(stepsJson);
+    const stepsSummary = steps.map((s, i) => {
+      const statusLabel = s.status === "completed" ? "✓ 已完成" : s.status === "failed" ? "✗ 失败" : "○ 未执行";
+      const result = s.result ? `
+   结果: ${s.result.slice(0, 500)}` : "";
+      return `${i + 1}. ${statusLabel} ${s.content}${result}`;
+    }).join("\n");
+    const reviewPrompt = [
+      "你是一个审查 Agent，负责检查已完成的子任务执行结果。",
+      "",
+      "## 原始任务",
+      planContext,
+      "",
+      "## 已完成的步骤",
+      stepsSummary,
+      "",
+      "## 要求",
+      "1. 检查各步骤之间的 consistency（一致性）",
+      "2. 确认所有步骤都正确完成",
+      "3. 如果发现问题，请明确指出并提供修复方案",
+      "4. 如果一切正常，请输出「审查通过」"
+    ].join("\n");
+    const reviewPtyId = "review-agent";
+    const oldPty = planStepPtys.get(reviewPtyId);
+    if (oldPty) {
+      oldPty.kill();
+      planStepPtys.delete(reviewPtyId);
+    }
+    const shell = isWin ? "cmd.exe" : "claude";
+    const args = isWin ? ["/c", "claude"] : [];
+    const pty = nodePty.spawn(shell, args, {
+      name: "xterm-256color",
+      cols: 120,
+      rows: 40,
+      cwd: workDir,
+      env: process.env
+    });
+    planStepPtys.set(reviewPtyId, pty);
+    planStepOutputs.set(reviewPtyId, "");
+    setTimeout(() => {
+      writePtyChunks(pty, reviewPrompt + "\r");
+    }, isWin ? 1500 : 500);
+    pty.onData((data) => {
+      const current = planStepOutputs.get(reviewPtyId) || "";
+      planStepOutputs.set(reviewPtyId, current + data);
+      broadcastPlanStepOutput(reviewPtyId, data);
+    });
+    pty.onExit(({ exitCode }) => {
+      const result = planStepOutputs.get(reviewPtyId) || "";
+      broadcastPlanStepComplete(reviewPtyId, exitCode ?? -1, result);
+      planStepPtys.delete(reviewPtyId);
+      planStepOutputs.delete(reviewPtyId);
+    });
+    return { success: true, stepId: reviewPtyId };
+  });
   electron.ipcMain.handle("send-to-claude", (_event, prompt, permission, cwd) => {
     const workDir = cwd || process.cwd();
     const isWin = process.platform === "win32";
@@ -1122,6 +1378,7 @@ function registerIPC() {
       electron.BrowserWindow.getAllWindows().forEach((win) => {
         if (!win.isDestroyed()) win.webContents.send("claude-output", data);
       });
+      parsePlanFromOutput("legacy", data);
       if (checkNeedConfirm("legacy", data)) {
         broadcastClaudeConfirmNeeded();
         scheduleAutoExpand();

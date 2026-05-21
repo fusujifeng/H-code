@@ -88,7 +88,7 @@ window.electronAPI?.onPtyData(() => {
   }, 2000)
 })
 
-// PTY 会话退出：任务完成/失败 → 显示状态
+// PTY 会话退出：任务完成/失败 → 显示状态并展开主窗口
 window.electronAPI?.onPtyExit((_sessionId, code) => {
   console.log('[FloatBall] onPtyExit:', _sessionId, code)
   if (code === 0 || code === null) {
@@ -96,6 +96,7 @@ window.electronAPI?.onPtyExit((_sessionId, code) => {
   } else {
     setBallStatus('error')
   }
+  window.electronAPI?.showMainWindow()
 })
 
 // 直接调用 Claude 的任务
@@ -111,6 +112,7 @@ window.electronAPI?.onClaudeClose((code) => {
   } else {
     setBallStatus('error')
   }
+  window.electronAPI?.showMainWindow()
 })
 
 // 任务队列状态监听
@@ -122,6 +124,7 @@ window.electronAPI?.onQueueStatus((status) => {
   } else if (wasRunning && status.active === 0) {
     wasRunning = false
     setBallStatus('success')
+    window.electronAPI?.showMainWindow()
   }
 })
 
@@ -131,10 +134,11 @@ window.electronAPI?.onClaudeConfirmNeeded(() => {
   setBallStatus('confirm')
 })
 
-// 任务完成时
+// 任务完成时，展开主窗口到前台
 window.electronAPI?.onTaskFinished(() => {
   console.log('[FloatBall] onTaskFinished')
   setBallStatus('success')
+  window.electronAPI?.showMainWindow()
 })
 
 // 点击打开主窗口时清除状态

@@ -11,13 +11,41 @@ const statusMap: Record<string, { label: string; color: string }> = {
   cancelled: { label: '已取消', color: 'var(--text-tertiary)' }
 }
 
-export default function TaskQueuePanel() {
+export default function TaskQueuePanel({ sidebar }: { sidebar?: boolean }) {
   const tasks = useAppStore((s) => s.tasks)
   const queueStatus = useAppStore((s) => s.queueStatus)
   const [collapsed, setCollapsed] = useState(false)
   const [expandedId, setExpandedId] = useState<number | null>(null)
 
-  if (tasks.length === 0) return null
+  if (tasks.length === 0) {
+    if (sidebar) {
+      return (
+        <div
+          style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: 24,
+            color: 'var(--text-tertiary)',
+            fontSize: 13,
+            gap: 12
+          }}
+        >
+          <ContainerOutlined style={{ fontSize: 28, opacity: 0.3 }} />
+          <div style={{ textAlign: 'center', lineHeight: 1.6 }}>
+            暂无队列任务
+            <br />
+            <span style={{ fontSize: 11 }}>
+              主任务执行期间输入的新任务将自动排队
+            </span>
+          </div>
+        </div>
+      )
+    }
+    return null
+  }
 
   const handlePause = (taskId: number) => {
     window.electronAPI?.pauseTask?.(taskId)
@@ -35,47 +63,58 @@ export default function TaskQueuePanel() {
     window.electronAPI?.deleteTask?.(taskId)
   }
 
+  const headerRow = !sidebar ? (
+    <div
+      onClick={() => setCollapsed(!collapsed)}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '8px 16px',
+        cursor: 'pointer',
+        fontSize: 12,
+        fontWeight: 600,
+        color: 'var(--text-secondary)',
+        userSelect: 'none'
+      }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <ContainerOutlined />
+        <span>任务队列</span>
+        <span
+          style={{
+            background: 'var(--border)',
+            padding: '1px 6px',
+            borderRadius: 10,
+            fontSize: 11
+          }}
+        >
+          {queueStatus.active}/{queueStatus.total}
+        </span>
+      </div>
+      <span style={{ fontSize: 10 }}>{collapsed ? '▼' : '▲'}</span>
+    </div>
+  ) : null
+
+  const showList = sidebar || !collapsed
+
   return (
     <div
-      style={{
+      style={sidebar ? {
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden'
+      } : {
         borderTop: '1px solid var(--border)',
         background: 'var(--surface)',
         flexShrink: 0
       }}
     >
-      <div
-        onClick={() => setCollapsed(!collapsed)}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '8px 16px',
-          cursor: 'pointer',
-          fontSize: 12,
-          fontWeight: 600,
-          color: 'var(--text-secondary)',
-          userSelect: 'none'
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <ContainerOutlined />
-          <span>任务队列</span>
-          <span
-            style={{
-              background: 'var(--border)',
-              padding: '1px 6px',
-              borderRadius: 10,
-              fontSize: 11
-            }}
-          >
-            {queueStatus.active}/{queueStatus.total}
-          </span>
-        </div>
-        <span style={{ fontSize: 10 }}>{collapsed ? '▼' : '▲'}</span>
-      </div>
+      {!sidebar && headerRow}
 
-      {!collapsed && (
-        <div style={{ maxHeight: 220, overflowY: 'auto', padding: '0 16px 8px' }}>
+      {showList && (
+        <div style={sidebar ? { flex: 1, overflowY: 'auto', padding: '0 12px' } : { maxHeight: 220, overflowY: 'auto', padding: '0 16px 8px' }}>
           {tasks.map((task) => {
             const cfg = statusMap[task.status] || statusMap.queued
             const isExpanded = expandedId === task.id

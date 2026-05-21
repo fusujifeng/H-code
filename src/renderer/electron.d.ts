@@ -83,6 +83,23 @@ declare global {
         }
         [key: string]: unknown
       } | null>
+
+      /* Git Diff & 变更文件 */
+      getGitChangedFiles: (cwd?: string) => Promise<{ success: boolean; files: { filePath: string; changeType: 'modified' | 'added' | 'deleted'; status: string }[]; cwd?: string; error?: string }>
+      getGitDiff: (filePath: string, cwd?: string) => Promise<{ success: boolean; diff: string; filePath: string; error?: string }>
+      readFileContent: (filePath: string) => Promise<{ success: boolean; content: string; error?: string }>
+
+      /* 计划检测 */
+      detectPlanFromOutput: (sessionId: string) => Promise<{ id: string; content: string; status: string }[]>
+      resetPlanDetection: (sessionId: string) => Promise<boolean>
+      onPlanStepsDetected: (cb: (sessionId: string, steps: { id: string; content: string; status: string }[]) => void) => () => void
+
+      /* 子 Agent 执行（父子开发模式） */
+      executePlanStep: (stepId: string, stepContent: string, planContext: string, cwd?: string) => Promise<{ success: boolean; stepId: string }>
+      cancelPlanStep: (stepId: string) => Promise<{ success: boolean; error?: string }>
+      reviewPlanSteps: (stepsJson: string, planContext: string, cwd?: string) => Promise<{ success: boolean; stepId: string }>
+      onPlanStepOutput: (cb: (stepId: string, data: string) => void) => () => void
+      onPlanStepComplete: (cb: (stepId: string, exitCode: number | null, result: string) => void) => () => void
     }
   }
 }

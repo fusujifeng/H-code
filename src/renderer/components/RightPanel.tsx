@@ -4,7 +4,6 @@ import WelcomeArea from './WelcomeArea'
 import InputArea from './InputArea'
 import XtermTerminal from './XtermTerminal'
 import FunnyStatusBar from './FunnyStatusBar'
-import TaskQueuePanel from './TaskQueuePanel'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { CloseOutlined } from '@ant-design/icons'
 
@@ -254,8 +253,6 @@ export default function RightPanel() {
         )}
       </div>
 
-      {/* 任务队列面板 */}
-      <TaskQueuePanel />
     </div>
   )
 }

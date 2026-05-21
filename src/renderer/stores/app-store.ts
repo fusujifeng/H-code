@@ -69,6 +69,25 @@ export interface TaskItem {
   finishedAt: string | null
 }
 
+export interface PlanStep {
+  id: string
+  content: string
+  status: 'pending' | 'in_progress' | 'completed' | 'failed'
+  taskId?: number
+  result?: string
+  error?: string
+}
+
+export type PlanningPhase = 'idle' | 'planning' | 'ready' | 'executing' | 'reviewing' | 'done'
+
+export interface DeliverableFile {
+  filePath: string
+  changeType: 'modified' | 'added' | 'deleted'
+  relativePath: string
+}
+
+export type RightSidebarTab = 'plan' | 'queue' | 'deliverables'
+
 /* ── 历史记录持久化 ──────────────────────────────────────── */
 
 const HISTORY_KEY = 'cb-chat-history'
@@ -149,6 +168,28 @@ interface AppState {
   /* 悬浮球自动展开 */
   autoExpandFloatBall: boolean
 
+  /* 右侧三模块面板 */
+  rightSidebarCollapsed: boolean
+  rightSidebarTab: RightSidebarTab
+  rightSidebarExpanded: boolean
+
+  /* 任务规划 */
+  planSteps: PlanStep[]
+  currentPlanSessionId: string | null
+  planningPhase: PlanningPhase
+  planContext: string
+
+  /* 任务产物 */
+  deliverables: DeliverableFile[]
+
+  /* Diff 抽屉 */
+  showDiffDrawer: boolean
+  diffFilePath: string | null
+  diffContent: string | null
+
+  /* 主任务运行状态（用于控制任务队列自动出队） */
+  isMainTaskRunning: boolean
+
   setTheme: (theme: ThemeId) => void
   setMidPanelView: (view: MidPanelView) => void
   setPermission: (mode: PermissionMode) => void
@@ -199,6 +240,32 @@ interface AppState {
 
   /* 悬浮球自动展开 */
   setAutoExpandFloatBall: (enabled: boolean) => void
+
+  /* 右侧面板 */
+  toggleRightSidebar: () => void
+  setRightSidebarTab: (tab: RightSidebarTab) => void
+  setRightSidebarExpanded: (expanded: boolean) => void
+
+  /* 任务规划 */
+  setPlanSteps: (steps: PlanStep[]) => void
+  updatePlanStep: (stepId: string, updates: Partial<PlanStep>) => void
+  setCurrentPlanSessionId: (id: string | null) => void
+  clearPlanSteps: () => void
+  setPlanningPhase: (phase: PlanningPhase) => void
+  setPlanContext: (context: string) => void
+
+  /* 任务产物 */
+  setDeliverables: (files: DeliverableFile[]) => void
+  addDeliverable: (file: DeliverableFile) => void
+  clearDeliverables: () => void
+
+  /* Diff 抽屉 */
+  openDiffDrawer: (filePath: string) => void
+  setDiffContent: (content: string | null) => void
+  closeDiffDrawer: () => void
+
+  /* 主任务运行状态 */
+  setIsMainTaskRunning: (running: boolean) => void
 }
 
 const defaultModels: ModelConfig[] = [
@@ -304,6 +371,28 @@ export const useAppStore = create<AppState>((set) => ({
   funnyMode: loadSetting('cb-funny-mode', false),
   fileWatcherEnabled: loadSetting('cb-file-watcher', false),
   autoExpandFloatBall: loadSetting('cb-auto-expand-float-ball', false),
+
+  /* 右侧三模块面板 */
+  rightSidebarCollapsed: false,
+  rightSidebarTab: 'plan' as RightSidebarTab,
+  rightSidebarExpanded: false,
+
+  /* 任务规划 */
+  planSteps: [],
+  currentPlanSessionId: null,
+  planningPhase: 'idle' as PlanningPhase,
+  planContext: '',
+
+  /* 任务产物 */
+  deliverables: [],
+
+  /* Diff 抽屉 */
+  showDiffDrawer: false,
+  diffFilePath: null,
+  diffContent: null,
+
+  /* 主任务运行状态 */
+  isMainTaskRunning: false,
 
   setTheme: (theme) => {
     try {
@@ -531,5 +620,41 @@ export const useAppStore = create<AppState>((set) => ({
   setAutoExpandFloatBall: (enabled) => {
     saveSetting('cb-auto-expand-float-ball', enabled)
     set({ autoExpandFloatBall: enabled })
-  }
+  },
+
+  /* 右侧面板 */
+  toggleRightSidebar: () => set((s) => ({ rightSidebarCollapsed: !s.rightSidebarCollapsed })),
+  setRightSidebarTab: (tab: RightSidebarTab) => set({ rightSidebarTab: tab }),
+  setRightSidebarExpanded: (expanded: boolean) => set({ rightSidebarExpanded: expanded }),
+
+  /* 任务规划 */
+  setPlanSteps: (steps: PlanStep[]) => set({ planSteps: steps }),
+  updatePlanStep: (stepId: string, updates: Partial<PlanStep>) =>
+    set((s) => ({
+      planSteps: s.planSteps.map((step) =>
+        step.id === stepId ? { ...step, ...updates } : step
+      )
+    })),
+  setCurrentPlanSessionId: (id: string | null) => set({ currentPlanSessionId: id }),
+  clearPlanSteps: () => set({ planSteps: [], currentPlanSessionId: null, planningPhase: 'idle', planContext: '' }),
+  setPlanningPhase: (phase: PlanningPhase) => set({ planningPhase: phase }),
+  setPlanContext: (context: string) => set({ planContext: context }),
+
+  /* 任务产物 */
+  setDeliverables: (files: DeliverableFile[]) => set({ deliverables: files }),
+  addDeliverable: (file: DeliverableFile) =>
+    set((s) => {
+      const exists = s.deliverables.find((f) => f.filePath === file.filePath)
+      if (exists) return { deliverables: s.deliverables.map((f) => f.filePath === file.filePath ? file : f) }
+      return { deliverables: [...s.deliverables, file] }
+    }),
+  clearDeliverables: () => set({ deliverables: [] }),
+
+  /* Diff 抽屉 */
+  openDiffDrawer: (filePath: string) => set({ showDiffDrawer: true, diffFilePath: filePath, diffContent: null }),
+  setDiffContent: (content: string | null) => set({ diffContent: content }),
+  closeDiffDrawer: () => set({ showDiffDrawer: false, diffFilePath: null, diffContent: null }),
+
+  /* 主任务运行状态 */
+  setIsMainTaskRunning: (running: boolean) => set({ isMainTaskRunning: running })
 }))

@@ -1,20 +1,59 @@
 import { useState } from 'react'
 import { useAppStore } from '../stores/app-store'
 import PermissionToggle from './PermissionToggle'
-import { SendOutlined, PictureOutlined, AudioOutlined, ContainerOutlined } from '@ant-design/icons'
+import { SendOutlined, PictureOutlined, AudioOutlined, ContainerOutlined, PartitionOutlined } from '@ant-design/icons'
+
+const PLANNING_PREFIX = '请为以下任务创建一个详细的、分步骤的执行计划。将每个步骤用编号列表输出。暂时不要执行任何步骤，只创建计划。\n\n任务：'
 
 export default function InputArea({ useTerminal, sessionId }: { useTerminal: boolean; sessionId: string }) {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [planMode, setPlanMode] = useState(false)
   const addMessage = useAppStore((s) => s.addMessage)
   const updateMessage = useAppStore((s) => s.updateMessage)
+  const enabledModel = useAppStore((s) => s.models.find((m) => m.enabled))
+  const isMainTaskRunning = useAppStore((s) => s.isMainTaskRunning)
+  const setPlanContext = useAppStore((s) => s.setPlanContext)
+  const setPlanningPhase = useAppStore((s) => s.setPlanningPhase)
+  const clearPlanSteps = useAppStore((s) => s.clearPlanSteps)
 
   const handleSend = async () => {
     const trimmed = input.trim()
     if (!trimmed) return
 
-    // 终端模式：直接写给 PTY
+    // 规划模式：保存上下文并发送规划提示
+    if (planMode) {
+      clearPlanSteps()
+      setPlanContext(trimmed)
+      setPlanningPhase('planning')
+      const planningPrompt = PLANNING_PREFIX + trimmed
+      setInput('')
+      setPlanMode(false)
+
+      if (useTerminal) {
+        try {
+          await window.electronAPI?.writePty(sessionId, planningPrompt + '\r')
+        } catch (err) {
+          console.error('[InputArea] writePty error:', err)
+        }
+        addMessage({
+          id: Date.now().toString(),
+          role: 'user',
+          content: `[规划模式] ${trimmed}`,
+          timestamp: new Date().toISOString(),
+          sessionId
+        })
+        return
+      }
+    }
+
+    // 终端模式：主任务运行中自动排队，否则直接写给 PTY
     if (useTerminal) {
+      if (isMainTaskRunning) {
+        setInput('')
+        await handleEnqueueInternal(trimmed)
+        return
+      }
       try {
         const result = await window.electronAPI?.writePty(sessionId, trimmed + '\r')
         if (!result?.success) {
@@ -105,21 +144,43 @@ export default function InputArea({ useTerminal, sessionId }: { useTerminal: boo
     }
   }
 
+  const handleEnqueueInternal = async (prompt: string) => {
+    try {
+      const result = await window.electronAPI?.enqueueTask?.(sessionId, prompt)
+      if (result) {
+        addMessage({
+          id: `enqueue-${Date.now()}`,
+          role: 'system',
+          content: `📝 已加入任务队列 (#${(result as unknown as { id: number }).id})`,
+          timestamp: new Date().toISOString(),
+          sessionId
+        })
+      } else {
+        console.error('[InputArea] enqueueTask returned falsy')
+      }
+    } catch (err) {
+      console.error('[InputArea] enqueueTask failed:', err)
+    }
+  }
+
   const handleEnqueue = async () => {
     const trimmed = input.trim()
     if (!trimmed) return
 
     setInput('')
-    const result = await window.electronAPI?.enqueueTask?.(sessionId, trimmed)
-    if (result) {
-      addMessage({
-        id: `enqueue-${Date.now()}`,
-        role: 'system',
-        content: `📝 已加入任务队列 (#${(result as unknown as { id: number }).id})`,
-        timestamp: new Date().toISOString(),
-        sessionId
-      })
+
+    // 规划模式：入队时也使用规划前缀
+    if (planMode) {
+      clearPlanSteps()
+      setPlanContext(trimmed)
+      setPlanningPhase('planning')
+      setPlanMode(false)
+      const planningPrompt = PLANNING_PREFIX + trimmed
+      await handleEnqueueInternal(planningPrompt)
+      return
     }
+
+    await handleEnqueueInternal(trimmed)
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -218,7 +279,7 @@ export default function InputArea({ useTerminal, sessionId }: { useTerminal: boo
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <button
                 onClick={handleEnqueue}
-                disabled={loading || !input.trim() || useTerminal}
+                disabled={loading || !input.trim()}
                 title="加入任务队列"
                 style={{
                   width: 32,
@@ -226,14 +287,14 @@ export default function InputArea({ useTerminal, sessionId }: { useTerminal: boo
                   borderRadius: '50%',
                   border: 'none',
                   background:
-                    loading || !input.trim() || useTerminal ? 'var(--text-tertiary)' : 'var(--orange)',
+                    loading || !input.trim() ? 'var(--text-tertiary)' : 'var(--orange)',
                   color: '#fff',
-                  cursor: loading || !input.trim() || useTerminal ? 'not-allowed' : 'pointer',
+                  cursor: loading || !input.trim() ? 'not-allowed' : 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   transition: 'all 0.15s',
-                  opacity: loading || !input.trim() || useTerminal ? 0.5 : 1
+                  opacity: loading || !input.trim() ? 0.5 : 1
                 }}
               >
                 <ContainerOutlined style={{ fontSize: 14 }} />
@@ -289,6 +350,28 @@ export default function InputArea({ useTerminal, sessionId }: { useTerminal: boo
           <PermissionToggle />
           <div style={{ width: 1, height: 14, background: 'var(--border)' }} />
           <button
+            onClick={() => setPlanMode(!planMode)}
+            title={planMode ? '规划模式已开启：先规划再执行' : '开启规划模式：让 AI 先生成任务计划'}
+            style={{
+              border: `1px solid ${planMode ? 'var(--blue)' : 'var(--border)'}`,
+              background: planMode ? 'var(--blue-light)' : 'transparent',
+              color: planMode ? 'var(--blue)' : 'var(--text-secondary)',
+              fontSize: 11,
+              cursor: 'pointer',
+              padding: '2px 8px',
+              borderRadius: 4,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 4,
+              fontWeight: planMode ? 600 : 400,
+              transition: 'all 0.15s'
+            }}
+          >
+            <PartitionOutlined style={{ fontSize: 12 }} />
+            规划
+          </button>
+          <div style={{ width: 1, height: 14, background: 'var(--border)' }} />
+          <button
             style={{
               border: 'none',
               background: 'transparent',
@@ -317,7 +400,7 @@ export default function InputArea({ useTerminal, sessionId }: { useTerminal: boo
             }}
           />
           <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-            Claude Code CLI
+            {enabledModel?.name || 'Claude Code CLI'}
           </span>
         </div>
       </div>

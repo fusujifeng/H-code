@@ -44,6 +44,15 @@ CSS custom properties (defined in `src/renderer/styles/themes.css`). Theme IDs: 
 - `electron-updater`: Auto-update via GitHub Releases, checks every Friday at 10:00 Beijing time
 - `better-sqlite3`: Available for local DB (imported but usage not yet active in current source)
 
+## Data upgrade compatibility
+
+This project releases frequently. When adding features that touch persisted data, **always** consider backward compatibility for upgrading users:
+
+- **localStorage keys**: `cb-chat-history`, model configs, theme/preference settings stored via `loadSetting`/`saveSetting` in `app-store.ts`. Do not rename or change the shape of these keys without a migration path.
+- **Model configs** (`models` array in store): persisted with `saveModels`/`loadModels`. Adding optional fields is safe; renaming or removing fields needs migration.
+- **Chat history** (`HISTORY_KEY`): has 14-day TTL and max 10 entries, so breaking changes self-heal quickly and are generally acceptable without migration.
+- When you must change a persisted format: read the old key first, transform the data, write back under the new key, and remove the old key.
+
 ## Code conventions
 
 - No semicolons, single quotes, trailing commas: none (see `.prettierrc`)

@@ -3,6 +3,7 @@ import { spawn as spawnPty } from 'node-pty'
 import path from 'path'
 import fs from 'fs'
 import os from 'os'
+import { execSync } from 'child_process'
 import { autoUpdater } from 'electron-updater'
 import https from 'https'
 import { sessionStore } from './session-store'
@@ -143,8 +144,11 @@ function showMainWindowFn() {
     clearTimeout(pendingAutoExpandTimer)
     pendingAutoExpandTimer = null
   }
+  if (mainWindow?.isMinimized()) {
+    mainWindow.restore()
+  }
   mainWindow?.show()
-  mainWindow?.restore()
+  mainWindow?.focus()
   floatWindow?.hide()
 }
 
@@ -555,10 +559,23 @@ function registerIPC() {
   /* ── PTY 辅助函数 ───────────────────────────────────────── */
 
   // 分块写入 PTY，避免长文本被输入缓冲区截断导致需要额外回车
+  // 关键：将末尾的 \r 剥离后单独写入，确保 CLI 收到完整内容后才收到回车符
   function writePtyChunks(pty: ReturnType<typeof spawnPty>, data: string, onDone?: () => void) {
-    const CHUNK_SIZE = 512
+    let terminator = ''
+    if (data.endsWith('\r\n')) {
+      terminator = '\r\n'
+      data = data.slice(0, -2)
+    } else if (data.endsWith('\r')) {
+      terminator = '\r'
+      data = data.slice(0, -1)
+    } else if (data.endsWith('\n')) {
+      terminator = '\n'
+      data = data.slice(0, -1)
+    }
+
+    const CHUNK_SIZE = 256
     if (data.length <= CHUNK_SIZE) {
-      pty.write(data)
+      pty.write(data + terminator)
       onDone?.()
       return
     }
@@ -568,8 +585,9 @@ function registerIPC() {
       pty.write(chunk)
       offset += CHUNK_SIZE
       if (offset < data.length) {
-        setTimeout(writeNext, 15)
+        setTimeout(writeNext, 10)
       } else {
+        pty.write(terminator)
         onDone?.()
       }
     }
@@ -639,6 +657,9 @@ function registerIPC() {
       ptyOutputHistory.set(sessionId, history + data)
       sendPtyData(sessionId, data)
 
+      // 计划检测
+      parsePlanFromOutput(sessionId, data)
+
       if (checkNeedConfirm(sessionId, data)) {
         broadcastClaudeConfirmNeeded()
         scheduleAutoExpand()
@@ -654,6 +675,7 @@ function registerIPC() {
       ptyConfirmDetected.delete(sessionId)
       ptyConfirmBuffers.delete(sessionId)
       ptyTaskDoneBuffers.delete(sessionId)
+      planDetectionState.delete(sessionId)
       const currentPty = ptySessions.get(sessionId)
       if (currentPty === pty) {
         ptySessions.delete(sessionId)
@@ -824,6 +846,320 @@ function registerIPC() {
     }
   })
 
+  /* ── Git Diff & 变更文件 ────────────────────────────────── */
+
+  // 获取当前工作目录下 git 变更的文件列表（含状态标记）
+  ipcMain.handle('get-git-changed-files', (_event, cwd?: string) => {
+    try {
+      const workDir = cwd || process.cwd()
+      // 使用 git status --porcelain 获取带状态标记的文件列表
+      const output = execSync('git status --porcelain', {
+        cwd: workDir,
+        timeout: 5000,
+        encoding: 'utf-8'
+      })
+      const files = output.trim().split('\n').filter(Boolean).map(line => {
+        const status = line.slice(0, 2).trim()
+        const filePath = line.slice(3).trim()
+        let changeType: 'modified' | 'added' | 'deleted' = 'modified'
+        if (status === '??' || status === 'A' || status === 'AM') changeType = 'added'
+        else if (status === 'D' || status === 'AD') changeType = 'deleted'
+        else if (status === 'M' || status === 'MM' || status.startsWith('R')) changeType = 'modified'
+        return { filePath, changeType, status }
+      })
+      return { success: true, files, cwd: workDir }
+    } catch (e: any) {
+      console.error('[Git] get-git-changed-files failed:', e.message)
+      return { success: false, files: [], error: e.message }
+    }
+  })
+
+  // 获取指定文件的 git diff 内容
+  ipcMain.handle('get-git-diff', (_event, filePath: string, cwd?: string) => {
+    try {
+      const workDir = cwd || process.cwd()
+      // 先尝试 HEAD diff
+      let output = ''
+      try {
+        output = execSync(`git diff HEAD -- "${filePath}"`, {
+          cwd: workDir,
+          timeout: 5000,
+          encoding: 'utf-8'
+        })
+      } catch {
+        // 如果 HEAD diff 失败，尝试工作区 diff（新文件）
+        output = execSync(`git diff -- "${filePath}"`, {
+          cwd: workDir,
+          timeout: 5000,
+          encoding: 'utf-8'
+        })
+      }
+      return { success: true, diff: output, filePath }
+    } catch (e: any) {
+      console.error('[Git] get-git-diff failed:', e.message)
+      return { success: false, diff: '', error: e.message }
+    }
+  })
+
+  // 获取文件完整内容（用于无 git 时的 diff 对比）
+  ipcMain.handle('read-file-content', (_event, filePath: string) => {
+    try {
+      if (!fs.existsSync(filePath)) {
+        return { success: false, content: '', error: 'File not found' }
+      }
+      const content = fs.readFileSync(filePath, 'utf-8')
+      return { success: true, content }
+    } catch (e: any) {
+      return { success: false, content: '', error: e.message }
+    }
+  })
+
+  /* ── 计划检测（从 PTY 输出中解析 Claude Code 计划）───────── */
+
+  // 全局计划检测状态
+  const planDetectionState = new Map<string, {
+    buffer: string
+    steps: { id: string; content: string; status: 'pending' | 'in_progress' | 'completed' }[]
+    detected: boolean
+  }>()
+
+  function parsePlanFromOutput(sessionId: string, data: string) {
+    let state = planDetectionState.get(sessionId)
+    if (!state) {
+      state = { buffer: '', steps: [], detected: false }
+      planDetectionState.set(sessionId, state)
+    }
+    if (state.detected) return
+
+    // 剥离 ANSI escape 序列
+    const clean = data.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, '').replace(/\x00/g, '')
+    state.buffer += clean
+    if (state.buffer.length > 20000) state.buffer = state.buffer.slice(-20000)
+
+    // 检测计划标题标记
+    const planHeaderPatterns = [
+      /(?:Here'?s?\s*(?:is\s*)?(?:my\s*)?(?:plan|the\s*plan)|Let me (?:plan|outline|break\s*this\s*down))/i,
+      /(?:任务规划|执行计划|实现步骤|Todo|Plan|Outline)/i
+    ]
+
+    const hasPlanHeader = planHeaderPatterns.some(p => p.test(clean))
+
+    if (hasPlanHeader || state.steps.length > 0) {
+      state.detected = true
+
+      // 解析步骤：匹配编号列表 / checkbox / 任务标题行
+      const stepPatterns = [
+        /(?:^|\n)\s*(\d+)[\.\)、]\s*(.+)/g,
+        /(?:^|\n)\s*[-*]\s*\[([ x])\]\s*(.+)/g,
+        /(?:^|\n)\s*###?\s+(.+)/g
+      ]
+
+      const newSteps: typeof state.steps = []
+      let match
+      for (const pattern of stepPatterns) {
+        pattern.lastIndex = 0
+        let idx = 0
+        while ((match = pattern.exec(state.buffer)) !== null) {
+          const content = match[2] || match[1]
+          if (content && content.trim().length > 3 && !content.includes('```')) {
+            newSteps.push({
+              id: `step-${idx++}`,
+              content: content.trim().slice(0, 120),
+              status: 'pending' as const
+            })
+          }
+        }
+      }
+
+      if (newSteps.length > 0) {
+        state.steps = newSteps
+        // 广播计划步骤到渲染进程
+        BrowserWindow.getAllWindows().forEach((win) => {
+          if (!win.isDestroyed()) {
+            win.webContents.send('plan-steps-detected', sessionId, state!.steps)
+          }
+        })
+      }
+    }
+  }
+
+  // 暴露手动触发计划检测的 IPC
+  ipcMain.handle('detect-plan-from-output', (_event, sessionId: string) => {
+    const state = planDetectionState.get(sessionId)
+    return state?.steps || []
+  })
+
+  // 重置计划检测状态
+  ipcMain.handle('reset-plan-detection', (_event, sessionId: string) => {
+    planDetectionState.delete(sessionId)
+    return true
+  })
+
+  /* ── 子 Agent 执行（父子开发模式）─────────────────────────── */
+
+  const planStepPtys = new Map<string, ReturnType<typeof spawnPty>>()
+  const planStepOutputs = new Map<string, string>()
+
+  function broadcastPlanStepOutput(stepId: string, data: string) {
+    BrowserWindow.getAllWindows().forEach((win) => {
+      if (!win.isDestroyed()) {
+        win.webContents.send('plan-step-output', stepId, data)
+      }
+    })
+  }
+
+  function broadcastPlanStepComplete(stepId: string, exitCode: number | null, result: string) {
+    BrowserWindow.getAllWindows().forEach((win) => {
+      if (!win.isDestroyed()) {
+        win.webContents.send('plan-step-complete', stepId, exitCode, result)
+      }
+    })
+  }
+
+  // 执行单个计划步骤（子 agent）
+  ipcMain.handle('execute-plan-step', (_event, stepId: string, stepContent: string, planContext: string, cwd?: string) => {
+    const workDir = cwd || process.cwd()
+    const isWin = process.platform === 'win32'
+
+    // 如果该 step 已有运行中的 PTY，先 kill
+    const oldPty = planStepPtys.get(stepId)
+    if (oldPty) {
+      oldPty.kill()
+      planStepPtys.delete(stepId)
+    }
+
+    const subAgentPrompt = [
+      '你是一个子 Agent，负责执行大型任务计划中的单个步骤。',
+      '',
+      '## 原始任务',
+      planContext,
+      '',
+      '## 你的任务步骤',
+      stepContent,
+      '',
+      '## 要求',
+      '1. 只专注于执行上述步骤，不要偏离',
+      '2. 完成步骤后，简要总结你的执行结果',
+      '3. 如果步骤产生文件变更，请列出变更的文件路径',
+    ].join('\n')
+
+    const shell = isWin ? 'cmd.exe' : 'claude'
+    const args = isWin ? ['/c', 'claude'] : []
+
+    const pty = spawnPty(shell, args, {
+      name: 'xterm-256color',
+      cols: 120,
+      rows: 40,
+      cwd: workDir,
+      env: process.env as { [key: string]: string }
+    })
+
+    planStepPtys.set(stepId, pty)
+    planStepOutputs.set(stepId, '')
+
+    // 延迟发送 prompt，等 CLI 启动
+    setTimeout(() => {
+      writePtyChunks(pty, subAgentPrompt + '\r')
+    }, isWin ? 1500 : 500)
+
+    pty.onData((data) => {
+      const current = planStepOutputs.get(stepId) || ''
+      planStepOutputs.set(stepId, current + data)
+      broadcastPlanStepOutput(stepId, data)
+    })
+
+    pty.onExit(({ exitCode }) => {
+      const result = planStepOutputs.get(stepId) || ''
+      broadcastPlanStepComplete(stepId, exitCode ?? -1, result)
+      planStepPtys.delete(stepId)
+      planStepOutputs.delete(stepId)
+    })
+
+    return { success: true, stepId }
+  })
+
+  // 取消正在执行的计划步骤
+  ipcMain.handle('cancel-plan-step', (_event, stepId: string) => {
+    const pty = planStepPtys.get(stepId)
+    if (pty) {
+      pty.kill()
+      planStepPtys.delete(stepId)
+      planStepOutputs.delete(stepId)
+      return { success: true }
+    }
+    return { success: false, error: 'No running PTY for step: ' + stepId }
+  })
+
+  // 主 Agent 检查（审查所有步骤结果）
+  ipcMain.handle('review-plan-steps', (_event, stepsJson: string, planContext: string, cwd?: string) => {
+    const workDir = cwd || process.cwd()
+    const isWin = process.platform === 'win32'
+    const steps: { content: string; result?: string; status: string }[] = JSON.parse(stepsJson)
+
+    const stepsSummary = steps.map((s, i) => {
+      const statusLabel = s.status === 'completed' ? '✓ 已完成' : s.status === 'failed' ? '✗ 失败' : '○ 未执行'
+      const result = s.result ? `\n   结果: ${s.result.slice(0, 500)}` : ''
+      return `${i + 1}. ${statusLabel} ${s.content}${result}`
+    }).join('\n')
+
+    const reviewPrompt = [
+      '你是一个审查 Agent，负责检查已完成的子任务执行结果。',
+      '',
+      '## 原始任务',
+      planContext,
+      '',
+      '## 已完成的步骤',
+      stepsSummary,
+      '',
+      '## 要求',
+      '1. 检查各步骤之间的 consistency（一致性）',
+      '2. 确认所有步骤都正确完成',
+      '3. 如果发现问题，请明确指出并提供修复方案',
+      '4. 如果一切正常，请输出「审查通过」',
+    ].join('\n')
+
+    // 使用 legacy PTY 机制
+    const reviewPtyId = 'review-agent'
+    const oldPty = planStepPtys.get(reviewPtyId)
+    if (oldPty) {
+      oldPty.kill()
+      planStepPtys.delete(reviewPtyId)
+    }
+
+    const shell = isWin ? 'cmd.exe' : 'claude'
+    const args = isWin ? ['/c', 'claude'] : []
+
+    const pty = spawnPty(shell, args, {
+      name: 'xterm-256color',
+      cols: 120,
+      rows: 40,
+      cwd: workDir,
+      env: process.env as { [key: string]: string }
+    })
+
+    planStepPtys.set(reviewPtyId, pty)
+    planStepOutputs.set(reviewPtyId, '')
+
+    setTimeout(() => {
+      writePtyChunks(pty, reviewPrompt + '\r')
+    }, isWin ? 1500 : 500)
+
+    pty.onData((data) => {
+      const current = planStepOutputs.get(reviewPtyId) || ''
+      planStepOutputs.set(reviewPtyId, current + data)
+      broadcastPlanStepOutput(reviewPtyId, data)
+    })
+
+    pty.onExit(({ exitCode }) => {
+      const result = planStepOutputs.get(reviewPtyId) || ''
+      broadcastPlanStepComplete(reviewPtyId, exitCode ?? -1, result)
+      planStepPtys.delete(reviewPtyId)
+      planStepOutputs.delete(reviewPtyId)
+    })
+
+    return { success: true, stepId: reviewPtyId }
+  })
+
   /* 保留旧的 CLI 流式接口（供 InputArea 用） */
   ipcMain.handle('send-to-claude', (_event, prompt: string, permission?: UIPermission, cwd?: string) => {
     const workDir = cwd || process.cwd()
@@ -877,6 +1213,7 @@ function registerIPC() {
       BrowserWindow.getAllWindows().forEach((win) => {
         if (!win.isDestroyed()) win.webContents.send('claude-output', data)
       })
+      parsePlanFromOutput('legacy', data)
       if (checkNeedConfirm('legacy', data)) {
         broadcastClaudeConfirmNeeded()
         scheduleAutoExpand()
@@ -912,8 +1249,8 @@ app.whenReady().then(() => {
   setupAutoUpdater()
   createFloatWindow()
   createTray()
+  registerIPC()      // 必须在 createMainWindow 之前注册，否则渲染进程的 getTasks() 等 IPC 调用会失败
   createMainWindow()
-  registerIPC()
 
   // 启动后延迟检查更新，然后按每周五 10:00 安排定时检查
   setTimeout(() => checkForUpdatesSilent(), 30000)

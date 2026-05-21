@@ -172,7 +172,43 @@ const electronAPI = {
   toggleFileWatcher: (enabled: boolean) => ipcRenderer.invoke('toggle-file-watcher', enabled),
 
   /* ── Claude Code CLI 配置读取 ──────────────────────────── */
-  readClaudeConfig: () => ipcRenderer.invoke('read-claude-config')
+  readClaudeConfig: () => ipcRenderer.invoke('read-claude-config'),
+
+  /* ── Git Diff & 变更文件 ────────────────────────────────── */
+  getGitChangedFiles: (cwd?: string) => ipcRenderer.invoke('get-git-changed-files', cwd),
+  getGitDiff: (filePath: string, cwd?: string) => ipcRenderer.invoke('get-git-diff', filePath, cwd),
+  readFileContent: (filePath: string) => ipcRenderer.invoke('read-file-content', filePath),
+
+  /* ── 计划检测 ──────────────────────────────────────────── */
+  detectPlanFromOutput: (sessionId: string) => ipcRenderer.invoke('detect-plan-from-output', sessionId),
+  resetPlanDetection: (sessionId: string) => ipcRenderer.invoke('reset-plan-detection', sessionId),
+
+  onPlanStepsDetected: (callback: (sessionId: string, steps: { id: string; content: string; status: string }[]) => void) => {
+    const listener = (_event: unknown, sessionId: string, steps: { id: string; content: string; status: string }[]) =>
+      callback(sessionId, steps)
+    ipcRenderer.on('plan-steps-detected', listener)
+    return () => ipcRenderer.removeListener('plan-steps-detected', listener)
+  },
+
+  /* ── 子 Agent 执行（父子开发模式）────────────────────────── */
+  executePlanStep: (stepId: string, stepContent: string, planContext: string, cwd?: string) =>
+    ipcRenderer.invoke('execute-plan-step', stepId, stepContent, planContext, cwd),
+  cancelPlanStep: (stepId: string) => ipcRenderer.invoke('cancel-plan-step', stepId),
+  reviewPlanSteps: (stepsJson: string, planContext: string, cwd?: string) =>
+    ipcRenderer.invoke('review-plan-steps', stepsJson, planContext, cwd),
+
+  onPlanStepOutput: (callback: (stepId: string, data: string) => void) => {
+    const listener = (_event: unknown, stepId: string, data: string) => callback(stepId, data)
+    ipcRenderer.on('plan-step-output', listener)
+    return () => ipcRenderer.removeListener('plan-step-output', listener)
+  },
+
+  onPlanStepComplete: (callback: (stepId: string, exitCode: number | null, result: string) => void) => {
+    const listener = (_event: unknown, stepId: string, exitCode: number | null, result: string) =>
+      callback(stepId, exitCode, result)
+    ipcRenderer.on('plan-step-complete', listener)
+    return () => ipcRenderer.removeListener('plan-step-complete', listener)
+  }
 }
 
 contextBridge.exposeInMainWorld('electronAPI', electronAPI)
