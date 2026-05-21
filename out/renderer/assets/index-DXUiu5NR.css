@@ -292,7 +292,7 @@
 	box-shadow: var(--vscode-scrollbar-shadow, #000) 6px 0 6px -6px inset;
 }
 /* ============================================
-   ClaudeBridge 7-Theme System
+   H-code 7-Theme System
    ============================================ */
 
 /* ① 汇川蓝 (默认) */
@@ -671,6 +671,9 @@
 }
 .italic {
   font-style: italic;
+}
+.line-through {
+  text-decoration-line: line-through;
 }
 .antialiased {
   -webkit-font-smoothing: antialiased;

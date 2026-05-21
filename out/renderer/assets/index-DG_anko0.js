@@ -9248,18 +9248,17 @@ class FastColor {
     }
     if (!input) ;
     else if (typeof input === "string") {
-      let matchPrefix2 = function(prefix) {
+      let matchPrefix = function(prefix) {
         return trimStr.startsWith(prefix);
       };
-      var matchPrefix = matchPrefix2;
       const trimStr = input.trim();
       if (/^#?[A-F\d]{3,8}$/i.test(trimStr)) {
         this.fromHexString(trimStr);
-      } else if (matchPrefix2("rgb")) {
+      } else if (matchPrefix("rgb")) {
         this.fromRgbString(trimStr);
-      } else if (matchPrefix2("hsl")) {
+      } else if (matchPrefix("hsl")) {
         this.fromHslString(trimStr);
-      } else if (matchPrefix2("hsv") || matchPrefix2("hsb")) {
+      } else if (matchPrefix("hsv") || matchPrefix("hsb")) {
         this.fromHsvString(trimStr);
       }
     } else if (input instanceof FastColor) {
@@ -11906,7 +11905,15 @@ var CloseOutlined = function CloseOutlined2(props, ref) {
     icon: CloseOutlined$1
   }));
 };
-var RefIcon$F = /* @__PURE__ */ reactExports.forwardRef(CloseOutlined);
+var RefIcon$T = /* @__PURE__ */ reactExports.forwardRef(CloseOutlined);
+var LoadingOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "0 0 1024 1024", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M988 548c-19.9 0-36-16.1-36-36 0-59.4-11.6-117-34.6-171.3a440.45 440.45 0 00-94.3-139.9 437.71 437.71 0 00-139.9-94.3C629 83.6 571.4 72 512 72c-19.9 0-36-16.1-36-36s16.1-36 36-36c69.1 0 136.2 13.5 199.3 40.3C772.3 66 827 103 874 150c47 47 83.9 101.8 109.7 162.7 26.7 63.1 40.2 130.2 40.2 199.3.1 19.9-16 36-35.9 36z" } }] }, "name": "loading", "theme": "outlined" };
+var LoadingOutlined = function LoadingOutlined2(props, ref) {
+  return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
+    ref,
+    icon: LoadingOutlined$1
+  }));
+};
+var RefIcon$S = /* @__PURE__ */ reactExports.forwardRef(LoadingOutlined);
 var RightOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M765.7 486.8L314.9 134.7A7.97 7.97 0 00302 141v77.3c0 4.9 2.3 9.6 6.1 12.6l360 281.1-360 281.1c-3.9 3-6.1 7.7-6.1 12.6V883c0 6.7 7.7 10.4 12.9 6.3l450.8-352.1a31.96 31.96 0 000-50.4z" } }] }, "name": "right", "theme": "outlined" };
 var RightOutlined = function RightOutlined2(props, ref) {
   return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
@@ -11914,7 +11921,7 @@ var RightOutlined = function RightOutlined2(props, ref) {
     icon: RightOutlined$1
   }));
 };
-var RefIcon$E = /* @__PURE__ */ reactExports.forwardRef(RightOutlined);
+var RefIcon$R = /* @__PURE__ */ reactExports.forwardRef(RightOutlined);
 var DownOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M884 256h-75c-5.1 0-9.9 2.5-12.9 6.6L512 654.2 227.9 262.6c-3-4.1-7.8-6.6-12.9-6.6h-75c-6.5 0-10.3 7.4-6.5 12.7l352.6 486.1c12.8 17.6 39 17.6 51.7 0l352.6-486.1c3.9-5.3.1-12.7-6.4-12.7z" } }] }, "name": "down", "theme": "outlined" };
 var DownOutlined = function DownOutlined2(props, ref) {
   return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
@@ -11922,7 +11929,7 @@ var DownOutlined = function DownOutlined2(props, ref) {
     icon: DownOutlined$1
   }));
 };
-var RefIcon$D = /* @__PURE__ */ reactExports.forwardRef(DownOutlined);
+var RefIcon$Q = /* @__PURE__ */ reactExports.forwardRef(DownOutlined);
 var SearchOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M909.6 854.5L649.9 594.8C690.2 542.7 712 479 712 412c0-80.2-31.3-155.4-87.9-212.1-56.6-56.7-132-87.9-212.1-87.9s-155.5 31.3-212.1 87.9C143.2 256.5 112 331.8 112 412c0 80.1 31.3 155.5 87.9 212.1C256.5 680.8 331.8 712 412 712c67 0 130.6-21.8 182.7-62l259.7 259.6a8.2 8.2 0 0011.6 0l43.6-43.5a8.2 8.2 0 000-11.6zM570.4 570.4C528 612.7 471.8 636 412 636s-116-23.3-158.4-65.6C211.3 528 188 471.8 188 412s23.3-116.1 65.6-158.4C296 211.3 352.2 188 412 188s116.1 23.2 158.4 65.6S636 352.2 636 412s-23.3 116.1-65.6 158.4z" } }] }, "name": "search", "theme": "outlined" };
 var SearchOutlined = function SearchOutlined2(props, ref) {
   return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
@@ -11930,7 +11937,7 @@ var SearchOutlined = function SearchOutlined2(props, ref) {
     icon: SearchOutlined$1
   }));
 };
-var RefIcon$C = /* @__PURE__ */ reactExports.forwardRef(SearchOutlined);
+var RefIcon$P = /* @__PURE__ */ reactExports.forwardRef(SearchOutlined);
 var LeftOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M724 218.3V141c0-6.7-7.7-10.4-12.9-6.3L260.3 486.8a31.86 31.86 0 000 50.3l450.8 352.1c5.3 4.1 12.9.4 12.9-6.3v-77.3c0-4.9-2.3-9.6-6.1-12.6l-360-281 360-281.1c3.8-3 6.1-7.7 6.1-12.6z" } }] }, "name": "left", "theme": "outlined" };
 var LeftOutlined = function LeftOutlined2(props, ref) {
   return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
@@ -11938,7 +11945,7 @@ var LeftOutlined = function LeftOutlined2(props, ref) {
     icon: LeftOutlined$1
   }));
 };
-var RefIcon$B = /* @__PURE__ */ reactExports.forwardRef(LeftOutlined);
+var RefIcon$O = /* @__PURE__ */ reactExports.forwardRef(LeftOutlined);
 var PlusOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M482 152h60q8 0 8 8v704q0 8-8 8h-60q-8 0-8-8V160q0-8 8-8z" } }, { "tag": "path", "attrs": { "d": "M192 474h672q8 0 8 8v60q0 8-8 8H160q-8 0-8-8v-60q0-8 8-8z" } }] }, "name": "plus", "theme": "outlined" };
 var PlusOutlined = function PlusOutlined2(props, ref) {
   return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
@@ -11946,7 +11953,7 @@ var PlusOutlined = function PlusOutlined2(props, ref) {
     icon: PlusOutlined$1
   }));
 };
-var RefIcon$A = /* @__PURE__ */ reactExports.forwardRef(PlusOutlined);
+var RefIcon$N = /* @__PURE__ */ reactExports.forwardRef(PlusOutlined);
 var UpOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M890.5 755.3L537.9 269.2c-12.8-17.6-39-17.6-51.7 0L133.5 755.3A8 8 0 00140 768h75c5.1 0 9.9-2.5 12.9-6.6L512 369.8l284.1 391.6c3 4.1 7.8 6.6 12.9 6.6h75c6.5 0 10.3-7.4 6.5-12.7z" } }] }, "name": "up", "theme": "outlined" };
 var UpOutlined = function UpOutlined2(props, ref) {
   return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
@@ -11954,7 +11961,23 @@ var UpOutlined = function UpOutlined2(props, ref) {
     icon: UpOutlined$1
   }));
 };
-var RefIcon$z = /* @__PURE__ */ reactExports.forwardRef(UpOutlined);
+var RefIcon$M = /* @__PURE__ */ reactExports.forwardRef(UpOutlined);
+var ClockCircleOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z" } }, { "tag": "path", "attrs": { "d": "M686.7 638.6L544.1 535.5V288c0-4.4-3.6-8-8-8H488c-4.4 0-8 3.6-8 8v275.4c0 2.6 1.2 5 3.3 6.5l165.4 120.6c3.6 2.6 8.6 1.8 11.2-1.7l28.6-39c2.6-3.7 1.8-8.7-1.8-11.2z" } }] }, "name": "clock-circle", "theme": "outlined" };
+var ClockCircleOutlined = function ClockCircleOutlined2(props, ref) {
+  return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
+    ref,
+    icon: ClockCircleOutlined$1
+  }));
+};
+var RefIcon$L = /* @__PURE__ */ reactExports.forwardRef(ClockCircleOutlined);
+var FileTextOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M854.6 288.6L639.4 73.4c-6-6-14.1-9.4-22.6-9.4H192c-17.7 0-32 14.3-32 32v832c0 17.7 14.3 32 32 32h640c17.7 0 32-14.3 32-32V311.3c0-8.5-3.4-16.7-9.4-22.7zM790.2 326H602V137.8L790.2 326zm1.8 562H232V136h302v216a42 42 0 0042 42h216v494zM504 618H320c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8h184c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8zM312 490v48c0 4.4 3.6 8 8 8h384c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8H320c-4.4 0-8 3.6-8 8z" } }] }, "name": "file-text", "theme": "outlined" };
+var FileTextOutlined = function FileTextOutlined2(props, ref) {
+  return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
+    ref,
+    icon: FileTextOutlined$1
+  }));
+};
+var RefIcon$K = /* @__PURE__ */ reactExports.forwardRef(FileTextOutlined);
 var SwapOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M847.9 592H152c-4.4 0-8 3.6-8 8v60c0 4.4 3.6 8 8 8h605.2L612.9 851c-4.1 5.2-.4 13 6.3 13h72.5c4.9 0 9.5-2.2 12.6-6.1l168.8-214.1c16.5-21 1.6-51.8-25.2-51.8zM872 356H266.8l144.3-183c4.1-5.2.4-13-6.3-13h-72.5c-4.9 0-9.5 2.2-12.6 6.1L150.9 380.2c-16.5 21-1.6 51.8 25.1 51.8h696c4.4 0 8-3.6 8-8v-60c0-4.4-3.6-8-8-8z" } }] }, "name": "swap", "theme": "outlined" };
 var SwapOutlined = function SwapOutlined2(props, ref) {
   return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
@@ -11962,7 +11985,23 @@ var SwapOutlined = function SwapOutlined2(props, ref) {
     icon: SwapOutlined$1
   }));
 };
-var RefIcon$y = /* @__PURE__ */ reactExports.forwardRef(SwapOutlined);
+var RefIcon$J = /* @__PURE__ */ reactExports.forwardRef(SwapOutlined);
+var DoubleLeftOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M272.9 512l265.4-339.1c4.1-5.2.4-12.9-6.3-12.9h-77.3c-4.9 0-9.6 2.3-12.6 6.1L186.8 492.3a31.99 31.99 0 000 39.5l255.3 326.1c3 3.9 7.7 6.1 12.6 6.1H532c6.7 0 10.4-7.7 6.3-12.9L272.9 512zm304 0l265.4-339.1c4.1-5.2.4-12.9-6.3-12.9h-77.3c-4.9 0-9.6 2.3-12.6 6.1L490.8 492.3a31.99 31.99 0 000 39.5l255.3 326.1c3 3.9 7.7 6.1 12.6 6.1H836c6.7 0 10.4-7.7 6.3-12.9L576.9 512z" } }] }, "name": "double-left", "theme": "outlined" };
+var DoubleLeftOutlined = function DoubleLeftOutlined2(props, ref) {
+  return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
+    ref,
+    icon: DoubleLeftOutlined$1
+  }));
+};
+var RefIcon$I = /* @__PURE__ */ reactExports.forwardRef(DoubleLeftOutlined);
+var DoubleRightOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M533.2 492.3L277.9 166.1c-3-3.9-7.7-6.1-12.6-6.1H188c-6.7 0-10.4 7.7-6.3 12.9L447.1 512 181.7 851.1A7.98 7.98 0 00188 864h77.3c4.9 0 9.6-2.3 12.6-6.1l255.3-326.1c9.1-11.7 9.1-27.9 0-39.5zm304 0L581.9 166.1c-3-3.9-7.7-6.1-12.6-6.1H492c-6.7 0-10.4 7.7-6.3 12.9L751.1 512 485.7 851.1A7.98 7.98 0 00492 864h77.3c4.9 0 9.6-2.3 12.6-6.1l255.3-326.1c9.1-11.7 9.1-27.9 0-39.5z" } }] }, "name": "double-right", "theme": "outlined" };
+var DoubleRightOutlined = function DoubleRightOutlined2(props, ref) {
+  return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
+    ref,
+    icon: DoubleRightOutlined$1
+  }));
+};
+var RefIcon$H = /* @__PURE__ */ reactExports.forwardRef(DoubleRightOutlined);
 var ReloadOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M909.1 209.3l-56.4 44.1C775.8 155.1 656.2 92 521.9 92 290 92 102.3 279.5 102 511.5 101.7 743.7 289.8 932 521.9 932c181.3 0 335.8-115 394.6-276.1 1.5-4.2-.7-8.9-4.9-10.3l-56.7-19.5a8 8 0 00-10.1 4.8c-1.8 5-3.8 10-5.9 14.9-17.3 41-42.1 77.8-73.7 109.4A344.77 344.77 0 01655.9 829c-42.3 17.9-87.4 27-133.8 27-46.5 0-91.5-9.1-133.8-27A341.5 341.5 0 01279 755.2a342.16 342.16 0 01-73.7-109.4c-17.9-42.4-27-87.4-27-133.9s9.1-91.5 27-133.9c17.3-41 42.1-77.8 73.7-109.4 31.6-31.6 68.4-56.4 109.3-73.8 42.3-17.9 87.4-27 133.8-27 46.5 0 91.5 9.1 133.8 27a341.5 341.5 0 01109.3 73.8c9.9 9.9 19.2 20.4 27.8 31.4l-60.2 47a8 8 0 003 14.1l175.6 43c5 1.2 9.9-2.6 9.9-7.7l.8-180.9c-.1-6.6-7.8-10.3-13-6.2z" } }] }, "name": "reload", "theme": "outlined" };
 var ReloadOutlined = function ReloadOutlined2(props, ref) {
   return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
@@ -11970,7 +12009,15 @@ var ReloadOutlined = function ReloadOutlined2(props, ref) {
     icon: ReloadOutlined$1
   }));
 };
-var RefIcon$x = /* @__PURE__ */ reactExports.forwardRef(ReloadOutlined);
+var RefIcon$G = /* @__PURE__ */ reactExports.forwardRef(ReloadOutlined);
+var FolderOpenOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M928 444H820V330.4c0-17.7-14.3-32-32-32H473L355.7 186.2a8.15 8.15 0 00-5.5-2.2H96c-17.7 0-32 14.3-32 32v592c0 17.7 14.3 32 32 32h698c13 0 24.8-7.9 29.7-20l134-332c1.5-3.8 2.3-7.9 2.3-12 0-17.7-14.3-32-32-32zM136 256h188.5l119.6 114.4H748V444H238c-13 0-24.8 7.9-29.7 20L136 643.2V256zm635.3 512H159l103.3-256h612.4L771.3 768z" } }] }, "name": "folder-open", "theme": "outlined" };
+var FolderOpenOutlined = function FolderOpenOutlined2(props, ref) {
+  return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
+    ref,
+    icon: FolderOpenOutlined$1
+  }));
+};
+var RefIcon$F = /* @__PURE__ */ reactExports.forwardRef(FolderOpenOutlined);
 var DeleteOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M360 184h-8c4.4 0 8-3.6 8-8v8h304v-8c0 4.4 3.6 8 8 8h-8v72h72v-80c0-35.3-28.7-64-64-64H352c-35.3 0-64 28.7-64 64v80h72v-72zm504 72H160c-17.7 0-32 14.3-32 32v32c0 4.4 3.6 8 8 8h60.4l24.7 523c1.6 34.1 29.8 61 63.9 61h454c34.2 0 62.3-26.8 63.9-61l24.7-523H888c4.4 0 8-3.6 8-8v-32c0-17.7-14.3-32-32-32zM731.3 840H292.7l-24.2-512h487l-24.2 512z" } }] }, "name": "delete", "theme": "outlined" };
 var DeleteOutlined = function DeleteOutlined2(props, ref) {
   return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
@@ -11978,7 +12025,7 @@ var DeleteOutlined = function DeleteOutlined2(props, ref) {
     icon: DeleteOutlined$1
   }));
 };
-var RefIcon$w = /* @__PURE__ */ reactExports.forwardRef(DeleteOutlined);
+var RefIcon$E = /* @__PURE__ */ reactExports.forwardRef(DeleteOutlined);
 var EditOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M257.7 752c2 0 4-.2 6-.5L431.9 722c2-.4 3.9-1.3 5.3-2.8l423.9-423.9a9.96 9.96 0 000-14.1L694.9 114.9c-1.9-1.9-4.4-2.9-7.1-2.9s-5.2 1-7.1 2.9L256.8 538.8c-1.5 1.5-2.4 3.3-2.8 5.3l-29.5 168.2a33.5 33.5 0 009.4 29.8c6.6 6.4 14.9 9.9 23.8 9.9zm67.4-174.4L687.8 215l73.3 73.3-362.7 362.6-88.9 15.7 15.6-89zM880 836H144c-17.7 0-32 14.3-32 32v36c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-36c0-17.7-14.3-32-32-32z" } }] }, "name": "edit", "theme": "outlined" };
 var EditOutlined = function EditOutlined2(props, ref) {
   return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
@@ -11986,7 +12033,7 @@ var EditOutlined = function EditOutlined2(props, ref) {
     icon: EditOutlined$1
   }));
 };
-var RefIcon$v = /* @__PURE__ */ reactExports.forwardRef(EditOutlined);
+var RefIcon$D = /* @__PURE__ */ reactExports.forwardRef(EditOutlined);
 var EnterOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M864 170h-60c-4.4 0-8 3.6-8 8v518H310v-73c0-6.7-7.8-10.5-13-6.3l-141.9 112a8 8 0 000 12.6l141.9 112c5.3 4.2 13 .4 13-6.3v-75h498c35.3 0 64-28.7 64-64V178c0-4.4-3.6-8-8-8z" } }] }, "name": "enter", "theme": "outlined" };
 var EnterOutlined = function EnterOutlined2(props, ref) {
   return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
@@ -11994,7 +12041,7 @@ var EnterOutlined = function EnterOutlined2(props, ref) {
     icon: EnterOutlined$1
   }));
 };
-var RefIcon$u = /* @__PURE__ */ reactExports.forwardRef(EnterOutlined);
+var RefIcon$C = /* @__PURE__ */ reactExports.forwardRef(EnterOutlined);
 var CopyOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M832 64H296c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h496v688c0 4.4 3.6 8 8 8h56c4.4 0 8-3.6 8-8V96c0-17.7-14.3-32-32-32zM704 192H192c-17.7 0-32 14.3-32 32v530.7c0 8.5 3.4 16.6 9.4 22.6l173.3 173.3c2.2 2.2 4.7 4 7.4 5.5v1.9h4.2c3.5 1.3 7.2 2 11 2H704c17.7 0 32-14.3 32-32V224c0-17.7-14.3-32-32-32zM350 856.2L263.9 770H350v86.2zM664 888H414V746c0-22.1-17.9-40-40-40H232V264h432v624z" } }] }, "name": "copy", "theme": "outlined" };
 var CopyOutlined = function CopyOutlined2(props, ref) {
   return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
@@ -12002,7 +12049,7 @@ var CopyOutlined = function CopyOutlined2(props, ref) {
     icon: CopyOutlined$1
   }));
 };
-var RefIcon$t = /* @__PURE__ */ reactExports.forwardRef(CopyOutlined);
+var RefIcon$B = /* @__PURE__ */ reactExports.forwardRef(CopyOutlined);
 var DownloadOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M505.7 661a8 8 0 0012.6 0l112-141.7c4.1-5.2.4-12.9-6.3-12.9h-74.1V168c0-4.4-3.6-8-8-8h-60c-4.4 0-8 3.6-8 8v338.3H400c-6.7 0-10.4 7.7-6.3 12.9l112 141.8zM878 626h-60c-4.4 0-8 3.6-8 8v154H214V634c0-4.4-3.6-8-8-8h-60c-4.4 0-8 3.6-8 8v198c0 17.7 14.3 32 32 32h684c17.7 0 32-14.3 32-32V634c0-4.4-3.6-8-8-8z" } }] }, "name": "download", "theme": "outlined" };
 var DownloadOutlined = function DownloadOutlined2(props, ref) {
   return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
@@ -12010,7 +12057,7 @@ var DownloadOutlined = function DownloadOutlined2(props, ref) {
     icon: DownloadOutlined$1
   }));
 };
-var RefIcon$s = /* @__PURE__ */ reactExports.forwardRef(DownloadOutlined);
+var RefIcon$A = /* @__PURE__ */ reactExports.forwardRef(DownloadOutlined);
 const createStoreImpl = (createState) => {
   let state;
   const listeners = /* @__PURE__ */ new Set();
@@ -12183,6 +12230,23 @@ const useAppStore = create((set2) => ({
   funnyMode: loadSetting("cb-funny-mode", false),
   fileWatcherEnabled: loadSetting("cb-file-watcher", false),
   autoExpandFloatBall: loadSetting("cb-auto-expand-float-ball", false),
+  /* 右侧三模块面板 */
+  rightSidebarCollapsed: false,
+  rightSidebarTab: "plan",
+  rightSidebarExpanded: false,
+  /* 任务规划 */
+  planSteps: [],
+  currentPlanSessionId: null,
+  planningPhase: "idle",
+  planContext: "",
+  /* 任务产物 */
+  deliverables: [],
+  /* Diff 抽屉 */
+  showDiffDrawer: false,
+  diffFilePath: null,
+  diffContent: null,
+  /* 主任务运行状态 */
+  isMainTaskRunning: false,
   setTheme: (theme) => {
     try {
       localStorage.setItem("cb-theme", theme);
@@ -12343,7 +12407,36 @@ const useAppStore = create((set2) => ({
   setAutoExpandFloatBall: (enabled) => {
     saveSetting("cb-auto-expand-float-ball", enabled);
     set2({ autoExpandFloatBall: enabled });
-  }
+  },
+  /* 右侧面板 */
+  toggleRightSidebar: () => set2((s15) => ({ rightSidebarCollapsed: !s15.rightSidebarCollapsed })),
+  setRightSidebarTab: (tab) => set2({ rightSidebarTab: tab }),
+  setRightSidebarExpanded: (expanded) => set2({ rightSidebarExpanded: expanded }),
+  /* 任务规划 */
+  setPlanSteps: (steps) => set2({ planSteps: steps }),
+  updatePlanStep: (stepId, updates) => set2((s15) => ({
+    planSteps: s15.planSteps.map(
+      (step) => step.id === stepId ? { ...step, ...updates } : step
+    )
+  })),
+  setCurrentPlanSessionId: (id2) => set2({ currentPlanSessionId: id2 }),
+  clearPlanSteps: () => set2({ planSteps: [], currentPlanSessionId: null, planningPhase: "idle", planContext: "" }),
+  setPlanningPhase: (phase) => set2({ planningPhase: phase }),
+  setPlanContext: (context) => set2({ planContext: context }),
+  /* 任务产物 */
+  setDeliverables: (files) => set2({ deliverables: files }),
+  addDeliverable: (file) => set2((s15) => {
+    const exists = s15.deliverables.find((f2) => f2.filePath === file.filePath);
+    if (exists) return { deliverables: s15.deliverables.map((f2) => f2.filePath === file.filePath ? file : f2) };
+    return { deliverables: [...s15.deliverables, file] };
+  }),
+  clearDeliverables: () => set2({ deliverables: [] }),
+  /* Diff 抽屉 */
+  openDiffDrawer: (filePath) => set2({ showDiffDrawer: true, diffFilePath: filePath, diffContent: null }),
+  setDiffContent: (content) => set2({ diffContent: content }),
+  closeDiffDrawer: () => set2({ showDiffDrawer: false, diffFilePath: null, diffContent: null }),
+  /* 主任务运行状态 */
+  setIsMainTaskRunning: (running) => set2({ isMainTaskRunning: running })
 }));
 var AppstoreOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M464 144H160c-8.8 0-16 7.2-16 16v304c0 8.8 7.2 16 16 16h304c8.8 0 16-7.2 16-16V160c0-8.8-7.2-16-16-16zm-52 268H212V212h200v200zm452-268H560c-8.8 0-16 7.2-16 16v304c0 8.8 7.2 16 16 16h304c8.8 0 16-7.2 16-16V160c0-8.8-7.2-16-16-16zm-52 268H612V212h200v200zM464 544H160c-8.8 0-16 7.2-16 16v304c0 8.8 7.2 16 16 16h304c8.8 0 16-7.2 16-16V560c0-8.8-7.2-16-16-16zm-52 268H212V612h200v200zm452-268H560c-8.8 0-16 7.2-16 16v304c0 8.8 7.2 16 16 16h304c8.8 0 16-7.2 16-16V560c0-8.8-7.2-16-16-16zm-52 268H612V612h200v200z" } }] }, "name": "appstore", "theme": "outlined" };
 var AppstoreOutlined = function AppstoreOutlined2(props, ref) {
@@ -12352,7 +12445,7 @@ var AppstoreOutlined = function AppstoreOutlined2(props, ref) {
     icon: AppstoreOutlined$1
   }));
 };
-var RefIcon$r = /* @__PURE__ */ reactExports.forwardRef(AppstoreOutlined);
+var RefIcon$z = /* @__PURE__ */ reactExports.forwardRef(AppstoreOutlined);
 var ArrowDownOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M862 465.3h-81c-4.6 0-9 2-12.1 5.5L550 723.1V160c0-4.4-3.6-8-8-8h-60c-4.4 0-8 3.6-8 8v563.1L255.1 470.8c-3-3.5-7.4-5.5-12.1-5.5h-81c-6.8 0-10.5 8.1-6 13.2L487.9 861a31.96 31.96 0 0048.3 0L868 478.5c4.5-5.2.8-13.2-6-13.2z" } }] }, "name": "arrow-down", "theme": "outlined" };
 var ArrowDownOutlined = function ArrowDownOutlined2(props, ref) {
   return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
@@ -12360,7 +12453,7 @@ var ArrowDownOutlined = function ArrowDownOutlined2(props, ref) {
     icon: ArrowDownOutlined$1
   }));
 };
-var RefIcon$q = /* @__PURE__ */ reactExports.forwardRef(ArrowDownOutlined);
+var RefIcon$y = /* @__PURE__ */ reactExports.forwardRef(ArrowDownOutlined);
 var ArrowUpOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M868 545.5L536.1 163a31.96 31.96 0 00-48.3 0L156 545.5a7.97 7.97 0 006 13.2h81c4.6 0 9-2 12.1-5.5L474 300.9V864c0 4.4 3.6 8 8 8h60c4.4 0 8-3.6 8-8V300.9l218.9 252.3c3 3.5 7.4 5.5 12.1 5.5h81c6.8 0 10.5-8 6-13.2z" } }] }, "name": "arrow-up", "theme": "outlined" };
 var ArrowUpOutlined = function ArrowUpOutlined2(props, ref) {
   return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
@@ -12368,7 +12461,7 @@ var ArrowUpOutlined = function ArrowUpOutlined2(props, ref) {
     icon: ArrowUpOutlined$1
   }));
 };
-var RefIcon$p = /* @__PURE__ */ reactExports.forwardRef(ArrowUpOutlined);
+var RefIcon$x = /* @__PURE__ */ reactExports.forwardRef(ArrowUpOutlined);
 var AudioOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M842 454c0-4.4-3.6-8-8-8h-60c-4.4 0-8 3.6-8 8 0 140.3-113.7 254-254 254S258 594.3 258 454c0-4.4-3.6-8-8-8h-60c-4.4 0-8 3.6-8 8 0 168.7 126.6 307.9 290 327.6V884H326.7c-13.7 0-24.7 14.3-24.7 32v36c0 4.4 2.8 8 6.2 8h407.6c3.4 0 6.2-3.6 6.2-8v-36c0-17.7-11-32-24.7-32H548V782.1c165.3-18 294-158 294-328.1zM512 624c93.9 0 170-75.2 170-168V232c0-92.8-76.1-168-170-168s-170 75.2-170 168v224c0 92.8 76.1 168 170 168zm-94-392c0-50.6 41.9-92 94-92s94 41.4 94 92v224c0 50.6-41.9 92-94 92s-94-41.4-94-92V232z" } }] }, "name": "audio", "theme": "outlined" };
 var AudioOutlined = function AudioOutlined2(props, ref) {
   return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
@@ -12376,7 +12469,15 @@ var AudioOutlined = function AudioOutlined2(props, ref) {
     icon: AudioOutlined$1
   }));
 };
-var RefIcon$o = /* @__PURE__ */ reactExports.forwardRef(AudioOutlined);
+var RefIcon$w = /* @__PURE__ */ reactExports.forwardRef(AudioOutlined);
+var AuditOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M296 250c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8h384c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8H296zm184 144H296c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8h184c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8zm-48 458H208V148h560v320c0 4.4 3.6 8 8 8h56c4.4 0 8-3.6 8-8V108c0-17.7-14.3-32-32-32H168c-17.7 0-32 14.3-32 32v784c0 17.7 14.3 32 32 32h264c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm440-88H728v-36.6c46.3-13.8 80-56.6 80-107.4 0-61.9-50.1-112-112-112s-112 50.1-112 112c0 50.7 33.7 93.6 80 107.4V764H520c-8.8 0-16 7.2-16 16v152c0 8.8 7.2 16 16 16h352c8.8 0 16-7.2 16-16V780c0-8.8-7.2-16-16-16zM646 620c0-27.6 22.4-50 50-50s50 22.4 50 50-22.4 50-50 50-50-22.4-50-50zm180 266H566v-60h260v60z" } }] }, "name": "audit", "theme": "outlined" };
+var AuditOutlined = function AuditOutlined2(props, ref) {
+  return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
+    ref,
+    icon: AuditOutlined$1
+  }));
+};
+var RefIcon$v = /* @__PURE__ */ reactExports.forwardRef(AuditOutlined);
 var BorderOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M880 112H144c-17.7 0-32 14.3-32 32v736c0 17.7 14.3 32 32 32h736c17.7 0 32-14.3 32-32V144c0-17.7-14.3-32-32-32zm-40 728H184V184h656v656z" } }] }, "name": "border", "theme": "outlined" };
 var BorderOutlined = function BorderOutlined2(props, ref) {
   return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
@@ -12384,7 +12485,7 @@ var BorderOutlined = function BorderOutlined2(props, ref) {
     icon: BorderOutlined$1
   }));
 };
-var RefIcon$n = /* @__PURE__ */ reactExports.forwardRef(BorderOutlined);
+var RefIcon$u = /* @__PURE__ */ reactExports.forwardRef(BorderOutlined);
 var BugOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M304 280h56c4.4 0 8-3.6 8-8 0-28.3 5.9-53.2 17.1-73.5 10.6-19.4 26-34.8 45.4-45.4C450.9 142 475.7 136 504 136h16c28.3 0 53.2 5.9 73.5 17.1 19.4 10.6 34.8 26 45.4 45.4C650 218.9 656 243.7 656 272c0 4.4 3.6 8 8 8h56c4.4 0 8-3.6 8-8 0-40-8.8-76.7-25.9-108.1a184.31 184.31 0 00-74-74C596.7 72.8 560 64 520 64h-16c-40 0-76.7 8.8-108.1 25.9a184.31 184.31 0 00-74 74C304.8 195.3 296 232 296 272c0 4.4 3.6 8 8 8z" } }, { "tag": "path", "attrs": { "d": "M940 512H792V412c76.8 0 139-62.2 139-139 0-4.4-3.6-8-8-8h-60c-4.4 0-8 3.6-8 8a63 63 0 01-63 63H232a63 63 0 01-63-63c0-4.4-3.6-8-8-8h-60c-4.4 0-8 3.6-8 8 0 76.8 62.2 139 139 139v100H84c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h148v96c0 6.5.2 13 .7 19.3C164.1 728.6 116 796.7 116 876c0 4.4 3.6 8 8 8h56c4.4 0 8-3.6 8-8 0-44.2 23.9-82.9 59.6-103.7a273 273 0 0022.7 49c24.3 41.5 59 76.2 100.5 100.5S460.5 960 512 960s99.8-13.9 141.3-38.2a281.38 281.38 0 00123.2-149.5A120 120 0 01836 876c0 4.4 3.6 8 8 8h56c4.4 0 8-3.6 8-8 0-79.3-48.1-147.4-116.7-176.7.4-6.4.7-12.8.7-19.3v-96h148c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM716 680c0 36.8-9.7 72-27.8 102.9-17.7 30.3-43 55.6-73.3 73.3C584 874.3 548.8 884 512 884s-72-9.7-102.9-27.8c-30.3-17.7-55.6-43-73.3-73.3A202.75 202.75 0 01308 680V412h408v268z" } }] }, "name": "bug", "theme": "outlined" };
 var BugOutlined = function BugOutlined2(props, ref) {
   return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
@@ -12392,7 +12493,7 @@ var BugOutlined = function BugOutlined2(props, ref) {
     icon: BugOutlined$1
   }));
 };
-var RefIcon$m = /* @__PURE__ */ reactExports.forwardRef(BugOutlined);
+var RefIcon$t = /* @__PURE__ */ reactExports.forwardRef(BugOutlined);
 var CaretRightOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "0 0 1024 1024", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M715.8 493.5L335 165.1c-14.2-12.2-35-1.2-35 18.5v656.8c0 19.7 20.8 30.7 35 18.5l380.8-328.4c10.9-9.4 10.9-27.6 0-37z" } }] }, "name": "caret-right", "theme": "outlined" };
 var CaretRightOutlined = function CaretRightOutlined2(props, ref) {
   return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
@@ -12400,7 +12501,7 @@ var CaretRightOutlined = function CaretRightOutlined2(props, ref) {
     icon: CaretRightOutlined$1
   }));
 };
-var RefIcon$l = /* @__PURE__ */ reactExports.forwardRef(CaretRightOutlined);
+var RefIcon$s = /* @__PURE__ */ reactExports.forwardRef(CaretRightOutlined);
 var CheckCircleOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M699 353h-46.9c-10.2 0-19.9 4.9-25.9 13.3L469 584.3l-71.2-98.8c-6-8.3-15.6-13.3-25.9-13.3H325c-6.5 0-10.3 7.4-6.5 12.7l124.6 172.8a31.8 31.8 0 0051.7 0l210.6-292c3.9-5.3.1-12.7-6.4-12.7z" } }, { "tag": "path", "attrs": { "d": "M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z" } }] }, "name": "check-circle", "theme": "outlined" };
 var CheckCircleOutlined = function CheckCircleOutlined2(props, ref) {
   return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
@@ -12408,7 +12509,15 @@ var CheckCircleOutlined = function CheckCircleOutlined2(props, ref) {
     icon: CheckCircleOutlined$1
   }));
 };
-var RefIcon$k = /* @__PURE__ */ reactExports.forwardRef(CheckCircleOutlined);
+var RefIcon$r = /* @__PURE__ */ reactExports.forwardRef(CheckCircleOutlined);
+var CloseCircleOutlined$1 = { "icon": { "tag": "svg", "attrs": { "fill-rule": "evenodd", "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M512 64c247.4 0 448 200.6 448 448S759.4 960 512 960 64 759.4 64 512 264.6 64 512 64zm0 76c-205.4 0-372 166.6-372 372s166.6 372 372 372 372-166.6 372-372-166.6-372-372-372zm128.01 198.83c.03 0 .05.01.09.06l45.02 45.01a.2.2 0 01.05.09.12.12 0 010 .07c0 .02-.01.04-.05.08L557.25 512l127.87 127.86a.27.27 0 01.05.06v.02a.12.12 0 010 .07c0 .03-.01.05-.05.09l-45.02 45.02a.2.2 0 01-.09.05.12.12 0 01-.07 0c-.02 0-.04-.01-.08-.05L512 557.25 384.14 685.12c-.04.04-.06.05-.08.05a.12.12 0 01-.07 0c-.03 0-.05-.01-.09-.05l-45.02-45.02a.2.2 0 01-.05-.09.12.12 0 010-.07c0-.02.01-.04.06-.08L466.75 512 338.88 384.14a.27.27 0 01-.05-.06l-.01-.02a.12.12 0 010-.07c0-.03.01-.05.05-.09l45.02-45.02a.2.2 0 01.09-.05.12.12 0 01.07 0c.02 0 .04.01.08.06L512 466.75l127.86-127.86c.04-.05.06-.06.08-.06a.12.12 0 01.07 0z" } }] }, "name": "close-circle", "theme": "outlined" };
+var CloseCircleOutlined = function CloseCircleOutlined2(props, ref) {
+  return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
+    ref,
+    icon: CloseCircleOutlined$1
+  }));
+};
+var RefIcon$q = /* @__PURE__ */ reactExports.forwardRef(CloseCircleOutlined);
 var CodeOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M516 673c0 4.4 3.4 8 7.5 8h185c4.1 0 7.5-3.6 7.5-8v-48c0-4.4-3.4-8-7.5-8h-185c-4.1 0-7.5 3.6-7.5 8v48zm-194.9 6.1l192-161c3.8-3.2 3.8-9.1 0-12.3l-192-160.9A7.95 7.95 0 00308 351v62.7c0 2.4 1 4.6 2.9 6.1L420.7 512l-109.8 92.2a8.1 8.1 0 00-2.9 6.1V673c0 6.8 7.9 10.5 13.1 6.1zM880 112H144c-17.7 0-32 14.3-32 32v736c0 17.7 14.3 32 32 32h736c17.7 0 32-14.3 32-32V144c0-17.7-14.3-32-32-32zm-40 728H184V184h656v656z" } }] }, "name": "code", "theme": "outlined" };
 var CodeOutlined = function CodeOutlined2(props, ref) {
   return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
@@ -12416,7 +12525,15 @@ var CodeOutlined = function CodeOutlined2(props, ref) {
     icon: CodeOutlined$1
   }));
 };
-var RefIcon$j = /* @__PURE__ */ reactExports.forwardRef(CodeOutlined);
+var RefIcon$p = /* @__PURE__ */ reactExports.forwardRef(CodeOutlined);
+var CompressOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "defs", "attrs": {}, "children": [{ "tag": "style", "attrs": {} }] }, { "tag": "path", "attrs": { "d": "M326 664H104c-8.8 0-16 7.2-16 16v48c0 8.8 7.2 16 16 16h174v176c0 8.8 7.2 16 16 16h48c8.8 0 16-7.2 16-16V696c0-17.7-14.3-32-32-32zm16-576h-48c-8.8 0-16 7.2-16 16v176H104c-8.8 0-16 7.2-16 16v48c0 8.8 7.2 16 16 16h222c17.7 0 32-14.3 32-32V104c0-8.8-7.2-16-16-16zm578 576H698c-17.7 0-32 14.3-32 32v224c0 8.8 7.2 16 16 16h48c8.8 0 16-7.2 16-16V744h174c8.8 0 16-7.2 16-16v-48c0-8.8-7.2-16-16-16zm0-384H746V104c0-8.8-7.2-16-16-16h-48c-8.8 0-16 7.2-16 16v224c0 17.7 14.3 32 32 32h222c8.8 0 16-7.2 16-16v-48c0-8.8-7.2-16-16-16z" } }] }, "name": "compress", "theme": "outlined" };
+var CompressOutlined = function CompressOutlined2(props, ref) {
+  return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
+    ref,
+    icon: CompressOutlined$1
+  }));
+};
+var RefIcon$o = /* @__PURE__ */ reactExports.forwardRef(CompressOutlined);
 var ContainerOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M832 64H192c-17.7 0-32 14.3-32 32v832c0 17.7 14.3 32 32 32h640c17.7 0 32-14.3 32-32V96c0-17.7-14.3-32-32-32zm-40 824H232V687h97.9c11.6 32.8 32 62.3 59.1 84.7 34.5 28.5 78.2 44.3 123 44.3s88.5-15.7 123-44.3c27.1-22.4 47.5-51.9 59.1-84.7H792v-63H643.6l-5.2 24.7C626.4 708.5 573.2 752 512 752s-114.4-43.5-126.5-103.3l-5.2-24.7H232V136h560v752zM320 341h384c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8H320c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8zm0 160h384c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8H320c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8z" } }] }, "name": "container", "theme": "outlined" };
 var ContainerOutlined = function ContainerOutlined2(props, ref) {
   return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
@@ -12424,7 +12541,7 @@ var ContainerOutlined = function ContainerOutlined2(props, ref) {
     icon: ContainerOutlined$1
   }));
 };
-var RefIcon$i = /* @__PURE__ */ reactExports.forwardRef(ContainerOutlined);
+var RefIcon$n = /* @__PURE__ */ reactExports.forwardRef(ContainerOutlined);
 var DislikeOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M885.9 490.3c3.6-12 5.4-24.4 5.4-37 0-28.3-9.3-55.5-26.1-77.7 3.6-12 5.4-24.4 5.4-37 0-28.3-9.3-55.5-26.1-77.7 3.6-12 5.4-24.4 5.4-37 0-51.6-30.7-98.1-78.3-118.4a66.1 66.1 0 00-26.5-5.4H144c-17.7 0-32 14.3-32 32v364c0 17.7 14.3 32 32 32h129.3l85.8 310.8C372.9 889 418.9 924 470.9 924c29.7 0 57.4-11.8 77.9-33.4 20.5-21.5 31-49.7 29.5-79.4l-6-122.9h239.9c12.1 0 23.9-3.2 34.3-9.3 40.4-23.5 65.5-66.1 65.5-111 0-28.3-9.3-55.5-26.1-77.7zM184 456V172h81v284h-81zm627.2 160.4H496.8l9.6 198.4c.6 11.9-4.7 23.1-14.6 30.5-6.1 4.5-13.6 6.8-21.1 6.7a44.28 44.28 0 01-42.2-32.3L329 459.2V172h415.4a56.85 56.85 0 0133.6 51.8c0 9.7-2.3 18.9-6.9 27.3l-13.9 25.4 21.9 19a56.76 56.76 0 0119.6 43c0 9.7-2.3 18.9-6.9 27.3l-13.9 25.4 21.9 19a56.76 56.76 0 0119.6 43c0 9.7-2.3 18.9-6.9 27.3l-14 25.5 21.9 19a56.76 56.76 0 0119.6 43c0 19.1-11 37.5-28.8 48.4z" } }] }, "name": "dislike", "theme": "outlined" };
 var DislikeOutlined = function DislikeOutlined2(props, ref) {
   return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
@@ -12432,7 +12549,7 @@ var DislikeOutlined = function DislikeOutlined2(props, ref) {
     icon: DislikeOutlined$1
   }));
 };
-var RefIcon$h = /* @__PURE__ */ reactExports.forwardRef(DislikeOutlined);
+var RefIcon$m = /* @__PURE__ */ reactExports.forwardRef(DislikeOutlined);
 var DollarOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372zm47.7-395.2l-25.4-5.9V348.6c38 5.2 61.5 29 65.5 58.2.5 4 3.9 6.9 7.9 6.9h44.9c4.7 0 8.4-4.1 8-8.8-6.1-62.3-57.4-102.3-125.9-109.2V263c0-4.4-3.6-8-8-8h-28.1c-4.4 0-8 3.6-8 8v33c-70.8 6.9-126.2 46-126.2 119 0 67.6 49.8 100.2 102.1 112.7l24.7 6.3v142.7c-44.2-5.9-69-29.5-74.1-61.3-.6-3.8-4-6.6-7.9-6.6H363c-4.7 0-8.4 4-8 8.7 4.5 55 46.2 105.6 135.2 112.1V761c0 4.4 3.6 8 8 8h28.4c4.4 0 8-3.6 8-8.1l-.2-31.7c78.3-6.9 134.3-48.8 134.3-124-.1-69.4-44.2-100.4-109-116.4zm-68.6-16.2c-5.6-1.6-10.3-3.1-15-5-33.8-12.2-49.5-31.9-49.5-57.3 0-36.3 27.5-57 64.5-61.7v124zM534.3 677V543.3c3.1.9 5.9 1.6 8.8 2.2 47.3 14.4 63.2 34.4 63.2 65.1 0 39.1-29.4 62.6-72 66.4z" } }] }, "name": "dollar", "theme": "outlined" };
 var DollarOutlined = function DollarOutlined2(props, ref) {
   return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
@@ -12440,7 +12557,7 @@ var DollarOutlined = function DollarOutlined2(props, ref) {
     icon: DollarOutlined$1
   }));
 };
-var RefIcon$g = /* @__PURE__ */ reactExports.forwardRef(DollarOutlined);
+var RefIcon$l = /* @__PURE__ */ reactExports.forwardRef(DollarOutlined);
 var ExclamationCircleOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M512 64C264.6 64 64 264.6 64 512s200.6 448 448 448 448-200.6 448-448S759.4 64 512 64zm0 820c-205.4 0-372-166.6-372-372s166.6-372 372-372 372 166.6 372 372-166.6 372-372 372z" } }, { "tag": "path", "attrs": { "d": "M464 688a48 48 0 1096 0 48 48 0 10-96 0zm24-112h48c4.4 0 8-3.6 8-8V296c0-4.4-3.6-8-8-8h-48c-4.4 0-8 3.6-8 8v272c0 4.4 3.6 8 8 8z" } }] }, "name": "exclamation-circle", "theme": "outlined" };
 var ExclamationCircleOutlined = function ExclamationCircleOutlined2(props, ref) {
   return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
@@ -12448,7 +12565,15 @@ var ExclamationCircleOutlined = function ExclamationCircleOutlined2(props, ref) 
     icon: ExclamationCircleOutlined$1
   }));
 };
-var RefIcon$f = /* @__PURE__ */ reactExports.forwardRef(ExclamationCircleOutlined);
+var RefIcon$k = /* @__PURE__ */ reactExports.forwardRef(ExclamationCircleOutlined);
+var ExpandOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "defs", "attrs": {}, "children": [{ "tag": "style", "attrs": {} }] }, { "tag": "path", "attrs": { "d": "M342 88H120c-17.7 0-32 14.3-32 32v224c0 8.8 7.2 16 16 16h48c8.8 0 16-7.2 16-16V168h174c8.8 0 16-7.2 16-16v-48c0-8.8-7.2-16-16-16zm578 576h-48c-8.8 0-16 7.2-16 16v176H682c-8.8 0-16 7.2-16 16v48c0 8.8 7.2 16 16 16h222c17.7 0 32-14.3 32-32V680c0-8.8-7.2-16-16-16zM342 856H168V680c0-8.8-7.2-16-16-16h-48c-8.8 0-16 7.2-16 16v224c0 17.7 14.3 32 32 32h222c8.8 0 16-7.2 16-16v-48c0-8.8-7.2-16-16-16zM904 88H682c-8.8 0-16 7.2-16 16v48c0 8.8 7.2 16 16 16h174v176c0 8.8 7.2 16 16 16h48c8.8 0 16-7.2 16-16V120c0-17.7-14.3-32-32-32z" } }] }, "name": "expand", "theme": "outlined" };
+var ExpandOutlined = function ExpandOutlined2(props, ref) {
+  return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
+    ref,
+    icon: ExpandOutlined$1
+  }));
+};
+var RefIcon$j = /* @__PURE__ */ reactExports.forwardRef(ExpandOutlined);
 var ExperimentOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M512 472a40 40 0 1080 0 40 40 0 10-80 0zm367 352.9L696.3 352V178H768v-68H256v68h71.7v174L145 824.9c-2.8 7.4-4.3 15.2-4.3 23.1 0 35.3 28.7 64 64 64h614.6c7.9 0 15.7-1.5 23.1-4.3 33-12.7 49.4-49.8 36.6-82.8zM395.7 364.7V180h232.6v184.7L719.2 600c-20.7-5.3-42.1-8-63.9-8-61.2 0-119.2 21.5-165.3 60a188.78 188.78 0 01-121.3 43.9c-32.7 0-64.1-8.3-91.8-23.7l118.8-307.5zM210.5 844l41.7-107.8c35.7 18.1 75.4 27.8 116.6 27.8 61.2 0 119.2-21.5 165.3-60 33.9-28.2 76.3-43.9 121.3-43.9 35 0 68.4 9.5 97.6 27.1L813.5 844h-603z" } }] }, "name": "experiment", "theme": "outlined" };
 var ExperimentOutlined = function ExperimentOutlined2(props, ref) {
   return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
@@ -12456,7 +12581,15 @@ var ExperimentOutlined = function ExperimentOutlined2(props, ref) {
     icon: ExperimentOutlined$1
   }));
 };
-var RefIcon$e = /* @__PURE__ */ reactExports.forwardRef(ExperimentOutlined);
+var RefIcon$i = /* @__PURE__ */ reactExports.forwardRef(ExperimentOutlined);
+var FileAddOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M854.6 288.6L639.4 73.4c-6-6-14.1-9.4-22.6-9.4H192c-17.7 0-32 14.3-32 32v832c0 17.7 14.3 32 32 32h640c17.7 0 32-14.3 32-32V311.3c0-8.5-3.4-16.7-9.4-22.7zM790.2 326H602V137.8L790.2 326zm1.8 562H232V136h302v216a42 42 0 0042 42h216v494zM544 472c0-4.4-3.6-8-8-8h-48c-4.4 0-8 3.6-8 8v108H372c-4.4 0-8 3.6-8 8v48c0 4.4 3.6 8 8 8h108v108c0 4.4 3.6 8 8 8h48c4.4 0 8-3.6 8-8V644h108c4.4 0 8-3.6 8-8v-48c0-4.4-3.6-8-8-8H544V472z" } }] }, "name": "file-add", "theme": "outlined" };
+var FileAddOutlined = function FileAddOutlined2(props, ref) {
+  return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
+    ref,
+    icon: FileAddOutlined$1
+  }));
+};
+var RefIcon$h = /* @__PURE__ */ reactExports.forwardRef(FileAddOutlined);
 var HistoryOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M536.1 273H488c-4.4 0-8 3.6-8 8v275.3c0 2.6 1.2 5 3.3 6.5l165.3 120.7c3.6 2.6 8.6 1.9 11.2-1.7l28.6-39c2.7-3.7 1.9-8.7-1.7-11.2L544.1 528.5V281c0-4.4-3.6-8-8-8zm219.8 75.2l156.8 38.3c5 1.2 9.9-2.6 9.9-7.7l.8-161.5c0-6.7-7.7-10.5-12.9-6.3L752.9 334.1a8 8 0 003 14.1zm167.7 301.1l-56.7-19.5a8 8 0 00-10.1 4.8c-1.9 5.1-3.9 10.1-6 15.1-17.8 42.1-43.3 80-75.9 112.5a353 353 0 01-112.5 75.9 352.18 352.18 0 01-137.7 27.8c-47.8 0-94.1-9.3-137.7-27.8a353 353 0 01-112.5-75.9c-32.5-32.5-58-70.4-75.9-112.5A353.44 353.44 0 01171 512c0-47.8 9.3-94.2 27.8-137.8 17.8-42.1 43.3-80 75.9-112.5a353 353 0 01112.5-75.9C430.6 167.3 477 158 524.8 158s94.1 9.3 137.7 27.8A353 353 0 01775 261.7c10.2 10.3 19.8 21 28.6 32.3l59.8-46.8C784.7 146.6 662.2 81.9 524.6 82 285 82.1 92.6 276.7 95 516.4 97.4 751.9 288.9 942 524.8 942c185.5 0 343.5-117.6 403.7-282.3 1.5-4.2-.7-8.9-4.9-10.4z" } }] }, "name": "history", "theme": "outlined" };
 var HistoryOutlined = function HistoryOutlined2(props, ref) {
   return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
@@ -12464,7 +12597,15 @@ var HistoryOutlined = function HistoryOutlined2(props, ref) {
     icon: HistoryOutlined$1
   }));
 };
-var RefIcon$d = /* @__PURE__ */ reactExports.forwardRef(HistoryOutlined);
+var RefIcon$g = /* @__PURE__ */ reactExports.forwardRef(HistoryOutlined);
+var HourglassOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M742 318V184h86c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8H196c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h86v134c0 81.5 42.4 153.2 106.4 194-64 40.8-106.4 112.5-106.4 194v134h-86c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h632c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8h-86V706c0-81.5-42.4-153.2-106.4-194 64-40.8 106.4-112.5 106.4-194zm-72 388v134H354V706c0-42.2 16.4-81.9 46.3-111.7C430.1 564.4 469.8 548 512 548s81.9 16.4 111.7 46.3C653.6 624.1 670 663.8 670 706zm0-388c0 42.2-16.4 81.9-46.3 111.7C593.9 459.6 554.2 476 512 476s-81.9-16.4-111.7-46.3A156.63 156.63 0 01354 318V184h316v134z" } }] }, "name": "hourglass", "theme": "outlined" };
+var HourglassOutlined = function HourglassOutlined2(props, ref) {
+  return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
+    ref,
+    icon: HourglassOutlined$1
+  }));
+};
+var RefIcon$f = /* @__PURE__ */ reactExports.forwardRef(HourglassOutlined);
 var LayoutOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M880 112H144c-17.7 0-32 14.3-32 32v736c0 17.7 14.3 32 32 32h736c17.7 0 32-14.3 32-32V144c0-17.7-14.3-32-32-32zm-696 72h136v656H184V184zm656 656H384V384h456v456zM384 320V184h456v136H384z" } }] }, "name": "layout", "theme": "outlined" };
 var LayoutOutlined = function LayoutOutlined2(props, ref) {
   return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
@@ -12472,7 +12613,7 @@ var LayoutOutlined = function LayoutOutlined2(props, ref) {
     icon: LayoutOutlined$1
   }));
 };
-var RefIcon$c = /* @__PURE__ */ reactExports.forwardRef(LayoutOutlined);
+var RefIcon$e = /* @__PURE__ */ reactExports.forwardRef(LayoutOutlined);
 var LikeOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M885.9 533.7c16.8-22.2 26.1-49.4 26.1-77.7 0-44.9-25.1-87.4-65.5-111.1a67.67 67.67 0 00-34.3-9.3H572.4l6-122.9c1.4-29.7-9.1-57.9-29.5-79.4A106.62 106.62 0 00471 99.9c-52 0-98 35-111.8 85.1l-85.9 311H144c-17.7 0-32 14.3-32 32v364c0 17.7 14.3 32 32 32h601.3c9.2 0 18.2-1.8 26.5-5.4 47.6-20.3 78.3-66.8 78.3-118.4 0-12.6-1.8-25-5.4-37 16.8-22.2 26.1-49.4 26.1-77.7 0-12.6-1.8-25-5.4-37 16.8-22.2 26.1-49.4 26.1-77.7-.2-12.6-2-25.1-5.6-37.1zM184 852V568h81v284h-81zm636.4-353l-21.9 19 13.9 25.4a56.2 56.2 0 016.9 27.3c0 16.5-7.2 32.2-19.6 43l-21.9 19 13.9 25.4a56.2 56.2 0 016.9 27.3c0 16.5-7.2 32.2-19.6 43l-21.9 19 13.9 25.4a56.2 56.2 0 016.9 27.3c0 22.4-13.2 42.6-33.6 51.8H329V564.8l99.5-360.5a44.1 44.1 0 0142.2-32.3c7.6 0 15.1 2.2 21.1 6.7 9.9 7.4 15.2 18.6 14.6 30.5l-9.6 198.4h314.4C829 418.5 840 436.9 840 456c0 16.5-7.2 32.1-19.6 43z" } }] }, "name": "like", "theme": "outlined" };
 var LikeOutlined = function LikeOutlined2(props, ref) {
   return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
@@ -12480,7 +12621,7 @@ var LikeOutlined = function LikeOutlined2(props, ref) {
     icon: LikeOutlined$1
   }));
 };
-var RefIcon$b = /* @__PURE__ */ reactExports.forwardRef(LikeOutlined);
+var RefIcon$d = /* @__PURE__ */ reactExports.forwardRef(LikeOutlined);
 var MenuOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M904 160H120c-4.4 0-8 3.6-8 8v64c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-64c0-4.4-3.6-8-8-8zm0 624H120c-4.4 0-8 3.6-8 8v64c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-64c0-4.4-3.6-8-8-8zm0-312H120c-4.4 0-8 3.6-8 8v64c0 4.4 3.6 8 8 8h784c4.4 0 8-3.6 8-8v-64c0-4.4-3.6-8-8-8z" } }] }, "name": "menu", "theme": "outlined" };
 var MenuOutlined = function MenuOutlined2(props, ref) {
   return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
@@ -12488,7 +12629,7 @@ var MenuOutlined = function MenuOutlined2(props, ref) {
     icon: MenuOutlined$1
   }));
 };
-var RefIcon$a = /* @__PURE__ */ reactExports.forwardRef(MenuOutlined);
+var RefIcon$c = /* @__PURE__ */ reactExports.forwardRef(MenuOutlined);
 var MessageOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M464 512a48 48 0 1096 0 48 48 0 10-96 0zm200 0a48 48 0 1096 0 48 48 0 10-96 0zm-400 0a48 48 0 1096 0 48 48 0 10-96 0zm661.2-173.6c-22.6-53.7-55-101.9-96.3-143.3a444.35 444.35 0 00-143.3-96.3C630.6 75.7 572.2 64 512 64h-2c-60.6.3-119.3 12.3-174.5 35.9a445.35 445.35 0 00-142 96.5c-40.9 41.3-73 89.3-95.2 142.8-23 55.4-34.6 114.3-34.3 174.9A449.4 449.4 0 00112 714v152a46 46 0 0046 46h152.1A449.4 449.4 0 00510 960h2.1c59.9 0 118-11.6 172.7-34.3a444.48 444.48 0 00142.8-95.2c41.3-40.9 73.8-88.7 96.5-142 23.6-55.2 35.6-113.9 35.9-174.5.3-60.9-11.5-120-34.8-175.6zm-151.1 438C704 845.8 611 884 512 884h-1.7c-60.3-.3-120.2-15.3-173.1-43.5l-8.4-4.5H188V695.2l-4.5-8.4C155.3 633.9 140.3 574 140 513.7c-.4-99.7 37.7-193.3 107.6-263.8 69.8-70.5 163.1-109.5 262.8-109.9h1.7c50 0 98.5 9.7 144.2 28.9 44.6 18.7 84.6 45.6 119 80 34.3 34.3 61.3 74.4 80 119 19.4 46.2 29.1 95.2 28.9 145.8-.6 99.6-39.7 192.9-110.1 262.7z" } }] }, "name": "message", "theme": "outlined" };
 var MessageOutlined = function MessageOutlined2(props, ref) {
   return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
@@ -12496,7 +12637,7 @@ var MessageOutlined = function MessageOutlined2(props, ref) {
     icon: MessageOutlined$1
   }));
 };
-var RefIcon$9 = /* @__PURE__ */ reactExports.forwardRef(MessageOutlined);
+var RefIcon$b = /* @__PURE__ */ reactExports.forwardRef(MessageOutlined);
 var MinusOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M872 474H152c-4.4 0-8 3.6-8 8v60c0 4.4 3.6 8 8 8h720c4.4 0 8-3.6 8-8v-60c0-4.4-3.6-8-8-8z" } }] }, "name": "minus", "theme": "outlined" };
 var MinusOutlined = function MinusOutlined2(props, ref) {
   return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
@@ -12504,7 +12645,7 @@ var MinusOutlined = function MinusOutlined2(props, ref) {
     icon: MinusOutlined$1
   }));
 };
-var RefIcon$8 = /* @__PURE__ */ reactExports.forwardRef(MinusOutlined);
+var RefIcon$a = /* @__PURE__ */ reactExports.forwardRef(MinusOutlined);
 var MoreOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M456 231a56 56 0 10112 0 56 56 0 10-112 0zm0 280a56 56 0 10112 0 56 56 0 10-112 0zm0 280a56 56 0 10112 0 56 56 0 10-112 0z" } }] }, "name": "more", "theme": "outlined" };
 var MoreOutlined = function MoreOutlined2(props, ref) {
   return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
@@ -12512,7 +12653,23 @@ var MoreOutlined = function MoreOutlined2(props, ref) {
     icon: MoreOutlined$1
   }));
 };
-var RefIcon$7 = /* @__PURE__ */ reactExports.forwardRef(MoreOutlined);
+var RefIcon$9 = /* @__PURE__ */ reactExports.forwardRef(MoreOutlined);
+var OrderedListOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M920 760H336c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h584c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0-568H336c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h584c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zm0 284H336c-4.4 0-8 3.6-8 8v56c0 4.4 3.6 8 8 8h584c4.4 0 8-3.6 8-8v-56c0-4.4-3.6-8-8-8zM216 712H100c-2.2 0-4 1.8-4 4v34c0 2.2 1.8 4 4 4h72.4v20.5h-35.7c-2.2 0-4 1.8-4 4v34c0 2.2 1.8 4 4 4h35.7V838H100c-2.2 0-4 1.8-4 4v34c0 2.2 1.8 4 4 4h116c2.2 0 4-1.8 4-4V716c0-2.2-1.8-4-4-4zM100 188h38v120c0 2.2 1.8 4 4 4h40c2.2 0 4-1.8 4-4V152c0-4.4-3.6-8-8-8h-78c-2.2 0-4 1.8-4 4v36c0 2.2 1.8 4 4 4zm116 240H100c-2.2 0-4 1.8-4 4v36c0 2.2 1.8 4 4 4h68.4l-70.3 77.7a8.3 8.3 0 00-2.1 5.4V592c0 2.2 1.8 4 4 4h116c2.2 0 4-1.8 4-4v-36c0-2.2-1.8-4-4-4h-68.4l70.3-77.7a8.3 8.3 0 002.1-5.4V432c0-2.2-1.8-4-4-4z" } }] }, "name": "ordered-list", "theme": "outlined" };
+var OrderedListOutlined = function OrderedListOutlined2(props, ref) {
+  return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
+    ref,
+    icon: OrderedListOutlined$1
+  }));
+};
+var RefIcon$8 = /* @__PURE__ */ reactExports.forwardRef(OrderedListOutlined);
+var PartitionOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "defs", "attrs": {}, "children": [{ "tag": "style", "attrs": {} }] }, { "tag": "path", "attrs": { "d": "M640.6 429.8h257.1c7.9 0 14.3-6.4 14.3-14.3V158.3c0-7.9-6.4-14.3-14.3-14.3H640.6c-7.9 0-14.3 6.4-14.3 14.3v92.9H490.6c-3.9 0-7.1 3.2-7.1 7.1v221.5h-85.7v-96.5c0-7.9-6.4-14.3-14.3-14.3H126.3c-7.9 0-14.3 6.4-14.3 14.3v257.2c0 7.9 6.4 14.3 14.3 14.3h257.1c7.9 0 14.3-6.4 14.3-14.3V544h85.7v221.5c0 3.9 3.2 7.1 7.1 7.1h135.7v92.9c0 7.9 6.4 14.3 14.3 14.3h257.1c7.9 0 14.3-6.4 14.3-14.3v-257c0-7.9-6.4-14.3-14.3-14.3h-257c-7.9 0-14.3 6.4-14.3 14.3v100h-78.6v-393h78.6v100c0 7.9 6.4 14.3 14.3 14.3zm53.5-217.9h150V362h-150V211.9zM329.9 587h-150V437h150v150zm364.2 75.1h150v150.1h-150V662.1z" } }] }, "name": "partition", "theme": "outlined" };
+var PartitionOutlined = function PartitionOutlined2(props, ref) {
+  return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
+    ref,
+    icon: PartitionOutlined$1
+  }));
+};
+var RefIcon$7 = /* @__PURE__ */ reactExports.forwardRef(PartitionOutlined);
 var PauseOutlined$1 = { "icon": { "tag": "svg", "attrs": { "viewBox": "64 64 896 896", "focusable": "false" }, "children": [{ "tag": "path", "attrs": { "d": "M304 176h80v672h-80zm408 0h-64c-4.4 0-8 3.6-8 8v656c0 4.4 3.6 8 8 8h64c4.4 0 8-3.6 8-8V184c0-4.4-3.6-8-8-8z" } }] }, "name": "pause", "theme": "outlined" };
 var PauseOutlined = function PauseOutlined2(props, ref) {
   return /* @__PURE__ */ reactExports.createElement(Icon, _extends({}, props, {
@@ -12584,34 +12741,34 @@ function LeftRail() {
   const topItems = [
     {
       key: "code",
-      icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$j, { style: { fontSize: 20 } }),
+      icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$p, { style: { fontSize: 20 } }),
       label: "Code",
       isSection: true
     },
-    { key: "new-session", icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$A, { style: { fontSize: 20 } }), label: "新建会话" },
-    { key: "customize", icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$v, { style: { fontSize: 18 } }), label: "自定义" },
-    { key: "more", icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$7, { style: { fontSize: 18 } }), label: "更多" }
+    { key: "new-session", icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$N, { style: { fontSize: 20 } }), label: "新建会话" },
+    { key: "customize", icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$D, { style: { fontSize: 18 } }), label: "自定义" },
+    { key: "more", icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$9, { style: { fontSize: 18 } }), label: "更多" }
   ];
   const bottomItems = [
     {
       key: "sessions",
-      icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$9, { style: { fontSize: 18 } }),
+      icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$b, { style: { fontSize: 18 } }),
       label: "项目",
       badge: 3
     },
     {
       key: "models",
-      icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$r, { style: { fontSize: 18 } }),
+      icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$z, { style: { fontSize: 18 } }),
       label: "模型"
     },
-    { key: "balance", icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$g, { style: { fontSize: 18 } }), label: "余额" },
+    { key: "balance", icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$l, { style: { fontSize: 18 } }), label: "余额" },
     {
       key: "settings",
       icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$2, { style: { fontSize: 18 } }),
       label: "设置",
       badge: hasUpdate ? 1 : void 0
     },
-    { key: "history", icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$d, { style: { fontSize: 18 } }), label: "历史记录" }
+    { key: "history", icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$g, { style: { fontSize: 18 } }), label: "历史记录" }
   ];
   const handleClick = (item) => {
     if (item.key === "code") return;
@@ -12669,8 +12826,8 @@ function LeftRail() {
               fontWeight: 700,
               fontSize: 14
             },
-            title: "ClaudeBridge",
-            children: "CB"
+            title: "H-code",
+            children: "HC"
           }
         ),
         topItems.map((item) => /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -12818,7 +12975,7 @@ function SessionsList() {
           color: "var(--text-tertiary)"
         },
         children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$C, {}),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$P, {}),
           /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "搜索项目..." })
         ]
       }
@@ -12900,7 +13057,7 @@ function SessionsList() {
                       padding: "2px 4px",
                       fontSize: 10
                     },
-                    children: isExpanded ? /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$z, {}) : /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$D, {})
+                    children: isExpanded ? /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$M, {}) : /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$Q, {})
                   }
                 )
               ] }),
@@ -12961,48 +13118,55 @@ function SessionsList() {
     }) })
   ] });
 }
+const themeAntdx = "" + new URL("moyk5mua-image-Pqo7T420.png", import.meta.url).href;
+const themeBlackgold = "" + new URL("moyk03lm-image-D_j-ce4K.png", import.meta.url).href;
+const themeVscode = "" + new URL("moyjqbvz-image-DRoRknwr.png", import.meta.url).href;
+const themeClaude = "" + new URL("moyjtptb-image-j_7P5d_f.png", import.meta.url).href;
+const themeTrae = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQAAAAEACAIAAADTED8xAAAKuUlEQVR4Aeydz6tVVRTH7cUjhcywoIKgTLNxEkFg0TDIaJRUUIMaOa5/oFEEUUGIIiSOIho0yoZBUdggGoWGpkGEmj1DMXna80f3sp+v++vss8/ZP+5ea33ivuO75+yz91qf7/rMHrSwjv8gYJgAAhgOn9bXrUMApsA0AQQwHT/NIwAzYJqAYQFM507zqwQQYBUE/9gkgAA2c6frVQIIsAqCf2wSQACbudP1KgEEWAVh6h+aXSOAAGso+MUiAQSwmDo9rxFAgDUU/GKRAAJYTJ2e1wggwBoKfrFAYLJHBJgkwndTBBDAVNw0O0kAASaJ8N0UAQQwFTfNThJAgEkifDdFwJAApnKl2UACCBAIimU6CSCAzlzpKpAAAgSCYplOAgigM1e6CiSAAIGgRC+j+EYCCNCIhgcWCCCAhZTpsZEAAjSi4YEFAghgIWV6bCSAAI1oeKCBQFsPCNBGiOeqCSCA6nhpro0AArQR4rlqAgigOl6aayOAAG2EeK6agGIBVOdGc4kIIEAikGwjkwACyMyNqhMRQIBEINlGJgEEkJkbVScigACJQFa1DcUEE0CAYFQs1EgAATSmSk/BBBAgGBULNRJAAI2p0lMwAQQIRsVCCQS61ogAXYmxXhUBBFAVJ810JYAAXYmxXhUBBFAVJ810JYAAXYmxXhUBRQKoyoVmChFAgEKgOaZOAghQZy5UVYgAAhQCzTF1EkCAOnOhqkIEEKAQ6KzHsHlvAgjQGx0vaiCAABpSpIfeBBCgNzpe1EAAATSkSA+9CSBAb3S8WAOB2BoQIJYg74smgACi46P4WAIIEEuQ90UTQADR8VF8LAEEiCXI+6IJCBZANHeKr4QAAlQSBGXMhwACzIc7p1ZCAAEqCYIy5kMAAebDnVMrIYAAlQTRqQwWJyOAAMlQspFEAgggMTVqTkYAAZKhZCOJBBBAYmrUnIwAAiRDyUYlCKQ+Q6QAi/fftePC+3yqIrCwfjH1cJbYT6QAJcBwhg0CCGAjZ7psIIAADWC4bYMAAtjImS4bCAgSoKEDbkMgggACRMDjVfkEEEB+hnQQQQABIuDxqnwCCCA/QzqIIIAAEfCKvcpB2QggQDa0bCyBAAJISIkasxFAgGxo2VgCAQSQkBI1ZiOAANnQsnEKArn3QIDchNm/agIIUHU8FJebAALkJsz+VRMwJ8CJXfv4NBE4+fLBqqc1Q3HmBLj03Uk+TQT+OfJbhhmresuKBaiaG8UpIYAASoKkjX4EEKAfN95SQgABlARJG/0IIEA/brylhAAC1BgkNRUjgADFUHNQjQQQoMZUqKkYAQQohpqDaiSAADWmQk3FCCBAMdQcFEKg9BoEKE2c86oigABVxUExpQkgQHridzxy78MHXl3YUO7/mHLb7QsPfbx74zPb0jejfUcESJzwYPq3H96zefeOrZ+/WcaB4fTvf+We154cnIgDXeNEgK7EfOvd9C8+sGmwaOPT2wYTmdsBN/2bX3p8cOLC+sXBiTgwQBH+qUiA8KLrXDk6/a7C3A6MTr87EQcch/ArAoSz8q2cnn63Op8D09PvTsQBxyHwigCBoHzLmqbfvZPDgabpdyfigOMQckWAEEq+Nf7pd2+mdcA//e5EHHAcWq8I0IrItyBk+t37qRwImX53Ig44Dv4rAvj5+J6GT7/bpdkB97z9Gj79bi8ccBw8VwTwwPE96jr9bq8YB7pOvzsRBxyHpisCNJHx3e83/W7Hfg70m353Ig44DjOvCDATi+9mzPS7fbs6EDP97kQccBymrwgwzcR3J3763e7hDsRPvzsRBxyHiSsCTADxfb1904bth/e4v3TwrQt7NnBgy6HXW9c++O6L7i8dWle2LnAOrH/svtaV5RbM+yQE6JDA9YvLfx34vsML3qU3rqyc2/uNd8nw4dKhH66dvzz8LcXP35/+eOX4uRQ7KdkDAboFefbDr0+/81W3d2atHkz/yd2fXPr211kPx+4tHz1z4oX9SRxYOnjk97e+WHfz5tgBtr8gQOf84x0In35XXBIHmH4Hc+KKABNAgr7GONB1+l1BkQ4w/Q7j9BUBppkE3ennQL/pdwX1doDpdwBnXucowMx6JN3s6kDM9DsuPRxg+h26pisCNJEJuh/uQPz0u4I6OcD0O2ieKwJ44AQ9CnEg1fS7ggIdYPodLv8VAfx8gp76HUg7/a6gVgeYfgeq9YoArYiCFjQ5kGP6XUEeB5h+hyjkigAhlILWTDvQOP1B+7UvGjqwa9/KmYujS5n+URqtvyNAK6IOC0YdyD39rqzlY2ePP/+/A0y/wxJ+RYBwVkErnQNlpt8VdPXUknNgib90cES6XBGgC62wtQMHjj7xXsjf+YTt177q6qmlX579iL/zaSc1tQIBppCkuPHvHxdSbNNhj5U/L/FXbh143VqKALdI8G8RArUdggC1JUI9RQkgQFHcHFYbAQSoLRHqKUoAAYri5rDaCCBAbYlQT1ECBQUo2heHQSCIAAIEYWKRVgIIoDVZ+goigABBmFiklQACaE2WvoIIIEAQpshFvF4tAQSoNhoKK0FApAA3V64v/3y6z+fY2Y07t/JpInDnU1tKDF1NZ4gU4Nr5y8d2ftDjc/y5vY9+uYdPE4Gtn71R03CWqEWkACXAcIYNAghgI+e5dVn7wQhQe0LUl5UAAmTFy+a1E0CA2hOivqwEECArXjavnQAC1J4Q9WUlkFGArHWzOQSSEECAJBjZRCoBBJCaHHUnIYAASTCyiVQCCCA1OepOQgABkmCc2ISvYggggJioKDQHAQTIQZU9xRBAADFRUWgOAgiQgyp7iiGAAGKiklGotCptCXD94vJPd7/NJweBG1dWpA3/sF5bAgw75gcCIwQQYAQGv9ojgAD2MqfjEQIIMAKDX+0RSCiAPXh0LJ8AAsjPkA4iCCBABDxelU8AAeRnSAcRBBAgAh6vyieAACkyZA+xBBBAbHQUnoIAAqSgyB5iCSCA2OgoPAUBBEhBkT3EEkAAsdHVUbj0KhBAeoLUH0UAAaLw8bJ0AgggPUHqjyKAAFH4eFk6AQSQniD1RxGIECDqXF6GQBUEEKCKGChiXgQQYF7kObcKAghQRQwUMS8CCDAv8pxbBQEE6BMD76ghgABqoqSRPgQQoA813lFDAAHUREkjfQggQB9qvKOGAAKoibJMI9pOQQBtidJPJwII0AkXi7URQABtidJPJwII0AkXi7URQABtidJPJwIdBOi0L4shIIIAAoiIiSJzEUCAXGTZVwQBBBARE0XmIoAAuciyrwgCCBASE2vUEkAAtdHSWAgBBAihxBq1BBBAbbQ0FkIAAUIosUYtAQRQG22axrTvggDaE6Y/LwEE8OLhoXYCCKA9YfrzEkAALx4eaieAANoTpj8vAY8A3vd4CAEVBBBARYw00ZcAAvQlx3sqCCCAihhpoi8BBOhLjvdUEECAWTFyzwwBBDATNY3OIoAAs6hwzwwBBDATNY3OIoAAs6hwzwwBBDATdVij1lYhgLXE6XeMAAKM4eCLNQIIYC1x+h0jgABjOPhijQACWEucfscIjAgwdp8vEDBBAAFMxEyTTQQQoIkM900QQAATMdNkEwEEaCLDfRMEEGAYMz9mCSCA2ehpfEgAAYYU+DFLAAHMRk/jQwIIMKTAj1kCCGA2ete49et/AAAA//9EVuCyAAAABklEQVQDAD7HzUwzSMCBAAAAAElFTkSuQmCC";
+const themeQoder = "" + new URL("moyk7tec-image-D_Xx153_.png", import.meta.url).href;
+const themeIdea = "" + new URL("moyk4xi4-image-CoYhZeFV.png", import.meta.url).href;
 const themeCards = [
   {
     id: "antdx",
     name: "汇川蓝",
     description: "清爽、专业的浅色主题",
-    image: "../assets/moyk5mua-image.png"
+    image: themeAntdx
   },
   {
     id: "blackgold",
     name: "至臻皮肤",
     description: "黑金配色，高端质感",
-    image: "../assets/moyk03lm-image.png"
+    image: themeBlackgold
   },
   {
     id: "vscode",
     name: "VS Code",
     description: "经典深色编辑器风格",
-    image: "../assets/moyjqbvz-image.png"
+    image: themeVscode
   },
   {
     id: "claude",
     name: "Claude Code",
     description: "温暖橙色，纸质感",
-    image: "../assets/moyjtptb-image.png"
+    image: themeClaude
   },
   {
     id: "trae",
     name: "TRAE",
     description: "黑底绿光，赛博风",
-    image: "../assets/moyk4jfw-image.png"
+    image: themeTrae
   },
   {
     id: "qoder",
     name: "Qoder",
     description: "翠绿色主色，自然清新",
-    image: "../assets/moyk7tec-image.png"
+    image: themeQoder
   },
   {
     id: "idea",
     name: "IDEA",
     description: "深灰蓝底，亮蓝强调",
-    image: "../assets/moyk4xi4-image.png"
+    image: themeIdea
   }
 ];
 function ToggleSwitch$1({
@@ -13076,27 +13240,27 @@ function UpdateSection() {
       color: "var(--text-secondary)"
     },
     available: {
-      icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$s, {}),
+      icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$A, {}),
       text: "发现新版本，点击下载",
       color: "var(--blue)"
     },
     downloading: {
-      icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$s, {}),
+      icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$A, {}),
       text: `下载中 ${Math.round(updateProgress)}%`,
       color: "var(--blue)"
     },
     "not-available": {
-      icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$k, {}),
+      icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$r, {}),
       text: "已是最新版本",
       color: "var(--green)"
     },
     downloaded: {
-      icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$f, {}),
+      icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$k, {}),
       text: "更新已下载，点击安装",
       color: "var(--green)"
     },
     error: {
-      icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$f, {}),
+      icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$k, {}),
       text: updateError || "检查失败，点击重试",
       color: "var(--red)"
     }
@@ -13643,7 +13807,7 @@ function ModelConfig() {
             gap: 4
           },
           children: [
-            /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$A, {}),
+            /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$N, {}),
             " 添加模型"
           ]
         }
@@ -13739,7 +13903,7 @@ function ModelConfig() {
                   padding: 4,
                   display: "flex"
                 },
-                children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$v, { style: { fontSize: 13 } })
+                children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$D, { style: { fontSize: 13 } })
               }
             ),
             /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -13756,7 +13920,7 @@ function ModelConfig() {
                   padding: 4,
                   display: "flex"
                 },
-                children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$w, { style: { fontSize: 13 } })
+                children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$E, { style: { fontSize: 13 } })
               }
             )
           ] })
@@ -14139,7 +14303,7 @@ function BalanceQuery() {
           opacity: refreshing ? 0.6 : 1
         },
         children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$x, { style: { animation: refreshing ? "spin 1s linear infinite" : "none" } }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$G, { style: { animation: refreshing ? "spin 1s linear infinite" : "none" } }),
           "刷新"
         ]
       }
@@ -14302,7 +14466,7 @@ function HistoryList() {
                 alignItems: "center"
               },
               title: "刷新",
-              children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$x, {})
+              children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$G, {})
             }
           )
         ]
@@ -14387,7 +14551,7 @@ function HistoryList() {
                 e2.currentTarget.style.opacity = "0.5";
                 e2.currentTarget.style.color = "var(--text-tertiary)";
               },
-              children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$w, { style: { fontSize: 12 } })
+              children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$E, { style: { fontSize: 12 } })
             }
           )
         ]
@@ -14522,7 +14686,7 @@ function MessageBubble({ message }) {
                     fontWeight: 600,
                     color: isAI ? "var(--blue)" : "var(--text)"
                   },
-                  children: isAI ? "ClaudeBridge" : "你"
+                  children: isAI ? "H-code" : "你"
                 }
               ),
               /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { fontSize: 11, color: "var(--text-tertiary)" }, children: new Date(message.timestamp).toLocaleTimeString("zh-CN", {
@@ -14564,7 +14728,7 @@ function MessageBubble({ message }) {
               /* @__PURE__ */ jsxRuntimeExports.jsx(
                 ActionBtn,
                 {
-                  icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$t, {}),
+                  icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$B, {}),
                   label: copied ? "已复制" : "复制",
                   onClick: handleCopy,
                   active: copied
@@ -14574,7 +14738,7 @@ function MessageBubble({ message }) {
               /* @__PURE__ */ jsxRuntimeExports.jsx(
                 ActionBtn,
                 {
-                  icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$b, {}),
+                  icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$d, {}),
                   label: "",
                   onClick: () => setLiked(liked === "like" ? null : "like"),
                   active: liked === "like"
@@ -14583,7 +14747,7 @@ function MessageBubble({ message }) {
               /* @__PURE__ */ jsxRuntimeExports.jsx(
                 ActionBtn,
                 {
-                  icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$h, {}),
+                  icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$m, {}),
                   label: "",
                   onClick: () => setLiked(liked === "dislike" ? null : "dislike"),
                   active: liked === "dislike"
@@ -14669,22 +14833,22 @@ function ChatView() {
 }
 const suggestions = [
   {
-    icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$y, {}),
+    icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$J, {}),
     title: "切换项目语言",
     description: "将当前项目的编程语言从 JavaScript 切换到 TypeScript"
   },
   {
-    icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$m, {}),
+    icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$t, {}),
     title: "修复 UI 问题",
     description: "检查并修复界面中的布局错位和样式问题"
   },
   {
-    icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$e, {}),
+    icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$i, {}),
     title: "生成单元测试",
     description: "为当前模块生成完整的单元测试用例"
   },
   {
-    icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$j, {}),
+    icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$p, {}),
     title: "重构代码",
     description: "优化代码结构，提高可读性和可维护性"
   }
@@ -14765,7 +14929,7 @@ function WelcomeArea({ sessionId }) {
               marginBottom: 8,
               textAlign: "center"
             },
-            children: "你好，我是 ClaudeBridge"
+            children: "你好，我是 H-code"
           }
         ),
         /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -15010,23 +15174,60 @@ function PermissionToggle() {
     )
   ] });
 }
+const PLANNING_PREFIX = "请为以下任务创建一个详细的、分步骤的执行计划。将每个步骤用编号列表输出。暂时不要执行任何步骤，只创建计划。\n\n任务：";
 function InputArea({ useTerminal, sessionId }) {
   const [input, setInput] = reactExports.useState("");
   const [loading, setLoading] = reactExports.useState(false);
+  const [planMode, setPlanMode] = reactExports.useState(false);
   const addMessage = useAppStore((s15) => s15.addMessage);
   const updateMessage = useAppStore((s15) => s15.updateMessage);
+  const enabledModel = useAppStore((s15) => s15.models.find((m2) => m2.enabled));
+  const isMainTaskRunning = useAppStore((s15) => s15.isMainTaskRunning);
+  const setPlanContext = useAppStore((s15) => s15.setPlanContext);
+  const setPlanningPhase = useAppStore((s15) => s15.setPlanningPhase);
+  const clearPlanSteps = useAppStore((s15) => s15.clearPlanSteps);
   const handleSend = async () => {
     const trimmed = input.trim();
     if (!trimmed) return;
-    if (useTerminal) {
+    if (planMode) {
+      clearPlanSteps();
+      setPlanContext(trimmed);
+      setPlanningPhase("planning");
+      const planningPrompt = PLANNING_PREFIX + trimmed;
       setInput("");
+      setPlanMode(false);
+      if (useTerminal) {
+        try {
+          await window.electronAPI?.writePty(sessionId, planningPrompt + "\r");
+        } catch (err) {
+          console.error("[InputArea] writePty error:", err);
+        }
+        addMessage({
+          id: Date.now().toString(),
+          role: "user",
+          content: `[规划模式] ${trimmed}`,
+          timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+          sessionId
+        });
+        return;
+      }
+    }
+    if (useTerminal) {
+      if (isMainTaskRunning) {
+        setInput("");
+        await handleEnqueueInternal(trimmed);
+        return;
+      }
       try {
         const result = await window.electronAPI?.writePty(sessionId, trimmed + "\r");
         if (!result?.success) {
           console.error("[InputArea] writePty failed:", result);
+          return;
         }
+        setInput("");
       } catch (err) {
         console.error("[InputArea] writePty error:", err);
+        return;
       }
       addMessage({
         id: Date.now().toString(),
@@ -15094,20 +15295,38 @@ function InputArea({ useTerminal, sessionId }) {
       removeListeners();
     }
   };
+  const handleEnqueueInternal = async (prompt) => {
+    try {
+      const result = await window.electronAPI?.enqueueTask?.(sessionId, prompt);
+      if (result) {
+        addMessage({
+          id: `enqueue-${Date.now()}`,
+          role: "system",
+          content: `📝 已加入任务队列 (#${result.id})`,
+          timestamp: (/* @__PURE__ */ new Date()).toISOString(),
+          sessionId
+        });
+      } else {
+        console.error("[InputArea] enqueueTask returned falsy");
+      }
+    } catch (err) {
+      console.error("[InputArea] enqueueTask failed:", err);
+    }
+  };
   const handleEnqueue = async () => {
     const trimmed = input.trim();
     if (!trimmed) return;
     setInput("");
-    const result = await window.electronAPI?.enqueueTask?.(sessionId, trimmed);
-    if (result) {
-      addMessage({
-        id: `enqueue-${Date.now()}`,
-        role: "system",
-        content: `📝 已加入任务队列 (#${result.id})`,
-        timestamp: (/* @__PURE__ */ new Date()).toISOString(),
-        sessionId
-      });
+    if (planMode) {
+      clearPlanSteps();
+      setPlanContext(trimmed);
+      setPlanningPhase("planning");
+      setPlanMode(false);
+      const planningPrompt = PLANNING_PREFIX + trimmed;
+      await handleEnqueueInternal(planningPrompt);
+      return;
     }
+    await handleEnqueueInternal(trimmed);
   };
   const handleKeyDown = (e2) => {
     if (e2.key === "Enter" && !e2.shiftKey) {
@@ -15187,7 +15406,7 @@ function InputArea({ useTerminal, sessionId }) {
                   children: [
                     /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { display: "flex", gap: 4 }, children: [
                       /* @__PURE__ */ jsxRuntimeExports.jsx(ToolBtn, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$5, {}), label: "上传图片" }),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx(ToolBtn, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$o, {}), label: "语音输入" }),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(ToolBtn, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$w, {}), label: "语音输入" }),
                       loading && /* @__PURE__ */ jsxRuntimeExports.jsx(
                         "button",
                         {
@@ -15211,23 +15430,23 @@ function InputArea({ useTerminal, sessionId }) {
                         "button",
                         {
                           onClick: handleEnqueue,
-                          disabled: loading || !input.trim() || useTerminal,
+                          disabled: loading || !input.trim(),
                           title: "加入任务队列",
                           style: {
                             width: 32,
                             height: 32,
                             borderRadius: "50%",
                             border: "none",
-                            background: loading || !input.trim() || useTerminal ? "var(--text-tertiary)" : "var(--orange)",
+                            background: loading || !input.trim() ? "var(--text-tertiary)" : "var(--orange)",
                             color: "#fff",
-                            cursor: loading || !input.trim() || useTerminal ? "not-allowed" : "pointer",
+                            cursor: loading || !input.trim() ? "not-allowed" : "pointer",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
                             transition: "all 0.15s",
-                            opacity: loading || !input.trim() || useTerminal ? 0.5 : 1
+                            opacity: loading || !input.trim() ? 0.5 : 1
                           },
-                          children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$i, { style: { fontSize: 14 } })
+                          children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$n, { style: { fontSize: 14 } })
                         }
                       ),
                       /* @__PURE__ */ jsxRuntimeExports.jsx(
@@ -15286,6 +15505,32 @@ function InputArea({ useTerminal, sessionId }) {
               /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { display: "flex", alignItems: "center", gap: 8 }, children: [
                 /* @__PURE__ */ jsxRuntimeExports.jsx(PermissionToggle, {}),
                 /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { width: 1, height: 14, background: "var(--border)" } }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                  "button",
+                  {
+                    onClick: () => setPlanMode(!planMode),
+                    title: planMode ? "规划模式已开启：先规划再执行" : "开启规划模式：让 AI 先生成任务计划",
+                    style: {
+                      border: `1px solid ${planMode ? "var(--blue)" : "var(--border)"}`,
+                      background: planMode ? "var(--blue-light)" : "transparent",
+                      color: planMode ? "var(--blue)" : "var(--text-secondary)",
+                      fontSize: 11,
+                      cursor: "pointer",
+                      padding: "2px 8px",
+                      borderRadius: 4,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 4,
+                      fontWeight: planMode ? 600 : 400,
+                      transition: "all 0.15s"
+                    },
+                    children: [
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$7, { style: { fontSize: 12 } }),
+                      "规划"
+                    ]
+                  }
+                ),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { width: 1, height: 14, background: "var(--border)" } }),
                 /* @__PURE__ */ jsxRuntimeExports.jsx(
                   "button",
                   {
@@ -15321,7 +15566,7 @@ function InputArea({ useTerminal, sessionId }) {
                         }
                       }
                     ),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { fontSize: 12, color: "var(--text-secondary)" }, children: "Claude Code CLI" })
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { fontSize: 12, color: "var(--text-secondary)" }, children: enabledModel?.name || "Claude Code CLI" })
                   ]
                 }
               )
@@ -24022,206 +24267,6 @@ function FunnyStatusBar() {
     }
   );
 }
-const statusMap = {
-  queued: { label: "排队中", color: "var(--text-secondary)" },
-  running: { label: "执行中", color: "var(--blue)" },
-  paused: { label: "已暂停", color: "var(--orange)" },
-  completed: { label: "已完成", color: "var(--green)" },
-  failed: { label: "失败", color: "var(--red)" },
-  cancelled: { label: "已取消", color: "var(--text-tertiary)" }
-};
-function TaskQueuePanel() {
-  const tasks = useAppStore((s15) => s15.tasks);
-  const queueStatus = useAppStore((s15) => s15.queueStatus);
-  const [collapsed, setCollapsed] = reactExports.useState(false);
-  const [expandedId, setExpandedId] = reactExports.useState(null);
-  if (tasks.length === 0) return null;
-  const handlePause = (taskId) => {
-    window.electronAPI?.pauseTask?.(taskId);
-  };
-  const handleResume = (taskId) => {
-    window.electronAPI?.resumeTask?.(taskId);
-  };
-  const handleCancel = (taskId) => {
-    window.electronAPI?.cancelTask?.(taskId);
-  };
-  const handleDelete = (taskId) => {
-    window.electronAPI?.deleteTask?.(taskId);
-  };
-  return /* @__PURE__ */ jsxRuntimeExports.jsxs(
-    "div",
-    {
-      style: {
-        borderTop: "1px solid var(--border)",
-        background: "var(--surface)",
-        flexShrink: 0
-      },
-      children: [
-        /* @__PURE__ */ jsxRuntimeExports.jsxs(
-          "div",
-          {
-            onClick: () => setCollapsed(!collapsed),
-            style: {
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              padding: "8px 16px",
-              cursor: "pointer",
-              fontSize: 12,
-              fontWeight: 600,
-              color: "var(--text-secondary)",
-              userSelect: "none"
-            },
-            children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { display: "flex", alignItems: "center", gap: 8 }, children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$i, {}),
-                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "任务队列" }),
-                /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                  "span",
-                  {
-                    style: {
-                      background: "var(--border)",
-                      padding: "1px 6px",
-                      borderRadius: 10,
-                      fontSize: 11
-                    },
-                    children: [
-                      queueStatus.active,
-                      "/",
-                      queueStatus.total
-                    ]
-                  }
-                )
-              ] }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { fontSize: 10 }, children: collapsed ? "▼" : "▲" })
-            ]
-          }
-        ),
-        !collapsed && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { maxHeight: 220, overflowY: "auto", padding: "0 16px 8px" }, children: tasks.map((task) => {
-          const cfg = statusMap[task.status] || statusMap.queued;
-          const isExpanded = expandedId === task.id;
-          const isTerminal = task.status === "completed" || task.status === "failed" || task.status === "cancelled";
-          return /* @__PURE__ */ jsxRuntimeExports.jsxs(
-            "div",
-            {
-              style: {
-                padding: "6px 0",
-                borderBottom: "1px solid var(--border)",
-                fontSize: 12
-              },
-              children: [
-                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between" }, children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { flex: 1, minWidth: 0, marginRight: 8 }, children: [
-                    /* @__PURE__ */ jsxRuntimeExports.jsxs(
-                      "div",
-                      {
-                        style: {
-                          color: "var(--text)",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap"
-                        },
-                        children: [
-                          "#",
-                          task.id,
-                          " ",
-                          task.prompt.slice(0, 40),
-                          task.prompt.length > 40 ? "..." : ""
-                        ]
-                      }
-                    ),
-                    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { color: cfg.color, fontSize: 11, marginTop: 2 }, children: cfg.label })
-                  ] }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { display: "flex", gap: 4, flexShrink: 0 }, children: [
-                    task.status === "queued" && /* @__PURE__ */ jsxRuntimeExports.jsx(
-                      "button",
-                      {
-                        onClick: () => handlePause(task.id),
-                        style: iconBtnStyle,
-                        title: "暂停",
-                        children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$6, { style: { fontSize: 12 } })
-                      }
-                    ),
-                    task.status === "paused" && /* @__PURE__ */ jsxRuntimeExports.jsx(
-                      "button",
-                      {
-                        onClick: () => handleResume(task.id),
-                        style: iconBtnStyle,
-                        title: "恢复",
-                        children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$l, { style: { fontSize: 12 } })
-                      }
-                    ),
-                    (task.status === "queued" || task.status === "paused" || task.status === "running") && /* @__PURE__ */ jsxRuntimeExports.jsx(
-                      "button",
-                      {
-                        onClick: () => handleCancel(task.id),
-                        style: iconBtnStyle,
-                        title: "取消",
-                        children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$F, { style: { fontSize: 12 } })
-                      }
-                    ),
-                    isTerminal && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
-                      task.result && /* @__PURE__ */ jsxRuntimeExports.jsx(
-                        "button",
-                        {
-                          onClick: () => setExpandedId(isExpanded ? null : task.id),
-                          style: iconBtnStyle,
-                          title: isExpanded ? "收起结果" : "查看结果",
-                          children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { fontSize: 10 }, children: isExpanded ? "▲" : "▼" })
-                        }
-                      ),
-                      /* @__PURE__ */ jsxRuntimeExports.jsx(
-                        "button",
-                        {
-                          onClick: () => handleDelete(task.id),
-                          style: iconBtnStyle,
-                          title: "删除",
-                          children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$w, { style: { fontSize: 12 } })
-                        }
-                      )
-                    ] })
-                  ] })
-                ] }),
-                isExpanded && task.result && /* @__PURE__ */ jsxRuntimeExports.jsx(
-                  "div",
-                  {
-                    style: {
-                      marginTop: 6,
-                      padding: "6px 8px",
-                      background: "var(--bg)",
-                      borderRadius: 6,
-                      color: "var(--text-secondary)",
-                      fontSize: 11,
-                      maxHeight: 120,
-                      overflowY: "auto",
-                      whiteSpace: "pre-wrap",
-                      wordBreak: "break-word",
-                      lineHeight: 1.5
-                    },
-                    children: task.result
-                  }
-                )
-              ]
-            },
-            task.id
-          );
-        }) })
-      ]
-    }
-  );
-}
-const iconBtnStyle = {
-  width: 24,
-  height: 24,
-  borderRadius: 4,
-  border: "1px solid var(--border)",
-  background: "var(--bg)",
-  color: "var(--text)",
-  cursor: "pointer",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center"
-};
 function generateId() {
   return `pty-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -24334,7 +24379,7 @@ function TerminalPane({
                     alignItems: "center"
                   },
                   title: "关闭此面板",
-                  children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$F, { style: { fontSize: 12 } })
+                  children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$T, { style: { fontSize: 12 } })
                 }
               )
             ]
@@ -24457,8 +24502,1166 @@ function RightPanel() {
               session.id
             ))
           }
+        )
+      ]
+    }
+  );
+}
+const statusIcon = {
+  pending: RefIcon$L,
+  in_progress: RefIcon$S,
+  completed: RefIcon$r,
+  failed: RefIcon$q
+};
+const statusColor = {
+  pending: "var(--text-tertiary)",
+  in_progress: "var(--blue)",
+  completed: "var(--green)",
+  failed: "var(--red)"
+};
+const statusBg = {
+  pending: "var(--bg)",
+  in_progress: "var(--blue-light)",
+  completed: "var(--green-light)",
+  failed: "var(--red-light)"
+};
+const statusLabel = {
+  pending: "待执行",
+  in_progress: "执行中",
+  completed: "已完成",
+  failed: "失败"
+};
+function TaskPlanPanel() {
+  const planSteps = useAppStore((s15) => s15.planSteps);
+  const setPlanSteps = useAppStore((s15) => s15.setPlanSteps);
+  const updatePlanStep = useAppStore((s15) => s15.updatePlanStep);
+  const activeSessionId = useAppStore((s15) => s15.activeSessionId);
+  const planContext = useAppStore((s15) => s15.planContext);
+  const planningPhase = useAppStore((s15) => s15.planningPhase);
+  const setPlanningPhase = useAppStore((s15) => s15.setPlanningPhase);
+  useAppStore((s15) => s15.setPlanContext);
+  const [expandedSteps, setExpandedSteps] = reactExports.useState(/* @__PURE__ */ new Set());
+  const runningStepRef = reactExports.useRef(null);
+  const outputRefs = reactExports.useRef(/* @__PURE__ */ new Map());
+  const [outputVersions, setOutputVersions] = reactExports.useState({});
+  const completedCount = planSteps.filter((s15) => s15.status === "completed").length;
+  const failedCount = planSteps.filter((s15) => s15.status === "failed").length;
+  const totalCount = planSteps.length;
+  const allDone = totalCount > 0 && completedCount + failedCount === totalCount;
+  const hasRunning = planSteps.some((s15) => s15.status === "in_progress");
+  const bumpOutput = reactExports.useCallback((stepId) => {
+    setOutputVersions((prev2) => ({ ...prev2, [stepId]: (prev2[stepId] || 0) + 1 }));
+  }, []);
+  reactExports.useEffect(() => {
+    const unsubOutput = window.electronAPI?.onPlanStepOutput((stepId, data) => {
+      const current = outputRefs.current.get(stepId) || "";
+      outputRefs.current.set(stepId, current + data);
+      bumpOutput(stepId);
+      setExpandedSteps((prev2) => new Set(prev2).add(stepId));
+    });
+    const unsubComplete = window.electronAPI?.onPlanStepComplete((stepId, exitCode, result) => {
+      if (stepId === "review-agent") {
+        setPlanningPhase("done");
+        updatePlanStep("review-agent", {
+          status: exitCode === 0 ? "completed" : "failed",
+          result: result.slice(-2e3)
+        });
+        return;
+      }
+      const success = exitCode === 0;
+      updatePlanStep(stepId, {
+        status: success ? "completed" : "failed",
+        result: success ? result.slice(-2e3) : result.slice(-2e3),
+        error: success ? void 0 : `退出码: ${exitCode}`
+      });
+      runningStepRef.current = null;
+      const steps = useAppStore.getState().planSteps;
+      const done = steps.every((s15) => s15.status === "completed" || s15.status === "failed");
+      if (done && steps.length > 0) {
+        setPlanningPhase("ready");
+      }
+    });
+    return () => {
+      unsubOutput?.();
+      unsubComplete?.();
+    };
+  }, []);
+  const executeStep = reactExports.useCallback(async (step) => {
+    if (runningStepRef.current) return;
+    runningStepRef.current = step.id;
+    updatePlanStep(step.id, { status: "in_progress", result: void 0, error: void 0 });
+    outputRefs.current.set(step.id, "");
+    setPlanningPhase("executing");
+    await window.electronAPI?.executePlanStep(
+      step.id,
+      step.content,
+      planContext || "执行以下任务步骤"
+    );
+  }, [planContext, updatePlanStep, setPlanningPhase]);
+  const cancelStep = reactExports.useCallback(async (stepId) => {
+    await window.electronAPI?.cancelPlanStep(stepId);
+    updatePlanStep(stepId, { status: "pending" });
+    runningStepRef.current = null;
+  }, [updatePlanStep]);
+  const executeAll = reactExports.useCallback(async () => {
+    const pending = planSteps.filter((s15) => s15.status === "pending");
+    setPlanningPhase("executing");
+    for (const step of pending) {
+      if (step.status === "completed") continue;
+      await new Promise((resolve) => {
+        const unsub = window.electronAPI?.onPlanStepComplete((completedId) => {
+          if (completedId === step.id) {
+            unsub?.();
+            resolve();
+          }
+        });
+        executeStep(step);
+      });
+    }
+  }, [planSteps, executeStep, setPlanningPhase]);
+  const reviewAll = reactExports.useCallback(async () => {
+    setPlanningPhase("reviewing");
+    const stepsJson = JSON.stringify(planSteps.map((s15) => ({
+      content: s15.content,
+      result: s15.result,
+      status: s15.status
+    })));
+    updatePlanStep("review-agent", {
+      id: "review-agent",
+      content: "主 Agent 审查",
+      status: "in_progress"
+    });
+    outputRefs.current.set("review-agent", "");
+    await window.electronAPI?.reviewPlanSteps(stepsJson, planContext);
+  }, [planSteps, planContext, updatePlanStep, setPlanningPhase]);
+  const handleRefresh = async () => {
+    const sessionId = activeSessionId || "legacy";
+    try {
+      const steps = await window.electronAPI?.detectPlanFromOutput?.(sessionId);
+      if (steps && Array.isArray(steps)) {
+        setPlanSteps(steps);
+        if (steps.length > 0) setPlanningPhase("ready");
+      }
+    } catch {
+    }
+  };
+  if (planSteps.length === 0 && planningPhase === "idle") {
+    return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+      "div",
+      {
+        style: {
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 24,
+          color: "var(--text-tertiary)",
+          fontSize: 13,
+          gap: 12
+        },
+        children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$L, { style: { fontSize: 28, opacity: 0.3 } }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { textAlign: "center", lineHeight: 1.6 }, children: [
+            "暂无任务规划",
+            /* @__PURE__ */ jsxRuntimeExports.jsx("br", {}),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { fontSize: 11 }, children: "运行 Claude Code CLI 时将自动检测计划步骤" })
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "button",
+            {
+              onClick: handleRefresh,
+              style: {
+                marginTop: 4,
+                padding: "4px 12px",
+                borderRadius: 6,
+                border: "1px solid var(--border)",
+                background: "var(--bg)",
+                color: "var(--text-secondary)",
+                cursor: "pointer",
+                fontSize: 11,
+                display: "flex",
+                alignItems: "center",
+                gap: 4
+              },
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$G, { style: { fontSize: 11 } }),
+                "手动检测"
+              ]
+            }
+          )
+        ]
+      }
+    );
+  }
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }, children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { padding: "8px 12px", borderBottom: "1px solid var(--border)", flexShrink: 0 }, children: [
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { display: "flex", justifyContent: "space-between", marginBottom: totalCount > 0 ? 4 : 0, fontSize: 11, color: "var(--text-secondary)" }, children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: planningPhase === "planning" ? "规划中..." : planningPhase === "executing" ? "执行中..." : planningPhase === "reviewing" ? "审查中..." : planningPhase === "done" ? "全部完成" : allDone ? "待审查" : "就绪" }),
+        totalCount > 0 && /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
+          completedCount,
+          "/",
+          totalCount,
+          " 完成",
+          failedCount > 0 ? `, ${failedCount} 失败` : ""
+        ] })
+      ] }),
+      totalCount > 0 && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { height: 3, borderRadius: 2, background: "var(--border)", overflow: "hidden", marginBottom: 6 }, children: /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: {
+        height: "100%",
+        width: `${completedCount / totalCount * 100}%`,
+        background: failedCount > 0 ? "var(--orange)" : "var(--blue)",
+        borderRadius: 2,
+        transition: "width 0.3s"
+      } }) }),
+      /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { display: "flex", gap: 6 }, children: [
+        totalCount > 0 && !hasRunning && !allDone && /* @__PURE__ */ jsxRuntimeExports.jsxs("button", { onClick: executeAll, style: actionBtnStyle("var(--blue)"), children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$s, { style: { fontSize: 10 } }),
+          "全部执行"
+        ] }),
+        allDone && planningPhase !== "reviewing" && planningPhase !== "done" && /* @__PURE__ */ jsxRuntimeExports.jsxs("button", { onClick: reviewAll, style: actionBtnStyle("var(--green)"), children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$v, { style: { fontSize: 10 } }),
+          "主 Agent 检查"
+        ] }),
+        planningPhase === "done" && /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { fontSize: 11, color: "var(--green)" }, children: "审查通过" })
+      ] })
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { flex: 1, overflowY: "auto", padding: "4px 12px" }, children: [
+      planSteps.map((step, idx) => {
+        const Icon2 = statusIcon[step.status];
+        const isExpanded = expandedSteps.has(step.id);
+        const isRunning = step.status === "in_progress";
+        const output = outputRefs.current.get(step.id) || step.result || "";
+        void outputVersions[step.id];
+        return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "div",
+          {
+            style: {
+              padding: "6px 0",
+              borderBottom: idx < planSteps.length - 1 ? "1px solid var(--border)" : "none",
+              fontSize: 12,
+              lineHeight: 1.5
+            },
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { display: "flex", gap: 8, alignItems: "flex-start" }, children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: {
+                  flexShrink: 0,
+                  marginTop: 1,
+                  color: statusColor[step.status],
+                  display: "flex",
+                  alignItems: "center"
+                }, children: /* @__PURE__ */ jsxRuntimeExports.jsx(Icon2, { style: { fontSize: 13 }, spin: isRunning }) }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { flex: 1, minWidth: 0 }, children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: {
+                    color: step.status === "completed" ? "var(--text-tertiary)" : step.status === "failed" ? "var(--red)" : "var(--text)",
+                    textDecoration: step.status === "completed" ? "line-through" : "none",
+                    wordBreak: "break-word"
+                  }, children: step.content }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { display: "flex", alignItems: "center", gap: 6, marginTop: 2 }, children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: {
+                      fontSize: 10,
+                      color: statusColor[step.status],
+                      background: statusBg[step.status],
+                      padding: "0 5px",
+                      borderRadius: 3
+                    }, children: statusLabel[step.status] }),
+                    step.status === "pending" && !hasRunning && /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                      "button",
+                      {
+                        onClick: () => executeStep(step),
+                        style: miniBtnStyle("var(--blue)"),
+                        title: "执行此步骤",
+                        children: [
+                          /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$s, { style: { fontSize: 10 } }),
+                          " 执行"
+                        ]
+                      }
+                    ),
+                    isRunning && /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                      "button",
+                      {
+                        onClick: () => cancelStep(step.id),
+                        style: miniBtnStyle("var(--red)"),
+                        title: "取消执行",
+                        children: [
+                          /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$6, { style: { fontSize: 10 } }),
+                          " 取消"
+                        ]
+                      }
+                    ),
+                    (output || isRunning) && /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                      "button",
+                      {
+                        onClick: () => {
+                          setExpandedSteps((prev2) => {
+                            const next2 = new Set(prev2);
+                            if (next2.has(step.id)) next2.delete(step.id);
+                            else next2.add(step.id);
+                            return next2;
+                          });
+                        },
+                        style: miniBtnStyle("var(--text-tertiary)"),
+                        title: isExpanded ? "收起输出" : "查看输出",
+                        children: [
+                          isExpanded ? /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$o, { style: { fontSize: 10 } }) : /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$j, { style: { fontSize: 10 } }),
+                          isExpanded ? "收起" : "输出"
+                        ]
+                      }
+                    )
+                  ] })
+                ] })
+              ] }),
+              isExpanded && (output || isRunning) && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: {
+                marginTop: 6,
+                marginLeft: 21,
+                padding: "6px 8px",
+                background: "var(--bg)",
+                borderRadius: 6,
+                border: "1px solid var(--border)",
+                maxHeight: 180,
+                overflowY: "auto",
+                fontFamily: "monospace",
+                fontSize: 10,
+                color: "var(--text-secondary)",
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-word",
+                lineHeight: 1.5
+              }, children: output || isRunning && /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$S, { spin: true, style: { fontSize: 11 } }) })
+            ]
+          },
+          step.id
+        );
+      }),
+      planSteps.length === 0 && planningPhase !== "idle" && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { padding: 12, textAlign: "center", color: "var(--text-tertiary)", fontSize: 13 }, children: planningPhase === "planning" ? "正在生成任务规划..." : planningPhase === "reviewing" ? "主 Agent 正在审查..." : planningPhase === "done" ? "全部任务完成！" : "等待指令" })
+    ] }),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { flexShrink: 0 }, children: [
+      (planningPhase === "reviewing" || planningPhase === "done") && /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: {
+        margin: "0 12px 6px",
+        padding: "8px 10px",
+        background: "var(--bg)",
+        borderRadius: 6,
+        border: `1px solid ${planningPhase === "done" ? "var(--green)" : "var(--blue)"}`,
+        maxHeight: 160,
+        overflowY: "auto",
+        fontFamily: "monospace",
+        fontSize: 10,
+        color: "var(--text-secondary)",
+        whiteSpace: "pre-wrap",
+        wordBreak: "break-word",
+        lineHeight: 1.5
+      }, children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: {
+          fontSize: 11,
+          fontWeight: 600,
+          color: planningPhase === "done" ? "var(--green)" : "var(--blue)",
+          marginBottom: 4
+        }, children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$v, { style: { marginRight: 4 } }),
+          planningPhase === "done" ? "审查完成" : "主 Agent 审查中..."
+        ] }),
+        outputRefs.current.get("review-agent") || planningPhase === "reviewing" && /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$S, { spin: true, style: { fontSize: 11 } })
+      ] }),
+      /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: {
+        padding: "6px 12px",
+        borderTop: "1px solid var(--border)",
+        display: "flex",
+        justifyContent: "flex-end"
+      }, children: /* @__PURE__ */ jsxRuntimeExports.jsxs("button", { onClick: handleRefresh, style: {
+        padding: "2px 8px",
+        borderRadius: 4,
+        border: "none",
+        background: "transparent",
+        color: "var(--text-tertiary)",
+        cursor: "pointer",
+        fontSize: 11,
+        display: "flex",
+        alignItems: "center",
+        gap: 4
+      }, children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$G, { style: { fontSize: 10 } }),
+        " 刷新"
+      ] }) })
+    ] })
+  ] });
+}
+const actionBtnStyle = (color) => ({
+  padding: "3px 10px",
+  borderRadius: 5,
+  border: "none",
+  background: color,
+  color: "#fff",
+  cursor: "pointer",
+  fontSize: 11,
+  display: "flex",
+  alignItems: "center",
+  gap: 4,
+  fontWeight: 500
+});
+const miniBtnStyle = (color) => ({
+  padding: "1px 6px",
+  borderRadius: 3,
+  border: `1px solid ${color}`,
+  background: "transparent",
+  color,
+  cursor: "pointer",
+  fontSize: 10,
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 2
+});
+const statusMap = {
+  queued: { label: "排队中", color: "var(--text-secondary)" },
+  running: { label: "执行中", color: "var(--blue)" },
+  paused: { label: "已暂停", color: "var(--orange)" },
+  completed: { label: "已完成", color: "var(--green)" },
+  failed: { label: "失败", color: "var(--red)" },
+  cancelled: { label: "已取消", color: "var(--text-tertiary)" }
+};
+function TaskQueuePanel({ sidebar }) {
+  const tasks = useAppStore((s15) => s15.tasks);
+  const queueStatus = useAppStore((s15) => s15.queueStatus);
+  const [collapsed, setCollapsed] = reactExports.useState(false);
+  const [expandedId, setExpandedId] = reactExports.useState(null);
+  if (tasks.length === 0) {
+    if (sidebar) {
+      return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+        "div",
+        {
+          style: {
+            flex: 1,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 24,
+            color: "var(--text-tertiary)",
+            fontSize: 13,
+            gap: 12
+          },
+          children: [
+            /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$n, { style: { fontSize: 28, opacity: 0.3 } }),
+            /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { textAlign: "center", lineHeight: 1.6 }, children: [
+              "暂无队列任务",
+              /* @__PURE__ */ jsxRuntimeExports.jsx("br", {}),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { fontSize: 11 }, children: "主任务执行期间输入的新任务将自动排队" })
+            ] })
+          ]
+        }
+      );
+    }
+    return null;
+  }
+  const handlePause = (taskId) => {
+    window.electronAPI?.pauseTask?.(taskId);
+  };
+  const handleResume = (taskId) => {
+    window.electronAPI?.resumeTask?.(taskId);
+  };
+  const handleCancel = (taskId) => {
+    window.electronAPI?.cancelTask?.(taskId);
+  };
+  const handleDelete = (taskId) => {
+    window.electronAPI?.deleteTask?.(taskId);
+  };
+  const headerRow = !sidebar ? /* @__PURE__ */ jsxRuntimeExports.jsxs(
+    "div",
+    {
+      onClick: () => setCollapsed(!collapsed),
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "8px 16px",
+        cursor: "pointer",
+        fontSize: 12,
+        fontWeight: 600,
+        color: "var(--text-secondary)",
+        userSelect: "none"
+      },
+      children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { display: "flex", alignItems: "center", gap: 8 }, children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$n, {}),
+          /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "任务队列" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "span",
+            {
+              style: {
+                background: "var(--border)",
+                padding: "1px 6px",
+                borderRadius: 10,
+                fontSize: 11
+              },
+              children: [
+                queueStatus.active,
+                "/",
+                queueStatus.total
+              ]
+            }
+          )
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { fontSize: 10 }, children: collapsed ? "▼" : "▲" })
+      ]
+    }
+  ) : null;
+  const showList = sidebar || !collapsed;
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+    "div",
+    {
+      style: sidebar ? {
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden"
+      } : {
+        borderTop: "1px solid var(--border)",
+        background: "var(--surface)",
+        flexShrink: 0
+      },
+      children: [
+        !sidebar && headerRow,
+        showList && /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: sidebar ? { flex: 1, overflowY: "auto", padding: "0 12px" } : { maxHeight: 220, overflowY: "auto", padding: "0 16px 8px" }, children: tasks.map((task) => {
+          const cfg = statusMap[task.status] || statusMap.queued;
+          const isExpanded = expandedId === task.id;
+          const isTerminal = task.status === "completed" || task.status === "failed" || task.status === "cancelled";
+          return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "div",
+            {
+              style: {
+                padding: "6px 0",
+                borderBottom: "1px solid var(--border)",
+                fontSize: 12
+              },
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between" }, children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { flex: 1, minWidth: 0, marginRight: 8 }, children: [
+                    /* @__PURE__ */ jsxRuntimeExports.jsxs(
+                      "div",
+                      {
+                        style: {
+                          color: "var(--text)",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap"
+                        },
+                        children: [
+                          "#",
+                          task.id,
+                          " ",
+                          task.prompt.slice(0, 40),
+                          task.prompt.length > 40 ? "..." : ""
+                        ]
+                      }
+                    ),
+                    /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { color: cfg.color, fontSize: 11, marginTop: 2 }, children: cfg.label })
+                  ] }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { display: "flex", gap: 4, flexShrink: 0 }, children: [
+                    task.status === "queued" && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "button",
+                      {
+                        onClick: () => handlePause(task.id),
+                        style: iconBtnStyle,
+                        title: "暂停",
+                        children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$6, { style: { fontSize: 12 } })
+                      }
+                    ),
+                    task.status === "paused" && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "button",
+                      {
+                        onClick: () => handleResume(task.id),
+                        style: iconBtnStyle,
+                        title: "恢复",
+                        children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$s, { style: { fontSize: 12 } })
+                      }
+                    ),
+                    (task.status === "queued" || task.status === "paused" || task.status === "running") && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                      "button",
+                      {
+                        onClick: () => handleCancel(task.id),
+                        style: iconBtnStyle,
+                        title: "取消",
+                        children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$T, { style: { fontSize: 12 } })
+                      }
+                    ),
+                    isTerminal && /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+                      task.result && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        "button",
+                        {
+                          onClick: () => setExpandedId(isExpanded ? null : task.id),
+                          style: iconBtnStyle,
+                          title: isExpanded ? "收起结果" : "查看结果",
+                          children: /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { fontSize: 10 }, children: isExpanded ? "▲" : "▼" })
+                        }
+                      ),
+                      /* @__PURE__ */ jsxRuntimeExports.jsx(
+                        "button",
+                        {
+                          onClick: () => handleDelete(task.id),
+                          style: iconBtnStyle,
+                          title: "删除",
+                          children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$E, { style: { fontSize: 12 } })
+                        }
+                      )
+                    ] })
+                  ] })
+                ] }),
+                isExpanded && task.result && /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "div",
+                  {
+                    style: {
+                      marginTop: 6,
+                      padding: "6px 8px",
+                      background: "var(--bg)",
+                      borderRadius: 6,
+                      color: "var(--text-secondary)",
+                      fontSize: 11,
+                      maxHeight: 120,
+                      overflowY: "auto",
+                      whiteSpace: "pre-wrap",
+                      wordBreak: "break-word",
+                      lineHeight: 1.5
+                    },
+                    children: task.result
+                  }
+                )
+              ]
+            },
+            task.id
+          );
+        }) })
+      ]
+    }
+  );
+}
+const iconBtnStyle = {
+  width: 24,
+  height: 24,
+  borderRadius: 4,
+  border: "1px solid var(--border)",
+  background: "var(--bg)",
+  color: "var(--text)",
+  cursor: "pointer",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center"
+};
+const changeTypeConfig = {
+  modified: { label: "M", color: "var(--orange)", bg: "var(--orange-light)", icon: RefIcon$K },
+  added: { label: "A", color: "var(--green)", bg: "var(--green-light)", icon: RefIcon$h },
+  deleted: { label: "D", color: "var(--red)", bg: "var(--red-light)", icon: RefIcon$E }
+};
+function TaskDeliverablesPanel() {
+  const deliverables = useAppStore((s15) => s15.deliverables);
+  const setDeliverables = useAppStore((s15) => s15.setDeliverables);
+  const openDiffDrawer = useAppStore((s15) => s15.openDiffDrawer);
+  const [loading, setLoading] = reactExports.useState(false);
+  const fetchFiles = async () => {
+    setLoading(true);
+    try {
+      const result = await window.electronAPI?.getGitChangedFiles?.();
+      if (result?.success && result.files) {
+        const files = result.files.map((f2) => ({
+          filePath: f2.filePath,
+          changeType: f2.changeType,
+          relativePath: f2.filePath
+        }));
+        setDeliverables(files);
+      }
+    } catch {
+    }
+    setLoading(false);
+  };
+  reactExports.useEffect(() => {
+    fetchFiles();
+  }, []);
+  reactExports.useEffect(() => {
+    const unsub = window.electronAPI?.onTaskFinished(() => {
+      setTimeout(fetchFiles, 1e3);
+    });
+    return () => unsub?.();
+  }, []);
+  const handleFileClick = async (file) => {
+    if (file.changeType === "deleted") return;
+    openDiffDrawer(file.filePath);
+  };
+  if (deliverables.length === 0) {
+    return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+      "div",
+      {
+        style: {
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 24,
+          color: "var(--text-tertiary)",
+          fontSize: 13,
+          gap: 12
+        },
+        children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$F, { style: { fontSize: 28, opacity: 0.3 } }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { textAlign: "center", lineHeight: 1.6 }, children: [
+            "暂无任务产物",
+            /* @__PURE__ */ jsxRuntimeExports.jsx("br", {}),
+            /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { fontSize: 11 }, children: "任务执行完成后将自动列出变更文件" })
+          ] }),
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "button",
+            {
+              onClick: fetchFiles,
+              style: {
+                marginTop: 4,
+                padding: "4px 12px",
+                borderRadius: 6,
+                border: "1px solid var(--border)",
+                background: "var(--bg)",
+                color: "var(--text-secondary)",
+                cursor: "pointer",
+                fontSize: 11,
+                display: "flex",
+                alignItems: "center",
+                gap: 4
+              },
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$G, { spin: loading, style: { fontSize: 11 } }),
+                "刷新"
+              ]
+            }
+          )
+        ]
+      }
+    );
+  }
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+    "div",
+    {
+      style: {
+        flex: 1,
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden"
+      },
+      children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "div",
+          {
+            style: {
+              padding: "8px 12px",
+              borderBottom: "1px solid var(--border)",
+              flexShrink: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              fontSize: 11,
+              color: "var(--text-secondary)"
+            },
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
+                deliverables.length,
+                " 个文件变更"
+              ] }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "button",
+                {
+                  onClick: fetchFiles,
+                  style: {
+                    padding: "2px 6px",
+                    borderRadius: 4,
+                    border: "none",
+                    background: "transparent",
+                    color: "var(--text-tertiary)",
+                    cursor: "pointer",
+                    fontSize: 11,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 4
+                  },
+                  children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$G, { spin: loading, style: { fontSize: 10 } })
+                }
+              )
+            ]
+          }
         ),
-        /* @__PURE__ */ jsxRuntimeExports.jsx(TaskQueuePanel, {})
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { flex: 1, overflowY: "auto", padding: "4px 12px" }, children: deliverables.map((file, idx) => {
+          const cfg = changeTypeConfig[file.changeType];
+          const Icon2 = cfg.icon;
+          const fileName = file.relativePath.split("/").pop() || file.relativePath;
+          return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "button",
+            {
+              onClick: () => handleFileClick(file),
+              disabled: file.changeType === "deleted",
+              style: {
+                width: "100%",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "6px 4px",
+                border: "none",
+                borderBottom: "1px solid var(--border)",
+                background: "transparent",
+                cursor: file.changeType === "deleted" ? "default" : "pointer",
+                textAlign: "left",
+                opacity: file.changeType === "deleted" ? 0.5 : 1
+              },
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "span",
+                  {
+                    style: {
+                      flexShrink: 0,
+                      width: 18,
+                      height: 18,
+                      borderRadius: 3,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontSize: 10,
+                      fontWeight: 700,
+                      color: cfg.color,
+                      background: cfg.bg
+                    },
+                    children: cfg.label
+                  }
+                ),
+                /* @__PURE__ */ jsxRuntimeExports.jsx(Icon2, { style: { fontSize: 12, color: "var(--text-tertiary)", flexShrink: 0 } }),
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { flex: 1, minWidth: 0 }, children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    "div",
+                    {
+                      style: {
+                        fontSize: 12,
+                        color: "var(--text)",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap"
+                      },
+                      children: fileName
+                    }
+                  ),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(
+                    "div",
+                    {
+                      style: {
+                        fontSize: 10,
+                        color: "var(--text-tertiary)",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                        marginTop: 1
+                      },
+                      children: file.relativePath
+                    }
+                  )
+                ] })
+              ]
+            },
+            `${file.filePath}-${idx}`
+          );
+        }) })
+      ]
+    }
+  );
+}
+function DiffDrawer() {
+  const showDiffDrawer = useAppStore((s15) => s15.showDiffDrawer);
+  const diffFilePath = useAppStore((s15) => s15.diffFilePath);
+  const diffContent = useAppStore((s15) => s15.diffContent);
+  const setDiffContent = useAppStore((s15) => s15.setDiffContent);
+  const closeDiffDrawer = useAppStore((s15) => s15.closeDiffDrawer);
+  const [loading, setLoading] = reactExports.useState(false);
+  const [error, setError] = reactExports.useState(null);
+  reactExports.useEffect(() => {
+    if (!showDiffDrawer || !diffFilePath) return;
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    const fetchDiff = async () => {
+      try {
+        const result = await window.electronAPI?.getGitDiff?.(diffFilePath);
+        if (cancelled) return;
+        if (result?.success && result.diff) {
+          setDiffContent(result.diff);
+        } else if (result?.success && !result.diff) {
+          setDiffContent(`# 新文件: ${diffFilePath}
+# 该文件尚未被 git 跟踪，暂无 diff 内容`);
+        } else {
+          setError(result?.error || "无法获取 diff");
+        }
+      } catch {
+        if (!cancelled) setError("获取 diff 失败");
+      }
+      if (!cancelled) setLoading(false);
+    };
+    fetchDiff();
+    return () => {
+      cancelled = true;
+    };
+  }, [showDiffDrawer, diffFilePath]);
+  reactExports.useEffect(() => {
+    if (!showDiffDrawer) return;
+    const handler = (e2) => {
+      if (e2.key === "Escape") closeDiffDrawer();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [showDiffDrawer, closeDiffDrawer]);
+  if (!showDiffDrawer) return null;
+  const fileName = diffFilePath?.split("/").pop() || diffFilePath || "";
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
+    /* @__PURE__ */ jsxRuntimeExports.jsx(
+      "div",
+      {
+        onClick: closeDiffDrawer,
+        style: {
+          position: "fixed",
+          inset: 0,
+          background: "rgba(0,0,0,0.2)",
+          zIndex: 100
+        }
+      }
+    ),
+    /* @__PURE__ */ jsxRuntimeExports.jsxs(
+      "div",
+      {
+        style: {
+          position: "fixed",
+          top: 0,
+          right: 0,
+          bottom: 0,
+          width: 480,
+          maxWidth: "60vw",
+          background: "var(--surface)",
+          borderLeft: "1px solid var(--border)",
+          zIndex: 101,
+          display: "flex",
+          flexDirection: "column",
+          boxShadow: "0 0 40px rgba(0,0,0,0.15)",
+          animation: "slideInRight 0.2s ease"
+        },
+        children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsxs(
+            "div",
+            {
+              style: {
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "10px 14px",
+                borderBottom: "1px solid var(--border)",
+                flexShrink: 0
+              },
+              children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { minWidth: 0 }, children: [
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { fontSize: 13, fontWeight: 600, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, children: fileName }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { fontSize: 10, color: "var(--text-tertiary)", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, children: diffFilePath })
+                ] }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx(
+                  "button",
+                  {
+                    onClick: closeDiffDrawer,
+                    style: {
+                      border: "none",
+                      background: "transparent",
+                      color: "var(--text-tertiary)",
+                      cursor: "pointer",
+                      padding: 4,
+                      borderRadius: 4,
+                      display: "flex"
+                    },
+                    children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$T, { style: { fontSize: 14 } })
+                  }
+                )
+              ]
+            }
+          ),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(
+            "div",
+            {
+              style: {
+                flex: 1,
+                overflow: "auto",
+                padding: 0,
+                fontFamily: '"Cascadia Code", "Fira Code", "JetBrains Mono", Consolas, monospace',
+                fontSize: 12,
+                lineHeight: 1.6
+              },
+              children: loading ? /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "var(--text-tertiary)", gap: 8 }, children: [
+                /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$S, { style: { fontSize: 18 } }),
+                /* @__PURE__ */ jsxRuntimeExports.jsx("span", { children: "加载 diff..." })
+              ] }) : error ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { padding: 16, color: "var(--red)" }, children: error }) : diffContent ? /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "pre",
+                {
+                  style: {
+                    margin: 0,
+                    padding: "12px 14px",
+                    whiteSpace: "pre",
+                    overflowX: "auto",
+                    color: "var(--text)",
+                    background: "var(--bg)",
+                    minHeight: "100%"
+                  },
+                  children: renderDiffLines(diffContent)
+                }
+              ) : /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "var(--text-tertiary)" }, children: "暂无 diff 内容" })
+            }
+          )
+        ]
+      }
+    ),
+    /* @__PURE__ */ jsxRuntimeExports.jsx("style", { children: `
+        @keyframes slideInRight {
+          from { transform: translateX(20px); opacity: 0.7; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+      ` })
+  ] });
+}
+function renderDiffLines(diff) {
+  return diff.split("\n").map((line2, i) => {
+    let color = "var(--text)";
+    let bg2 = "transparent";
+    if (line2.startsWith("+") && !line2.startsWith("+++")) {
+      color = "var(--green)";
+      bg2 = "rgba(0,200,0,0.06)";
+    } else if (line2.startsWith("-") && !line2.startsWith("---")) {
+      color = "var(--red)";
+      bg2 = "rgba(255,0,0,0.06)";
+    } else if (line2.startsWith("@@")) {
+      color = "var(--blue)";
+      bg2 = "rgba(0,100,255,0.06)";
+    } else if (line2.startsWith("diff") || line2.startsWith("index") || line2.startsWith("---") || line2.startsWith("+++")) {
+      color = "var(--text-tertiary)";
+    }
+    return /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { color, background: bg2, minHeight: "1.4em", whiteSpace: "pre" }, children: line2 }, i);
+  });
+}
+function RightSidebar() {
+  const collapsed = useAppStore((s15) => s15.rightSidebarCollapsed);
+  const toggleRightSidebar = useAppStore((s15) => s15.toggleRightSidebar);
+  if (collapsed) {
+    return /* @__PURE__ */ jsxRuntimeExports.jsx(
+      "div",
+      {
+        style: {
+          width: 36,
+          minWidth: 36,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          borderLeft: "1px solid var(--border)",
+          background: "var(--surface)",
+          paddingTop: 8,
+          gap: 8
+        },
+        children: /* @__PURE__ */ jsxRuntimeExports.jsx(
+          "button",
+          {
+            onClick: toggleRightSidebar,
+            style: {
+              border: "none",
+              background: "transparent",
+              color: "var(--text-tertiary)",
+              cursor: "pointer",
+              padding: 4,
+              borderRadius: 4
+            },
+            title: "展开面板",
+            children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$I, { style: { fontSize: 14 } })
+          }
+        )
+      }
+    );
+  }
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+    "div",
+    {
+      style: {
+        width: 280,
+        minWidth: 280,
+        display: "flex",
+        flexDirection: "column",
+        borderLeft: "1px solid var(--border)",
+        background: "var(--surface)",
+        overflow: "hidden"
+      },
+      children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "div",
+          {
+            style: {
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              padding: "4px 12px",
+              borderBottom: "1px solid var(--border)",
+              flexShrink: 0
+            },
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { fontSize: 11, color: "var(--text-tertiary)" }, children: "辅助面板" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(
+                "button",
+                {
+                  onClick: toggleRightSidebar,
+                  style: {
+                    border: "none",
+                    background: "transparent",
+                    color: "var(--text-tertiary)",
+                    cursor: "pointer",
+                    padding: 2,
+                    borderRadius: 4,
+                    display: "flex"
+                  },
+                  title: "收起面板",
+                  children: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$H, { style: { fontSize: 13 } })
+                }
+              )
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { flex: 1, display: "flex", flexDirection: "column" }, children: [
+          /* @__PURE__ */ jsxRuntimeExports.jsx(PanelSection, { title: "任务规划", icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$8, {}), children: /* @__PURE__ */ jsxRuntimeExports.jsx(TaskPlanPanel, {}) }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(PanelSection, { title: "任务队列", icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$f, {}), children: /* @__PURE__ */ jsxRuntimeExports.jsx(TaskQueuePanel, { sidebar: true }) }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(PanelSection, { title: "任务产物", icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$K, {}), children: /* @__PURE__ */ jsxRuntimeExports.jsx(TaskDeliverablesPanel, {}) })
+        ] }),
+        /* @__PURE__ */ jsxRuntimeExports.jsx(DiffDrawer, {})
+      ]
+    }
+  );
+}
+function PanelSection({
+  title,
+  icon,
+  children
+}) {
+  return /* @__PURE__ */ jsxRuntimeExports.jsxs(
+    "div",
+    {
+      style: {
+        flex: 1,
+        minHeight: 0,
+        display: "flex",
+        flexDirection: "column",
+        borderBottom: "1px solid var(--border)"
+      },
+      children: [
+        /* @__PURE__ */ jsxRuntimeExports.jsxs(
+          "div",
+          {
+            style: {
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              padding: "6px 12px",
+              borderBottom: "1px solid var(--border)",
+              flexShrink: 0
+            },
+            children: [
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { color: "var(--text-tertiary)", fontSize: 12, display: "flex" }, children: icon }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx("span", { style: { fontSize: 12, fontWeight: 600, color: "var(--text)" }, children: title })
+            ]
+          }
+        ),
+        /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }, children })
       ]
     }
   );
@@ -24521,21 +25724,21 @@ function TitleBar() {
                 }
               )
             ] }) : /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
-              /* @__PURE__ */ jsxRuntimeExports.jsx(TitleBarIconBtn, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$a, {}), title: "菜单" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(TitleBarIconBtn, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$c, {}), title: "菜单" }),
               /* @__PURE__ */ jsxRuntimeExports.jsx(
                 TitleBarIconBtn,
                 {
-                  icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$c, {}),
+                  icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$e, {}),
                   title: showMidPanel ? "收起侧边栏" : "展开侧边栏",
                   onClick: toggleMidPanel,
                   active: showMidPanel
                 }
               ),
               /* @__PURE__ */ jsxRuntimeExports.jsx(Divider, {}),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(TitleBarIconBtn, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$C, {}), title: "全局搜索 (Ctrl+K)", onClick: toggleSearch }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(TitleBarIconBtn, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$P, {}), title: "全局搜索 (Ctrl+K)", onClick: toggleSearch }),
               /* @__PURE__ */ jsxRuntimeExports.jsx(Divider, {}),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(TitleBarIconBtn, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$B, {}), title: "后退" }),
-              /* @__PURE__ */ jsxRuntimeExports.jsx(TitleBarIconBtn, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$E, {}), title: "前进" })
+              /* @__PURE__ */ jsxRuntimeExports.jsx(TitleBarIconBtn, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$O, {}), title: "后退" }),
+              /* @__PURE__ */ jsxRuntimeExports.jsx(TitleBarIconBtn, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$R, {}), title: "前进" })
             ] })
           }
         ),
@@ -24573,11 +25776,11 @@ function TitleBar() {
           }
         ),
         /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { display: "flex", alignItems: "center", flexShrink: 0, ...noDrag }, children: isMac ? /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { width: 68 } }) : isWin ? /* @__PURE__ */ jsxRuntimeExports.jsxs(jsxRuntimeExports.Fragment, { children: [
-          /* @__PURE__ */ jsxRuntimeExports.jsx(WinCtrlBtn, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$8, {}), onClick: handleMinimize, title: "最小化" }),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(WinCtrlBtn, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$a, {}), onClick: handleMinimize, title: "最小化" }),
           /* @__PURE__ */ jsxRuntimeExports.jsx(
             WinCtrlBtn,
             {
-              icon: isMaximized ? /* @__PURE__ */ jsxRuntimeExports.jsx(RestoreIcon, {}) : /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$n, {}),
+              icon: isMaximized ? /* @__PURE__ */ jsxRuntimeExports.jsx(RestoreIcon, {}) : /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$u, {}),
               onClick: handleMaximize,
               title: isMaximized ? "还原" : "最大化"
             }
@@ -24585,7 +25788,7 @@ function TitleBar() {
           /* @__PURE__ */ jsxRuntimeExports.jsx(
             WinCtrlBtn,
             {
-              icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$F, {}),
+              icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$T, {}),
               onClick: handleClose,
               title: "关闭",
               isClose: true
@@ -24747,7 +25950,7 @@ function GlobalSearch() {
     const base = [
       {
         id: "new-session",
-        icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$A, {}),
+        icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$N, {}),
         title: "新建会话",
         subtitle: "开始一个新的聊天会话",
         action: () => {
@@ -24757,7 +25960,7 @@ function GlobalSearch() {
       },
       {
         id: "goto-sessions",
-        icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$9, {}),
+        icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$b, {}),
         title: "打开会话列表",
         subtitle: "查看所有历史会话",
         action: () => {
@@ -24779,7 +25982,7 @@ function GlobalSearch() {
       },
       {
         id: "goto-models",
-        icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$r, {}),
+        icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$z, {}),
         title: "模型配置",
         subtitle: "管理 AI 模型与 API 密钥",
         action: () => {
@@ -24790,7 +25993,7 @@ function GlobalSearch() {
       },
       {
         id: "goto-balance",
-        icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$g, {}),
+        icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$l, {}),
         title: "余额查询",
         subtitle: "查看各模型账户余额",
         action: () => {
@@ -24801,7 +26004,7 @@ function GlobalSearch() {
       },
       {
         id: "toggle-theme",
-        icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$v, {}),
+        icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$D, {}),
         title: "切换主题",
         subtitle: "更换应用外观主题",
         action: () => {
@@ -24814,7 +26017,7 @@ function GlobalSearch() {
     sessions.forEach((s15) => {
       base.push({
         id: `session-${s15.id}`,
-        icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$9, {}),
+        icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$b, {}),
         title: s15.title || `会话 ${s15.id.slice(0, 8)}`,
         subtitle: `打开会话 · ${s15.updatedAt}`,
         action: () => {
@@ -24922,7 +26125,7 @@ function GlobalSearch() {
                   borderBottom: "1px solid var(--border)"
                 },
                 children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$C, { style: { fontSize: 18, color: "var(--text-tertiary)", flexShrink: 0 } }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$P, { style: { fontSize: 18, color: "var(--text-tertiary)", flexShrink: 0 } }),
                   /* @__PURE__ */ jsxRuntimeExports.jsx(
                     "input",
                     {
@@ -25036,7 +26239,7 @@ function GlobalSearch() {
                           )
                         ] }),
                         active && /* @__PURE__ */ jsxRuntimeExports.jsx(
-                          RefIcon$u,
+                          RefIcon$C,
                           {
                             style: {
                               fontSize: 12,
@@ -25065,9 +26268,9 @@ function GlobalSearch() {
                   color: "var(--text-tertiary)"
                 },
                 children: [
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(Hint, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$p, {}), label: "上" }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(Hint, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$q, {}), label: "下" }),
-                  /* @__PURE__ */ jsxRuntimeExports.jsx(Hint, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$u, {}), label: "选择" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(Hint, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$x, {}), label: "上" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(Hint, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$y, {}), label: "下" }),
+                  /* @__PURE__ */ jsxRuntimeExports.jsx(Hint, { icon: /* @__PURE__ */ jsxRuntimeExports.jsx(RefIcon$C, {}), label: "选择" }),
                   /* @__PURE__ */ jsxRuntimeExports.jsx("div", { style: { flex: 1 } }),
                   /* @__PURE__ */ jsxRuntimeExports.jsxs("span", { children: [
                     filtered.length,
@@ -25121,7 +26324,8 @@ function MainLayout() {
         /* @__PURE__ */ jsxRuntimeExports.jsxs("div", { style: { display: "flex", flex: 1, overflow: "hidden" }, children: [
           /* @__PURE__ */ jsxRuntimeExports.jsx(LeftRail, {}),
           showMidPanel && /* @__PURE__ */ jsxRuntimeExports.jsx(MidPanel, {}),
-          /* @__PURE__ */ jsxRuntimeExports.jsx(RightPanel, {})
+          /* @__PURE__ */ jsxRuntimeExports.jsx(RightPanel, {}),
+          /* @__PURE__ */ jsxRuntimeExports.jsx(RightSidebar, {})
         ] }),
         /* @__PURE__ */ jsxRuntimeExports.jsx(GlobalSearch, {})
       ]
@@ -25144,6 +26348,10 @@ function App() {
   const activeSessionId = useAppStore((s15) => s15.activeSessionId);
   const fileWatcherEnabled = useAppStore((s15) => s15.fileWatcherEnabled);
   const autoExpandFloatBall = useAppStore((s15) => s15.autoExpandFloatBall);
+  const setPlanSteps = useAppStore((s15) => s15.setPlanSteps);
+  const setPlanningPhase = useAppStore((s15) => s15.setPlanningPhase);
+  useAppStore((s15) => s15.setPlanContext);
+  const setIsMainTaskRunning = useAppStore((s15) => s15.setIsMainTaskRunning);
   const currentTaskIdRef = reactExports.useRef(null);
   const assistantIdRef = reactExports.useRef(null);
   const fullContentRef = reactExports.useRef("");
@@ -25175,7 +26383,11 @@ function App() {
   }, []);
   reactExports.useEffect(() => {
     window.electronAPI?.getTasks?.().then((tasks) => {
-      setTasks(tasks);
+      if (tasks && Array.isArray(tasks)) {
+        setTasks(tasks);
+      }
+    }).catch((err) => {
+      console.error("[App] getTasks failed:", err);
     });
     const unsubTaskUpdated = window.electronAPI?.onTaskUpdated((task) => {
       updateTask(task);
@@ -25188,11 +26400,13 @@ function App() {
     });
     const unsubClaudeTaskStart = window.electronAPI?.onClaudeTaskStart(() => {
       setFloatStatus("running");
+      setIsMainTaskRunning(true);
     });
     const unsubTaskExecute = window.electronAPI?.onTaskExecute((payload) => {
       currentTaskIdRef.current = payload.taskId;
       setCurrentTaskId(payload.taskId);
       setFloatStatus("running");
+      setIsMainTaskRunning(true);
       const sessionId = payload.conversationId || activeSessionIdRef.current || "default";
       addMessage({
         id: `task-user-${payload.taskId}`,
@@ -25261,7 +26475,24 @@ function App() {
         assistantIdRef.current = null;
         fullContentRef.current = "";
         setCurrentTaskId(null);
+        setIsMainTaskRunning(false);
+      } else {
+        setIsMainTaskRunning(false);
       }
+    });
+    const unsubPlanSteps = window.electronAPI?.onPlanStepsDetected((_sessionId, steps) => {
+      const mapped = steps.map((s15) => ({
+        id: s15.id,
+        content: s15.content,
+        status: s15.status
+      }));
+      setPlanSteps(mapped);
+      if (mapped.length > 0) {
+        setPlanningPhase("ready");
+      }
+    });
+    const unsubTaskFinished = window.electronAPI?.onTaskFinished(() => {
+      setIsMainTaskRunning(false);
     });
     return () => {
       unsubClaudeTaskStart?.();
@@ -25272,6 +26503,8 @@ function App() {
       unsubOutput?.();
       unsubError?.();
       unsubClaudeClose?.();
+      unsubPlanSteps?.();
+      unsubTaskFinished?.();
     };
   }, []);
   reactExports.useEffect(() => {

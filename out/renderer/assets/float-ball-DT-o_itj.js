@@ -72,6 +72,7 @@ window.electronAPI?.onPtyExit((_sessionId, code) => {
   } else {
     setBallStatus("error");
   }
+  window.electronAPI?.showMainWindow();
 });
 window.electronAPI?.onClaudeTaskStart(() => {
   console.log("[FloatBall] onClaudeTaskStart");
@@ -84,6 +85,7 @@ window.electronAPI?.onClaudeClose((code) => {
   } else {
     setBallStatus("error");
   }
+  window.electronAPI?.showMainWindow();
 });
 window.electronAPI?.onQueueStatus((status) => {
   console.log("[FloatBall] onQueueStatus:", status);
@@ -93,6 +95,7 @@ window.electronAPI?.onQueueStatus((status) => {
   } else if (wasRunning && status.active === 0) {
     wasRunning = false;
     setBallStatus("success");
+    window.electronAPI?.showMainWindow();
   }
 });
 window.electronAPI?.onClaudeConfirmNeeded(() => {
@@ -102,6 +105,7 @@ window.electronAPI?.onClaudeConfirmNeeded(() => {
 window.electronAPI?.onTaskFinished(() => {
   console.log("[FloatBall] onTaskFinished");
   setBallStatus("success");
+  window.electronAPI?.showMainWindow();
 });
 ball.addEventListener("click", () => {
   if (!hasDragged) {

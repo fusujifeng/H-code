@@ -64,6 +64,15 @@ jobs:
           npm_config_python: python
         run: pnpm dist
 
+      - name: List dist output
+        if: always()
+        shell: bash
+        run: |
+          echo "=== dist directory contents ==="
+          ls -la dist/ 2>/dev/null || echo "dist/ does not exist or is empty"
+          echo "=== checking for installers ==="
+          find dist/ -type f \( -name "*.exe" -o -name "*.dmg" -o -name "*.AppImage" -o -name "*.zip" -o -name "*.blockmap" -o -name "*.yml" \) 2>/dev/null || echo "No installer files found"
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -72,9 +81,10 @@ jobs:
             dist/*.exe
             dist/*.dmg
             dist/*.AppImage
+            dist/*.zip
             dist/*.yml
             dist/*.blockmap
-          if-no-files-found: ignore
+          if-no-files-found: error
 
   publish:
     needs: build
@@ -89,12 +99,23 @@ jobs:
           merge-multiple: true
           path: dist
 
-      - name: List artifacts
-        run: ls -la dist/
+      - name: Verify artifacts exist
+        run: |
+          echo "=== Downloaded artifacts ==="
+          ls -la dist/
+          file_count=$(ls dist/ 2>/dev/null | wc -l)
+          echo "File count: $file_count"
+          if [ "$file_count" -eq 0 ]; then
+            echo "ERROR: No artifacts were downloaded. Build jobs may have failed."
+            exit 1
+          fi
 
       - name: Create release and upload
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create ${{ github.ref_name }} --title "${{ github.ref_name }}" --generate-notes
-          gh release upload ${{ github.ref_name }} dist/*
+          echo "Creating release for ${{ github.ref_name }}"
+          gh release create "${{ github.ref_name }}" \
+            --title "${{ github.ref_name }}" \
+            --generate-notes \
+            dist/*

@@ -431,7 +431,8 @@ const fileWatcher = new FileWatcher();
 let currentClaudePty = null;
 function getIconPath() {
   if (electron.app.isPackaged) {
-    return path.join(process.resourcesPath, "appIcon.png");
+    const isWin = process.platform === "win32";
+    return isWin ? path.join(process.resourcesPath, "icon.ico") : path.join(process.resourcesPath, "appIcon.png");
   }
   return path.join(__dirname, "../../src/renderer/assets/appIcon.png");
 }
@@ -538,8 +539,11 @@ function showMainWindowFn() {
     clearTimeout(pendingAutoExpandTimer);
     pendingAutoExpandTimer = null;
   }
+  if (mainWindow?.isMinimized()) {
+    mainWindow.restore();
+  }
   mainWindow?.show();
-  mainWindow?.restore();
+  mainWindow?.focus();
   floatWindow?.hide();
 }
 function scheduleAutoExpand() {
@@ -868,9 +872,20 @@ function registerIPC() {
     floatBallPosition = { x, y };
   });
   function writePtyChunks(pty, data, onDone) {
-    const CHUNK_SIZE = 512;
+    let terminator = "";
+    if (data.endsWith("\r\n")) {
+      terminator = "\r\n";
+      data = data.slice(0, -2);
+    } else if (data.endsWith("\r")) {
+      terminator = "\r";
+      data = data.slice(0, -1);
+    } else if (data.endsWith("\n")) {
+      terminator = "\n";
+      data = data.slice(0, -1);
+    }
+    const CHUNK_SIZE = 256;
     if (data.length <= CHUNK_SIZE) {
-      pty.write(data);
+      pty.write(data + terminator);
       onDone?.();
       return;
     }
@@ -880,8 +895,9 @@ function registerIPC() {
       pty.write(chunk);
       offset += CHUNK_SIZE;
       if (offset < data.length) {
-        setTimeout(writeNext, 15);
+        setTimeout(writeNext, 10);
       } else {
+        pty.write(terminator);
         onDone?.();
       }
     };
@@ -1409,8 +1425,8 @@ electron.app.whenReady().then(() => {
   setupAutoUpdater();
   createFloatWindow();
   createTray();
-  createMainWindow();
   registerIPC();
+  createMainWindow();
   setTimeout(() => checkForUpdatesSilent(), 3e4);
   scheduleNextFridayCheck();
   electron.app.on("activate", () => {
