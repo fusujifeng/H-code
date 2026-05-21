@@ -62,7 +62,7 @@ jobs:
       - name: Package
         env:
           npm_config_python: python
-        run: pnpm dist
+        run: pnpm dist --publish never
 
       - name: List dist output
         if: always()
