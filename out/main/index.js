@@ -805,7 +805,7 @@ function rebuildTrayMenu() {
 function createTray() {
   if (tray) return;
   const iconPath = getIconPath();
-  const icon = electron.nativeImage.createFromPath(iconPath).resize({ width: 32, height: 32 });
+  const icon = electron.nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 });
   tray = new electron.Tray(icon);
   tray.setToolTip("H-code");
   rebuildTrayMenu();

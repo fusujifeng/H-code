@@ -468,7 +468,7 @@ function createTray() {
   if (tray) return
 
   const iconPath = getIconPath()
-  const icon = nativeImage.createFromPath(iconPath).resize({ width: 32, height: 32 })
+  const icon = nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 })
   tray = new Tray(icon)
 
   tray.setToolTip('H-code')
