@@ -428,6 +428,86 @@ ${lines.join("\n")}`;
   }
 }
 const fileWatcher = new FileWatcher();
+function resolveClaudePath() {
+  if (process.platform === "win32") return "cmd.exe";
+  const home = os.homedir();
+  const knownPaths = [
+    "/opt/homebrew/bin/claude",
+    "/usr/local/bin/claude",
+    path.join(home, ".npm-global/bin/claude"),
+    path.join(home, "Library/pnpm/claude"),
+    path.join(home, ".local/bin/claude"),
+    "/usr/bin/claude"
+  ];
+  for (const p of knownPaths) {
+    if (fs.existsSync(p)) {
+      console.log("[resolveClaudePath] found:", p);
+      return p;
+    }
+  }
+  try {
+    const fromWhich = child_process.execSync("which claude 2>/dev/null", { encoding: "utf-8" }).trim();
+    if (fromWhich && fs.existsSync(fromWhich)) {
+      console.log("[resolveClaudePath] which:", fromWhich);
+      return fromWhich;
+    }
+  } catch {
+  }
+  try {
+    const shellCmd = "source ~/.zshrc 2>/dev/null; source ~/.zprofile 2>/dev/null; source ~/.bashrc 2>/dev/null; source ~/.bash_profile 2>/dev/null; which claude 2>/dev/null";
+    const fromShell = child_process.execSync(shellCmd, {
+      encoding: "utf-8",
+      shell: process.env.SHELL || "/bin/zsh"
+    }).trim();
+    if (fromShell && fs.existsSync(fromShell)) {
+      console.log("[resolveClaudePath] via shell:", fromShell);
+      return fromShell;
+    }
+  } catch {
+  }
+  try {
+    const npmBin = child_process.execSync("npm bin -g 2>/dev/null", { encoding: "utf-8" }).trim();
+    if (npmBin) {
+      const claudeAtNpm = path.join(npmBin, "claude");
+      if (fs.existsSync(claudeAtNpm)) {
+        console.log("[resolveClaudePath] npm global:", claudeAtNpm);
+        return claudeAtNpm;
+      }
+    }
+  } catch {
+  }
+  try {
+    const brewPrefix = child_process.execSync("brew --prefix 2>/dev/null", { encoding: "utf-8" }).trim();
+    if (brewPrefix) {
+      const claudeAtBrew = path.join(brewPrefix, "bin", "claude");
+      if (fs.existsSync(claudeAtBrew)) {
+        console.log("[resolveClaudePath] homebrew:", claudeAtBrew);
+        return claudeAtBrew;
+      }
+    }
+  } catch {
+  }
+  const searchDirs = [
+    "/opt/homebrew/bin",
+    "/usr/local/bin",
+    "/opt/local/bin",
+    path.join(home, ".local/bin"),
+    path.join(home, "bin"),
+    path.join(home, ".npm-global/bin"),
+    path.join(home, ".cargo/bin"),
+    path.join(home, ".yarn/bin")
+  ];
+  for (const dir of searchDirs) {
+    const candidate = path.join(dir, "claude");
+    if (fs.existsSync(candidate)) {
+      console.log("[resolveClaudePath] search:", candidate);
+      return candidate;
+    }
+  }
+  console.warn('[resolveClaudePath] not found, falling back to "claude"');
+  return "claude";
+}
+const CLAUDE_BIN = resolveClaudePath();
 let currentClaudePty = null;
 function getIconPath() {
   if (electron.app.isPackaged) {
@@ -935,11 +1015,10 @@ function registerIPC() {
       ptyCreateTime.delete(sessionId);
       ptyOutputHistory.delete(sessionId);
     }
-    const shell = isWin ? "cmd.exe" : "claude";
     const claudeCmd = ["claude", ...permFlags].join(" ");
     const args = isWin ? ["/c", claudeCmd] : permFlags;
-    console.log("[PTY] creating session:", sessionId, shell, args, "cwd:", workDir);
-    const pty = nodePty.spawn(shell, args, {
+    console.log("[PTY] creating session:", sessionId, CLAUDE_BIN, args, "cwd:", workDir);
+    const pty = nodePty.spawn(CLAUDE_BIN, args, {
       name: "xterm-256color",
       cols: 120,
       rows: 40,
@@ -1254,9 +1333,8 @@ function registerIPC() {
       "2. 完成步骤后，简要总结你的执行结果",
       "3. 如果步骤产生文件变更，请列出变更的文件路径"
     ].join("\n");
-    const shell = isWin ? "cmd.exe" : "claude";
     const args = isWin ? ["/c", "claude"] : [];
-    const pty = nodePty.spawn(shell, args, {
+    const pty = nodePty.spawn(CLAUDE_BIN, args, {
       name: "xterm-256color",
       cols: 120,
       rows: 40,
@@ -1322,9 +1400,8 @@ function registerIPC() {
       oldPty.kill();
       planStepPtys.delete(reviewPtyId);
     }
-    const shell = isWin ? "cmd.exe" : "claude";
     const args = isWin ? ["/c", "claude"] : [];
-    const pty = nodePty.spawn(shell, args, {
+    const pty = nodePty.spawn(CLAUDE_BIN, args, {
       name: "xterm-256color",
       cols: 120,
       rows: 40,
@@ -1363,14 +1440,13 @@ function registerIPC() {
         }
       });
     }, TIMEOUT);
-    const shell = isWin ? "cmd.exe" : "claude";
     const claudeCmd = ["claude", ...permFlags].join(" ");
     const args = isWin ? ["/c", claudeCmd] : permFlags;
     if (currentClaudePty) {
       currentClaudePty.kill();
       currentClaudePty = null;
     }
-    const pty = nodePty.spawn(shell, args, {
+    const pty = nodePty.spawn(CLAUDE_BIN, args, {
       name: "xterm-256color",
       cols: 120,
       rows: 40,

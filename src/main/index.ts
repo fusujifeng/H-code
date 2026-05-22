@@ -11,6 +11,102 @@ import { taskQueue } from './task-queue'
 import { fileWatcher } from './file-watcher'
 import { snapshotManager } from './snapshot-manager'
 
+function resolveClaudePath(): string {
+  if (process.platform === 'win32') return 'cmd.exe'
+
+  // 打包后的 Electron app 在 macOS 上 PATH 很有限
+  // （/usr/bin:/bin:/usr/sbin:/sbin），不包含用户安装的 cli 路径
+  const home = os.homedir()
+
+  // 1. 已知常见路径（快速命中）
+  const knownPaths = [
+    '/opt/homebrew/bin/claude',
+    '/usr/local/bin/claude',
+    path.join(home, '.npm-global/bin/claude'),
+    path.join(home, 'Library/pnpm/claude'),
+    path.join(home, '.local/bin/claude'),
+    '/usr/bin/claude',
+  ]
+  for (const p of knownPaths) {
+    if (fs.existsSync(p)) {
+      console.log('[resolveClaudePath] found:', p)
+      return p
+    }
+  }
+
+  // 2. 开发模式下从当前 PATH 查找
+  try {
+    const fromWhich = execSync('which claude 2>/dev/null', { encoding: 'utf-8' }).trim()
+    if (fromWhich && fs.existsSync(fromWhich)) {
+      console.log('[resolveClaudePath] which:', fromWhich)
+      return fromWhich
+    }
+  } catch { /* ignore */ }
+
+  // 3. 通过 shell 加载用户配置后的完整 PATH 来查找
+  //    这是最可靠的方法，能够覆盖用户 .zshrc/.bashrc 中配置的任何路径
+  try {
+    const shellCmd = 'source ~/.zshrc 2>/dev/null; source ~/.zprofile 2>/dev/null; source ~/.bashrc 2>/dev/null; source ~/.bash_profile 2>/dev/null; which claude 2>/dev/null'
+    const fromShell = execSync(shellCmd, {
+      encoding: 'utf-8',
+      shell: process.env.SHELL || '/bin/zsh',
+    }).trim()
+    if (fromShell && fs.existsSync(fromShell)) {
+      console.log('[resolveClaudePath] via shell:', fromShell)
+      return fromShell
+    }
+  } catch { /* ignore */ }
+
+  // 4. 尝试获取 npm 全局 bin 目录
+  try {
+    const npmBin = execSync('npm bin -g 2>/dev/null', { encoding: 'utf-8' }).trim()
+    if (npmBin) {
+      const claudeAtNpm = path.join(npmBin, 'claude')
+      if (fs.existsSync(claudeAtNpm)) {
+        console.log('[resolveClaudePath] npm global:', claudeAtNpm)
+        return claudeAtNpm
+      }
+    }
+  } catch { /* ignore */ }
+
+  // 5. 尝试 Homebrew prefix（如果已安装但 shell 配置未加载）
+  try {
+    const brewPrefix = execSync('brew --prefix 2>/dev/null', { encoding: 'utf-8' }).trim()
+    if (brewPrefix) {
+      const claudeAtBrew = path.join(brewPrefix, 'bin', 'claude')
+      if (fs.existsSync(claudeAtBrew)) {
+        console.log('[resolveClaudePath] homebrew:', claudeAtBrew)
+        return claudeAtBrew
+      }
+    }
+  } catch { /* ignore */ }
+
+  // 6. 在常见 bin 目录中搜索 claude
+  const searchDirs = [
+    '/opt/homebrew/bin',
+    '/usr/local/bin',
+    '/opt/local/bin',
+    path.join(home, '.local/bin'),
+    path.join(home, 'bin'),
+    path.join(home, '.npm-global/bin'),
+    path.join(home, '.cargo/bin'),
+    path.join(home, '.yarn/bin'),
+  ]
+  for (const dir of searchDirs) {
+    const candidate = path.join(dir, 'claude')
+    if (fs.existsSync(candidate)) {
+      console.log('[resolveClaudePath] search:', candidate)
+      return candidate
+    }
+  }
+
+  // 最后的 fallback：希望 PATH 中有
+  console.warn('[resolveClaudePath] not found, falling back to "claude"')
+  return 'claude'
+}
+
+const CLAUDE_BIN = resolveClaudePath()
+
 let currentClaudePty: ReturnType<typeof spawnPty> | null = null
 
 function getIconPath(): string {
@@ -638,13 +734,12 @@ function registerIPC() {
       ptyOutputHistory.delete(sessionId)
     }
 
-    const shell = isWin ? 'cmd.exe' : 'claude'
     const claudeCmd = ['claude', ...permFlags].join(' ')
     const args = isWin ? ['/c', claudeCmd] : permFlags
 
-    console.log('[PTY] creating session:', sessionId, shell, args, 'cwd:', workDir)
+    console.log('[PTY] creating session:', sessionId, CLAUDE_BIN, args, 'cwd:', workDir)
 
-    const pty = spawnPty(shell, args, {
+    const pty = spawnPty(CLAUDE_BIN, args, {
       name: 'xterm-256color',
       cols: 120,
       rows: 40,
@@ -1047,10 +1142,9 @@ function registerIPC() {
       '3. 如果步骤产生文件变更，请列出变更的文件路径',
     ].join('\n')
 
-    const shell = isWin ? 'cmd.exe' : 'claude'
     const args = isWin ? ['/c', 'claude'] : []
 
-    const pty = spawnPty(shell, args, {
+    const pty = spawnPty(CLAUDE_BIN, args, {
       name: 'xterm-256color',
       cols: 120,
       rows: 40,
@@ -1130,10 +1224,9 @@ function registerIPC() {
       planStepPtys.delete(reviewPtyId)
     }
 
-    const shell = isWin ? 'cmd.exe' : 'claude'
     const args = isWin ? ['/c', 'claude'] : []
 
-    const pty = spawnPty(shell, args, {
+    const pty = spawnPty(CLAUDE_BIN, args, {
       name: 'xterm-256color',
       cols: 120,
       rows: 40,
@@ -1181,7 +1274,6 @@ function registerIPC() {
       })
     }, TIMEOUT)
 
-    const shell = isWin ? 'cmd.exe' : 'claude'
     const claudeCmd = ['claude', ...permFlags].join(' ')
     const args = isWin ? ['/c', claudeCmd] : permFlags
 
@@ -1190,7 +1282,7 @@ function registerIPC() {
       currentClaudePty = null
     }
 
-    const pty = spawnPty(shell, args, {
+    const pty = spawnPty(CLAUDE_BIN, args, {
       name: 'xterm-256color',
       cols: 120,
       rows: 40,
