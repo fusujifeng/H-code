@@ -1,5 +1,5 @@
 import { useAppStore, type ThemeId } from '../stores/app-store'
-import { ArrowLeftOutlined, DownloadOutlined, SyncOutlined, CheckCircleOutlined, ExclamationCircleOutlined, RedoOutlined } from '@ant-design/icons'
+import { ArrowLeftOutlined, DownloadOutlined, SyncOutlined, CheckCircleOutlined, ExclamationCircleOutlined, RedoOutlined, ApiOutlined } from '@ant-design/icons'
 import { useState, useEffect } from 'react'
 
 import themeAntdx from '../assets/moyk5mua-image.png'
@@ -379,6 +379,54 @@ export default function SettingsPanel() {
   const autoExpandFloatBall = useAppStore((s) => s.autoExpandFloatBall)
   const setAutoExpandFloatBall = useAppStore((s) => s.setAutoExpandFloatBall)
 
+  // 远程控制状态
+  const [remoteEnabled, setRemoteEnabled] = useState(false)
+  const [remoteStatus, setRemoteStatus] = useState('offline')
+  const [pairingCode, setPairingCode] = useState('')
+
+  useEffect(() => {
+    window.electronAPI?.remoteGetStatus().then((res) => {
+      if (res?.status && res.status !== 'offline') {
+        setRemoteEnabled(true)
+        setRemoteStatus(res.status)
+        setPairingCode(res.pairingCode || '')
+      }
+    })
+    const unsubs = [
+      window.electronAPI?.onRemoteRegistered((code) => {
+        setPairingCode(code)
+        setRemoteStatus('online')
+      }),
+      window.electronAPI?.onRemoteStatusChange((status) => {
+        setRemoteStatus(status)
+        if (status === 'offline') setRemoteEnabled(false)
+      }),
+    ]
+    return () => unsubs.forEach((u) => u?.())
+  }, [])
+
+  const toggleRemote = (enable: boolean) => {
+    setRemoteEnabled(enable)
+    if (enable) {
+      window.electronAPI?.remoteStart()
+    } else {
+      window.electronAPI?.remoteStop()
+      setRemoteStatus('offline')
+      setPairingCode('')
+    }
+  }
+
+  const statusLabels: Record<string, string> = {
+    offline: '未连接',
+    online: '等待手机配对',
+    paired: '已配对，待命',
+  }
+  const statusColors: Record<string, string> = {
+    offline: '#666',
+    online: '#3498db',
+    paired: '#2ecc71',
+  }
+
   return (
     <div style={{ height: '100%', overflowY: 'auto' }}>
       {/* Section: Themes */}
@@ -588,6 +636,107 @@ export default function SettingsPanel() {
               }}
             />
           </div>
+        </div>
+      </div>
+
+      {/* Section: Remote Control */}
+      <div style={{ padding: '12px 16px' }}>
+        <div
+          style={{
+            fontSize: 12,
+            fontWeight: 600,
+            color: 'var(--text-secondary)',
+            textTransform: 'uppercase',
+            marginBottom: 10,
+            letterSpacing: 0.5
+          }}
+        >
+          远程控制
+        </div>
+        <div
+          style={{
+            background: 'var(--surface)',
+            borderRadius: 10,
+            border: '1px solid var(--border)',
+            overflow: 'hidden'
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              padding: '10px 14px'
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <ApiOutlined style={{ fontSize: 18, color: remoteEnabled ? 'var(--blue)' : 'var(--text-tertiary)' }} />
+              <div>
+                <div style={{ fontSize: 13, color: 'var(--text)' }}>手机远程控制</div>
+                <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>
+                  手机扫码或打开链接，远程发送指令给桌面 H-code
+                </div>
+              </div>
+            </div>
+            <ToggleSwitch
+              checked={remoteEnabled}
+              onChange={toggleRemote}
+            />
+          </div>
+
+          {remoteEnabled && (
+            <div
+              style={{
+                padding: '12px 14px',
+                borderTop: '1px solid var(--border)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8
+              }}
+            >
+              {/* 状态指示 */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{
+                  width: 8, height: 8, borderRadius: '50%',
+                  background: statusColors[remoteStatus] || '#666',
+                  flexShrink: 0
+                }} />
+                <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                  {statusLabels[remoteStatus] || remoteStatus}
+                </span>
+              </div>
+
+              {/* 配对码 */}
+              {pairingCode && (
+                <div style={{
+                  background: 'var(--bg)',
+                  borderRadius: 8,
+                  padding: '10px 14px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}>
+                  <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>配对码</span>
+                  <span style={{
+                    fontSize: 22,
+                    fontWeight: 700,
+                    letterSpacing: 6,
+                    color: 'var(--text)',
+                    fontFamily: "'SF Mono', Monaco, monospace"
+                  }}>
+                    {pairingCode}
+                  </span>
+                </div>
+              )}
+
+              {/* PWA 地址提示 */}
+              {pairingCode && (
+                <div style={{ fontSize: 11, color: 'var(--text-tertiary)', lineHeight: 1.6 }}>
+                  手机浏览器打开 PWA 地址，输入上方配对码即可连接
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

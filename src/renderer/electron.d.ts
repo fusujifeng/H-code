@@ -100,6 +100,17 @@ declare global {
       reviewPlanSteps: (stepsJson: string, planContext: string, cwd?: string) => Promise<{ success: boolean; stepId: string }>
       onPlanStepOutput: (cb: (stepId: string, data: string) => void) => () => void
       onPlanStepComplete: (cb: (stepId: string, exitCode: number | null, result: string) => void) => () => void
+
+      /* 远程控制（手机 ↔ 桌面） */
+      remoteStart: (serverUrl?: string) => Promise<{ success: boolean; status: string }>
+      remoteStop: () => Promise<{ success: boolean }>
+      remoteGetStatus: () => Promise<{ status: string; pairingCode: string }>
+      onRemoteRegistered: (cb: (pairingCode: string) => void) => () => void
+      onRemoteStatusChange: (cb: (status: string) => void) => () => void
+      onRemoteTaskStart: (cb: (command: string) => void) => () => void
+      onRemoteOutput: (cb: (data: string) => void) => () => void
+      onRemoteTaskEnd: (cb: (exitCode: number) => void) => () => void
+      onRemoteError: (cb: (msg: string) => void) => () => void
     }
   }
 }

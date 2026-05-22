@@ -208,6 +208,42 @@ const electronAPI = {
       callback(stepId, exitCode, result)
     ipcRenderer.on('plan-step-complete', listener)
     return () => ipcRenderer.removeListener('plan-step-complete', listener)
+  },
+
+  /* ── 远程控制（手机 ↔ 桌面）─────────────────────────────── */
+  remoteStart: (serverUrl?: string) => ipcRenderer.invoke('remote-start', serverUrl),
+  remoteStop: () => ipcRenderer.invoke('remote-stop'),
+  remoteGetStatus: () => ipcRenderer.invoke('remote-get-status'),
+
+  onRemoteRegistered: (callback: (pairingCode: string) => void) => {
+    const listener = (_event: unknown, code: string) => callback(code)
+    ipcRenderer.on('remote-registered', listener)
+    return () => ipcRenderer.removeListener('remote-registered', listener)
+  },
+  onRemoteStatusChange: (callback: (status: string) => void) => {
+    const listener = (_event: unknown, status: string) => callback(status)
+    ipcRenderer.on('remote-status-change', listener)
+    return () => ipcRenderer.removeListener('remote-status-change', listener)
+  },
+  onRemoteTaskStart: (callback: (command: string) => void) => {
+    const listener = (_event: unknown, command: string) => callback(command)
+    ipcRenderer.on('remote-task-start', listener)
+    return () => ipcRenderer.removeListener('remote-task-start', listener)
+  },
+  onRemoteOutput: (callback: (data: string) => void) => {
+    const listener = (_event: unknown, data: string) => callback(data)
+    ipcRenderer.on('remote-output', listener)
+    return () => ipcRenderer.removeListener('remote-output', listener)
+  },
+  onRemoteTaskEnd: (callback: (exitCode: number) => void) => {
+    const listener = (_event: unknown, code: number) => callback(code)
+    ipcRenderer.on('remote-task-end', listener)
+    return () => ipcRenderer.removeListener('remote-task-end', listener)
+  },
+  onRemoteError: (callback: (msg: string) => void) => {
+    const listener = (_event: unknown, msg: string) => callback(msg)
+    ipcRenderer.on('remote-error', listener)
+    return () => ipcRenderer.removeListener('remote-error', listener)
   }
 }
 

@@ -158,6 +158,40 @@ const electronAPI = {
     const listener = (_event, stepId, exitCode, result) => callback(stepId, exitCode, result);
     electron.ipcRenderer.on("plan-step-complete", listener);
     return () => electron.ipcRenderer.removeListener("plan-step-complete", listener);
+  },
+  /* ── 远程控制（手机 ↔ 桌面）─────────────────────────────── */
+  remoteStart: (serverUrl) => electron.ipcRenderer.invoke("remote-start", serverUrl),
+  remoteStop: () => electron.ipcRenderer.invoke("remote-stop"),
+  remoteGetStatus: () => electron.ipcRenderer.invoke("remote-get-status"),
+  onRemoteRegistered: (callback) => {
+    const listener = (_event, code) => callback(code);
+    electron.ipcRenderer.on("remote-registered", listener);
+    return () => electron.ipcRenderer.removeListener("remote-registered", listener);
+  },
+  onRemoteStatusChange: (callback) => {
+    const listener = (_event, status) => callback(status);
+    electron.ipcRenderer.on("remote-status-change", listener);
+    return () => electron.ipcRenderer.removeListener("remote-status-change", listener);
+  },
+  onRemoteTaskStart: (callback) => {
+    const listener = (_event, command) => callback(command);
+    electron.ipcRenderer.on("remote-task-start", listener);
+    return () => electron.ipcRenderer.removeListener("remote-task-start", listener);
+  },
+  onRemoteOutput: (callback) => {
+    const listener = (_event, data) => callback(data);
+    electron.ipcRenderer.on("remote-output", listener);
+    return () => electron.ipcRenderer.removeListener("remote-output", listener);
+  },
+  onRemoteTaskEnd: (callback) => {
+    const listener = (_event, code) => callback(code);
+    electron.ipcRenderer.on("remote-task-end", listener);
+    return () => electron.ipcRenderer.removeListener("remote-task-end", listener);
+  },
+  onRemoteError: (callback) => {
+    const listener = (_event, msg) => callback(msg);
+    electron.ipcRenderer.on("remote-error", listener);
+    return () => electron.ipcRenderer.removeListener("remote-error", listener);
   }
 };
 electron.contextBridge.exposeInMainWorld("electronAPI", electronAPI);

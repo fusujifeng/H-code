@@ -9,6 +9,7 @@ const electronUpdater = require("electron-updater");
 const https = require("https");
 const Database = require("better-sqlite3");
 const chokidar = require("chokidar");
+const ws = require("ws");
 class SessionStore {
   db;
   constructor() {
@@ -428,6 +429,177 @@ ${lines.join("\n")}`;
   }
 }
 const fileWatcher = new FileWatcher();
+class RemoteAgent {
+  ws = null;
+  pty = null;
+  pairingCode = "";
+  serverUrl;
+  handlers = /* @__PURE__ */ new Map();
+  confirmResolve = null;
+  outputBuffer = "";
+  status = "offline";
+  constructor(serverUrl) {
+    this.serverUrl = serverUrl;
+  }
+  getStatus() {
+    return this.status;
+  }
+  getPairingCode() {
+    return this.pairingCode;
+  }
+  connect(existingCode) {
+    if (this.ws) this.ws.close();
+    this.ws = new ws.WebSocket(this.serverUrl);
+    this.status = "online";
+    this.ws.on("open", () => {
+      this.send({
+        type: "register",
+        pairingCode: existingCode
+      });
+    });
+    this.ws.on("message", (raw) => {
+      try {
+        const msg = JSON.parse(raw.toString());
+        this.handleMessage(msg);
+      } catch {
+      }
+    });
+    this.ws.on("close", () => {
+      this.status = "offline";
+      this.pty?.kill();
+      this.emit("status-change", "offline");
+    });
+    this.ws.on("error", (err) => {
+      console.error("[RemoteAgent] ws error:", err.message);
+      this.emit("error", err.message);
+    });
+  }
+  disconnect() {
+    this.pty?.kill();
+    this.pty = null;
+    this.ws?.close();
+    this.ws = null;
+    this.status = "offline";
+  }
+  /**
+   * 执行一条从手机发来的指令
+   */
+  executeCommand(command, cwd) {
+    if (this.pty) {
+      this.pty.kill();
+      this.pty = null;
+    }
+    this.outputBuffer = "";
+    this.emit("task-start", command);
+    this.send({ type: "task-start", payload: command });
+    const workDir = cwd || process.cwd();
+    this.pty = nodePty.spawn(process.platform === "win32" ? "cmd.exe" : "claude", process.platform === "win32" ? ["/c", "claude", "-p"] : ["-p"], {
+      name: "xterm-256color",
+      cols: 120,
+      rows: 40,
+      cwd: workDir,
+      env: process.env
+    });
+    this.pty.onData((data) => {
+      this.outputBuffer += data;
+      this.send({ type: "output", payload: data });
+      this.emit("output", data);
+      if (this.detectConfirm(data)) {
+        this.send({ type: "confirm-needed", payload: data });
+        this.emit("confirm-needed", data);
+      }
+    });
+    this.pty.onExit(({ exitCode }) => {
+      this.send({ type: "task-end", payload: String(exitCode) });
+      this.emit("task-end", exitCode);
+      this.pty = null;
+    });
+    setTimeout(() => {
+      this.pty?.write(command + "\r");
+    }, 500);
+  }
+  /**
+   * 响应手机端发来的确认
+   */
+  sendConfirm(response) {
+    this.pty?.write(response + "\r");
+    if (this.confirmResolve) {
+      this.confirmResolve(response);
+      this.confirmResolve = null;
+    }
+  }
+  /**
+   * 取消当前任务
+   */
+  cancelTask() {
+    this.pty?.kill();
+    this.pty = null;
+    this.send({ type: "status", payload: "cancelled" });
+  }
+  /**
+   * 检测 Claude CLI 是否需要确认
+   */
+  detectConfirm(data) {
+    const markers = [
+      "是否继续",
+      "Do you want to proceed",
+      "permission",
+      "y/n",
+      "(y/n)",
+      "confirm",
+      "allow",
+      "deny"
+    ];
+    const lower = data.toLowerCase();
+    return markers.some((m) => lower.includes(m.toLowerCase()));
+  }
+  // ── 消息路由 ──────────────────────────────
+  handleMessage(msg) {
+    switch (msg.type) {
+      case "registered":
+        this.pairingCode = msg.pairingCode || "";
+        this.status = "online";
+        this.emit("registered", this.pairingCode);
+        break;
+      case "phone-connected":
+        this.status = "paired";
+        this.emit("status-change", "paired");
+        break;
+      case "command":
+        this.executeCommand(msg.payload || "");
+        break;
+      case "confirm-response":
+        this.sendConfirm(msg.payload || "");
+        break;
+      case "cancel":
+        this.cancelTask();
+        break;
+      case "status":
+        if (msg.payload === "phone-offline") {
+          this.status = "online";
+          this.emit("status-change", "online");
+        }
+        break;
+      case "error":
+        this.emit("error", msg.payload || "unknown");
+        break;
+    }
+  }
+  // ── 简单事件系统 ──────────────────────────
+  on(event, handler) {
+    if (!this.handlers.has(event)) this.handlers.set(event, []);
+    this.handlers.get(event).push(handler);
+  }
+  emit(event, data) {
+    const list = this.handlers.get(event);
+    if (list) list.forEach((h) => h(data));
+  }
+  send(msg) {
+    if (this.ws?.readyState === ws.WebSocket.OPEN) {
+      this.ws.send(JSON.stringify(msg));
+    }
+  }
+}
 function resolveClaudePath() {
   if (process.platform === "win32") return "cmd.exe";
   const home = os.homedir();
@@ -509,6 +681,8 @@ function resolveClaudePath() {
 }
 const CLAUDE_BIN = resolveClaudePath();
 let currentClaudePty = null;
+const RELAY_SERVER_URL = process.env.RELAY_SERVER_URL || "wss://hcode-relay.zeabur.app";
+let remoteAgent = null;
 function getIconPath() {
   if (electron.app.isPackaged) {
     const isWin = process.platform === "win32";
@@ -1169,6 +1343,61 @@ function registerIPC() {
     if (currentClaudePty) {
       currentClaudePty.kill();
     }
+  });
+  electron.ipcMain.handle("remote-start", (_event, serverUrl) => {
+    if (remoteAgent) {
+      remoteAgent.disconnect();
+    }
+    const url = serverUrl || RELAY_SERVER_URL;
+    remoteAgent = new RemoteAgent(url);
+    remoteAgent.on("registered", (pairingCode) => {
+      electron.BrowserWindow.getAllWindows().forEach((win) => {
+        if (!win.isDestroyed()) win.webContents.send("remote-registered", pairingCode);
+      });
+    });
+    remoteAgent.on("status-change", (status) => {
+      electron.BrowserWindow.getAllWindows().forEach((win) => {
+        if (!win.isDestroyed()) win.webContents.send("remote-status-change", status);
+      });
+    });
+    remoteAgent.on("task-start", (command) => {
+      electron.BrowserWindow.getAllWindows().forEach((win) => {
+        if (!win.isDestroyed()) win.webContents.send("remote-task-start", command);
+      });
+    });
+    remoteAgent.on("output", (data) => {
+      electron.BrowserWindow.getAllWindows().forEach((win) => {
+        if (!win.isDestroyed()) win.webContents.send("remote-output", data);
+      });
+    });
+    remoteAgent.on("task-end", (exitCode) => {
+      electron.BrowserWindow.getAllWindows().forEach((win) => {
+        if (!win.isDestroyed()) win.webContents.send("remote-task-end", exitCode);
+      });
+      notifyTaskFinished();
+    });
+    remoteAgent.on("confirm-needed", () => {
+      broadcastClaudeConfirmNeeded();
+      scheduleAutoExpand();
+    });
+    remoteAgent.on("error", (msg) => {
+      electron.BrowserWindow.getAllWindows().forEach((win) => {
+        if (!win.isDestroyed()) win.webContents.send("remote-error", msg);
+      });
+    });
+    remoteAgent.connect();
+    return { success: true, status: remoteAgent.getStatus() };
+  });
+  electron.ipcMain.handle("remote-stop", () => {
+    remoteAgent?.disconnect();
+    remoteAgent = null;
+    return { success: true };
+  });
+  electron.ipcMain.handle("remote-get-status", () => {
+    return {
+      status: remoteAgent?.getStatus() || "offline",
+      pairingCode: remoteAgent?.getPairingCode() || ""
+    };
   });
   electron.ipcMain.handle("read-claude-config", () => {
     try {
