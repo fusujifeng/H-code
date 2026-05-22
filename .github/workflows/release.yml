@@ -59,9 +59,36 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Import Apple Developer certificate (macOS)
+        if: runner.os == 'macOS'
+        env:
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+        run: |
+          if [ -z "$MACOS_CERTIFICATE" ]; then
+            echo "::warning::MACOS_CERTIFICATE secret not set — skipping code signing. DMG will be unsigned."
+            echo "SKIP_SIGNING=1" >> $GITHUB_ENV
+            exit 0
+          fi
+          KEYCHAIN_PATH=$(mktemp -d)/app-signing.keychain-db
+          echo "$MACOS_CERTIFICATE" | base64 --decode > certificate.p12
+          security create-keychain -p temp_password "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p temp_password "$KEYCHAIN_PATH"
+          security import certificate.p12 -k "$KEYCHAIN_PATH" -P "$MACOS_CERTIFICATE_PASSWORD" -A -T /usr/bin/codesign -T /usr/bin/notarytool
+          security list-keychains -d user -s "$KEYCHAIN_PATH" login.keychain
+          security default-keychain -s "$KEYCHAIN_PATH"
+          IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" | head -1 | grep -o '".*"' | tr -d '"')
+          echo "CODE_SIGN_IDENTITY=$IDENTITY" >> $GITHUB_ENV
+          echo "Code signing identity: $IDENTITY"
+          rm certificate.p12
+
       - name: Package
         env:
           npm_config_python: python
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: pnpm dist --publish never
 
       - name: List dist output
