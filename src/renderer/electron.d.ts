@@ -94,6 +94,12 @@ declare global {
       resetPlanDetection: (sessionId: string) => Promise<boolean>
       onPlanStepsDetected: (cb: (sessionId: string, steps: { id: string; content: string; status: string }[]) => void) => () => void
 
+      /* 远程控制 */
+      getPairCode: () => Promise<string | null>
+      getConnectionStatus: () => Promise<string>
+      onConnectionStatusChanged: (cb: (status: string) => void) => () => void
+      onPairCodeUpdated: (cb: (code: string) => void) => () => void
+
       /* 子 Agent 执行（父子开发模式） */
       executePlanStep: (stepId: string, stepContent: string, planContext: string, cwd?: string) => Promise<{ success: boolean; stepId: string }>
       cancelPlanStep: (stepId: string) => Promise<{ success: boolean; error?: string }>

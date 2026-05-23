@@ -10,8 +10,13 @@ import { sessionStore } from './session-store'
 import { taskQueue } from './task-queue'
 import { fileWatcher } from './file-watcher'
 import { snapshotManager } from './snapshot-manager'
+import { WSBridge } from './ws-bridge'
 
 let currentClaudePty: ReturnType<typeof spawnPty> | null = null
+
+const wsBridge = new WSBridge({
+  serverUrl: process.env.HC_SERVER_URL || 'ws://localhost:8080/ws'
+})
 
 function getIconPath(): string {
   if (app.isPackaged) {
@@ -672,6 +677,12 @@ function registerIPC() {
       if (checkTaskDone(sessionId, data)) {
         scheduleAutoExpand()
       }
+
+      // 远程控制：提取 AI 回复转发给手机端
+      const aiResponse = extractAIResponse(data)
+      if (aiResponse) {
+        wsBridge.sendAIResponse(aiResponse)
+      }
     })
 
     pty.onExit(({ exitCode }) => {
@@ -836,6 +847,16 @@ function registerIPC() {
     }
   })
 
+  /* ── 远程控制 ────────────────────────────────────────────── */
+
+  ipcMain.handle('get-pair-code', () => {
+    return wsBridge.getPairCode()
+  })
+
+  ipcMain.handle('get-connection-status', () => {
+    return wsBridge.getStatus()
+  })
+
   /* ── 读取 Claude Code CLI 配置 ───────────────────────────── */
 
   ipcMain.handle('read-claude-config', () => {
@@ -983,6 +1004,8 @@ function registerIPC() {
             win.webContents.send('plan-steps-detected', sessionId, state!.steps)
           }
         })
+        // 同步到手机端
+        wsBridge.sendTodoUpdate(JSON.stringify(state.steps))
       }
     }
   }
@@ -1164,6 +1187,19 @@ function registerIPC() {
     return { success: true, stepId: reviewPtyId }
   })
 
+  /* ── 远程控制命令转发 ────────────────────────────────────── */
+
+  wsBridge.setOnCommand((payload: string) => {
+    const ptyIds = Array.from(ptySessions.keys())
+    if (ptyIds.length > 0) {
+      const targetId = ptyIds[ptyIds.length - 1]
+      const pty = ptySessions.get(targetId)
+      if (pty) {
+        writePtyChunks(pty, payload + '\r\n')
+      }
+    }
+  })
+
   /* 保留旧的 CLI 流式接口（供 InputArea 用） */
   ipcMain.handle('send-to-claude', (_event, prompt: string, permission?: UIPermission, cwd?: string) => {
     const workDir = cwd || process.cwd()
@@ -1247,6 +1283,21 @@ function registerIPC() {
   })
 }
 
+function extractAIResponse(data: string): string | null {
+  const cleaned = data
+    .replace(/\x1b\[[0-9;?]*[A-Za-z]/g, '')   // CSI: ESC[*letter
+    .replace(/\x1b\][^\x07]*\x07/g, '')        // OSC: ESC]text BEL (window title, etc.)
+    .replace(/\x1b[PX^_][^\x1b]*\x1b\\?/g, '') // DCS/SOS/APC/PM
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '') // Other control chars
+    .replace(/\x1b./g, '')                      // Remaining single-char ESC sequences
+    .replace(/[\r\n]/g, '\n')                   // Normalize newlines
+    .replace(/\n{3,}/g, '\n\n')                 // Collapse excessive blank lines
+  if (cleaned.trim().length > 0) {
+    return cleaned
+  }
+  return null
+}
+
 /* ── lifecycle ───────────────────────────────────────────── */
 
 app.whenReady().then(() => {
@@ -1255,6 +1306,8 @@ app.whenReady().then(() => {
   createTray()
   registerIPC()      // 必须在 createMainWindow 之前注册，否则渲染进程的 getTasks() 等 IPC 调用会失败
   createMainWindow()
+
+  wsBridge.connect()
 
   // 启动后延迟检查更新，然后按每周五 10:00 安排定时检查
   setTimeout(() => checkForUpdatesSilent(), 30000)

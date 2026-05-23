@@ -9,6 +9,7 @@ const electronUpdater = require("electron-updater");
 const https = require("https");
 const Database = require("better-sqlite3");
 const chokidar = require("chokidar");
+const WebSocket = require("ws");
 class SessionStore {
   db;
   constructor() {
@@ -428,7 +429,149 @@ ${lines.join("\n")}`;
   }
 }
 const fileWatcher = new FileWatcher();
+class WSBridge {
+  ws = null;
+  config;
+  status = "disconnected";
+  pairCode = null;
+  reconnectTimer = null;
+  reconnectDelay = 1e3;
+  heartbeatTimer = null;
+  onCommand = null;
+  aiResponseBuffer = "";
+  aiResponseFlushTimer = null;
+  constructor(config) {
+    this.config = config;
+  }
+  setOnCommand(handler) {
+    this.onCommand = handler;
+  }
+  getStatus() {
+    return this.status;
+  }
+  getPairCode() {
+    return this.pairCode;
+  }
+  connect() {
+    if (this.ws) {
+      this.ws.close();
+    }
+    this.setStatus("connecting");
+    try {
+      this.ws = new WebSocket(this.config.serverUrl);
+      this.ws.on("open", () => {
+        console.log("[ws-bridge] connected to", this.config.serverUrl);
+        this.ws.send(JSON.stringify({ type: "register", client_type: "desktop" }));
+      });
+      this.ws.on("message", (raw) => {
+        try {
+          const msg = JSON.parse(raw.toString());
+          switch (msg.type) {
+            case "pair_code":
+              this.pairCode = typeof msg.payload === "string" ? msg.payload : JSON.stringify(msg.payload);
+              this.setStatus("connected");
+              this.reconnectDelay = 1e3;
+              this.startHeartbeat();
+              this.notifyRenderers("pair-code-updated", this.pairCode);
+              console.log("[ws-bridge] pair code:", this.pairCode);
+              break;
+            case "command":
+              if (this.onCommand) {
+                const payload = typeof msg.payload === "string" ? msg.payload : JSON.stringify(msg.payload);
+                this.onCommand(payload);
+              }
+              break;
+            case "heartbeat":
+              break;
+            case "disconnect":
+              console.log("[ws-bridge] peer disconnected:", msg.payload);
+              break;
+            case "error":
+              console.error("[ws-bridge] server error:", msg.payload);
+              break;
+          }
+        } catch (e) {
+          console.error("[ws-bridge] parse error:", e);
+        }
+      });
+      this.ws.on("close", () => {
+        console.log("[ws-bridge] disconnected");
+        this.heartbeatTimer && clearInterval(this.heartbeatTimer);
+        this.heartbeatTimer = null;
+        this.setStatus("disconnected");
+        this.scheduleReconnect();
+      });
+      this.ws.on("error", (err) => {
+        console.error("[ws-bridge] error:", err.message);
+        this.ws?.close();
+      });
+    } catch (e) {
+      console.error("[ws-bridge] connect error:", e);
+      this.setStatus("disconnected");
+      this.scheduleReconnect();
+    }
+  }
+  sendAIResponse(payload) {
+    this.aiResponseBuffer += payload;
+    if (this.aiResponseFlushTimer) {
+      clearTimeout(this.aiResponseFlushTimer);
+    }
+    this.aiResponseFlushTimer = setTimeout(() => this.flushAIResponse(), 300);
+  }
+  sendTodoUpdate(payload) {
+    if (this.ws && this.status === "connected") {
+      this.ws.send(JSON.stringify({ type: "todo_update", payload }));
+    }
+  }
+  flushAIResponse() {
+    this.aiResponseFlushTimer = null;
+    if (this.aiResponseBuffer.trim().length > 0 && this.ws && this.status === "connected") {
+      this.ws.send(JSON.stringify({ type: "ai_response", payload: this.aiResponseBuffer }));
+      this.aiResponseBuffer = "";
+    }
+  }
+  startHeartbeat() {
+    this.heartbeatTimer && clearInterval(this.heartbeatTimer);
+    this.heartbeatTimer = setInterval(() => {
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+        this.ws.send(JSON.stringify({ type: "heartbeat" }));
+      }
+    }, 3e4);
+  }
+  setStatus(s) {
+    this.status = s;
+    this.notifyRenderers("connection-status-changed", s);
+  }
+  scheduleReconnect() {
+    if (this.reconnectTimer) return;
+    console.log(`[ws-bridge] reconnect in ${this.reconnectDelay}ms`);
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
+      this.reconnectDelay = Math.min(this.reconnectDelay * 2, 3e4);
+      this.connect();
+    }, this.reconnectDelay);
+  }
+  notifyRenderers(channel, data) {
+    electron.BrowserWindow.getAllWindows().forEach((win) => {
+      if (!win.isDestroyed()) {
+        win.webContents.send(channel, data);
+      }
+    });
+  }
+  destroy() {
+    this.heartbeatTimer && clearInterval(this.heartbeatTimer);
+    this.aiResponseFlushTimer && clearTimeout(this.aiResponseFlushTimer);
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+    }
+    this.ws?.close();
+    this.ws = null;
+  }
+}
 let currentClaudePty = null;
+const wsBridge = new WSBridge({
+  serverUrl: process.env.HC_SERVER_URL || "ws://localhost:8080/ws"
+});
 function getIconPath() {
   if (electron.app.isPackaged) {
     const isWin = process.platform === "win32";
@@ -961,6 +1104,10 @@ function registerIPC() {
       if (checkTaskDone(sessionId, data)) {
         scheduleAutoExpand();
       }
+      const aiResponse = extractAIResponse(data);
+      if (aiResponse) {
+        wsBridge.sendAIResponse(aiResponse);
+      }
     });
     pty.onExit(({ exitCode }) => {
       console.log("[PTY] session exited:", sessionId, "code:", exitCode);
@@ -1091,6 +1238,12 @@ function registerIPC() {
       currentClaudePty.kill();
     }
   });
+  electron.ipcMain.handle("get-pair-code", () => {
+    return wsBridge.getPairCode();
+  });
+  electron.ipcMain.handle("get-connection-status", () => {
+    return wsBridge.getStatus();
+  });
   electron.ipcMain.handle("read-claude-config", () => {
     try {
       const configPath = path.join(os.homedir(), ".claude", "settings.json");
@@ -1205,6 +1358,7 @@ function registerIPC() {
             win.webContents.send("plan-steps-detected", sessionId, state.steps);
           }
         });
+        wsBridge.sendTodoUpdate(JSON.stringify(state.steps));
       }
     }
   }
@@ -1349,6 +1503,16 @@ function registerIPC() {
     });
     return { success: true, stepId: reviewPtyId };
   });
+  wsBridge.setOnCommand((payload) => {
+    const ptyIds = Array.from(ptySessions.keys());
+    if (ptyIds.length > 0) {
+      const targetId = ptyIds[ptyIds.length - 1];
+      const pty = ptySessions.get(targetId);
+      if (pty) {
+        writePtyChunks(pty, payload + "\r\n");
+      }
+    }
+  });
   electron.ipcMain.handle("send-to-claude", (_event, prompt, permission, cwd) => {
     const workDir = cwd || process.cwd();
     const isWin = process.platform === "win32";
@@ -1421,12 +1585,20 @@ function registerIPC() {
     return { success: true };
   });
 }
+function extractAIResponse(data) {
+  const cleaned = data.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, "").replace(/\x1b\][^\x07]*\x07/g, "").replace(/\x1b[PX^_][^\x1b]*\x1b\\?/g, "").replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "").replace(/\x1b./g, "").replace(/[\r\n]/g, "\n").replace(/\n{3,}/g, "\n\n");
+  if (cleaned.trim().length > 0) {
+    return cleaned;
+  }
+  return null;
+}
 electron.app.whenReady().then(() => {
   setupAutoUpdater();
   createFloatWindow();
   createTray();
   registerIPC();
   createMainWindow();
+  wsBridge.connect();
   setTimeout(() => checkForUpdatesSilent(), 3e4);
   scheduleNextFridayCheck();
   electron.app.on("activate", () => {
