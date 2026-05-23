@@ -10,7 +10,6 @@ import { sessionStore } from './session-store'
 import { taskQueue } from './task-queue'
 import { fileWatcher } from './file-watcher'
 import { snapshotManager } from './snapshot-manager'
-import { RemoteAgent } from './remote-agent'
 
 function resolveClaudePath(): string {
   if (process.platform === 'win32') return 'cmd.exe'
@@ -109,10 +108,6 @@ function resolveClaudePath(): string {
 const CLAUDE_BIN = resolveClaudePath()
 
 let currentClaudePty: ReturnType<typeof spawnPty> | null = null
-
-// 远程控制 Agent（手机 ↔ 桌面）
-const RELAY_SERVER_URL = process.env.RELAY_SERVER_URL || 'wss://hcode-relay.zeabur.app'
-let remoteAgent: RemoteAgent | null = null
 
 function getIconPath(): string {
   if (app.isPackaged) {
@@ -936,68 +931,6 @@ function registerIPC() {
     }
   })
 
-  /* ── 远程控制（手机 ↔ 桌面）───────────────────────────────── */
-
-  ipcMain.handle('remote-start', (_event, serverUrl?: string) => {
-    if (remoteAgent) {
-      remoteAgent.disconnect()
-    }
-    const url = serverUrl || RELAY_SERVER_URL
-    remoteAgent = new RemoteAgent(url)
-
-    remoteAgent.on('registered', (pairingCode: unknown) => {
-      BrowserWindow.getAllWindows().forEach((win) => {
-        if (!win.isDestroyed()) win.webContents.send('remote-registered', pairingCode)
-      })
-    })
-    remoteAgent.on('status-change', (status: unknown) => {
-      BrowserWindow.getAllWindows().forEach((win) => {
-        if (!win.isDestroyed()) win.webContents.send('remote-status-change', status)
-      })
-    })
-    remoteAgent.on('task-start', (command: unknown) => {
-      BrowserWindow.getAllWindows().forEach((win) => {
-        if (!win.isDestroyed()) win.webContents.send('remote-task-start', command)
-      })
-    })
-    remoteAgent.on('output', (data: unknown) => {
-      BrowserWindow.getAllWindows().forEach((win) => {
-        if (!win.isDestroyed()) win.webContents.send('remote-output', data)
-      })
-    })
-    remoteAgent.on('task-end', (exitCode: unknown) => {
-      BrowserWindow.getAllWindows().forEach((win) => {
-        if (!win.isDestroyed()) win.webContents.send('remote-task-end', exitCode)
-      })
-      notifyTaskFinished()
-    })
-    remoteAgent.on('confirm-needed', () => {
-      broadcastClaudeConfirmNeeded()
-      scheduleAutoExpand()
-    })
-    remoteAgent.on('error', (msg: unknown) => {
-      BrowserWindow.getAllWindows().forEach((win) => {
-        if (!win.isDestroyed()) win.webContents.send('remote-error', msg)
-      })
-    })
-
-    remoteAgent.connect()
-    return { success: true, status: remoteAgent.getStatus() }
-  })
-
-  ipcMain.handle('remote-stop', () => {
-    remoteAgent?.disconnect()
-    remoteAgent = null
-    return { success: true }
-  })
-
-  ipcMain.handle('remote-get-status', () => {
-    return {
-      status: remoteAgent?.getStatus() || 'offline',
-      pairingCode: remoteAgent?.getPairingCode() || '',
-    }
-  })
-
   /* ── 读取 Claude Code CLI 配置 ───────────────────────────── */
 
   ipcMain.handle('read-claude-config', () => {
@@ -1408,7 +1341,15 @@ function registerIPC() {
 
 /* ── lifecycle ───────────────────────────────────────────── */
 
+app.setName('H-code')
+
 app.whenReady().then(() => {
+  // macOS dock 图标（不设置会显示 Electron 默认图标）
+  if (process.platform === 'darwin') {
+    const dockIcon = nativeImage.createFromPath(getIconPath()).resize({ width: 1024, height: 1024 })
+    app.dock.setIcon(dockIcon)
+  }
+
   setupAutoUpdater()
   createFloatWindow()
   createTray()
