@@ -18,6 +18,8 @@ const isWin = typeof navigator !== 'undefined' && navigator.platform?.toLowerCas
 
 export default function TitleBar() {
   const [isMaximized, setIsMaximized] = useState(false)
+  const [connStatus, setConnStatus] = useState<string>('disconnected')
+  const [pairCode, setPairCode] = useState<string | null>(null)
   const activeSessionId = useAppStore((s) => s.activeSessionId)
   const showMidPanel = useAppStore((s) => s.showMidPanel)
   const toggleMidPanel = useAppStore((s) => s.toggleMidPanel)
@@ -27,7 +29,16 @@ export default function TitleBar() {
   useEffect(() => {
     if (!api) return
     api.windowIsMaximized().then(setIsMaximized)
-    return api.onWindowMaximized(setIsMaximized)
+    const unsubWin = api.onWindowMaximized(setIsMaximized)
+    const unsub1 = api.onConnectionStatusChanged?.((status: string) => setConnStatus(status))
+    const unsub2 = api.onPairCodeUpdated?.((code: string) => setPairCode(code))
+    api.getConnectionStatus?.().then(setConnStatus)
+    api.getPairCode?.().then(setPairCode)
+    return () => {
+      unsubWin()
+      unsub1?.()
+      unsub2?.()
+    }
   }, [])
 
   const handleMinimize = () => api?.windowMinimize()
@@ -121,6 +132,20 @@ export default function TitleBar() {
       </div>
 
       {/* ── RIGHT ──────────────────────────── */}
+      <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0, paddingRight: 8, gap: 6, ...noDrag }}>
+        <span style={{
+          width: 7, height: 7, borderRadius: '50%', flexShrink: 0,
+          background: connStatus === 'connected' ? '#34C759' : connStatus === 'connecting' ? '#FF9F0A' : '#FF3B30',
+          boxShadow: connStatus === 'connected' ? '0 0 6px rgba(52,199,89,0.5)' : undefined
+        }} />
+        <span style={{
+          fontSize: 11, color: 'var(--text-secondary)', whiteSpace: 'nowrap',
+          fontFamily: 'SF Mono, monospace', letterSpacing: pairCode ? 2 : 0
+        }}>
+          {connStatus === 'connected' ? (pairCode ? pairCode.replace(/(\d{3})(\d{3})/, '$1 $2') : '已连接') :
+           connStatus === 'connecting' ? '连接中...' : '未连接'}
+        </span>
+      </div>
       <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0, ...noDrag }}>
         {isMac ? (
           <div style={{ width: 68 }} />

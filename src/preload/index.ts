@@ -157,6 +157,20 @@ const electronAPI = {
 
   killClaude: () => ipcRenderer.invoke('kill-claude'),
 
+  /* ── 远程控制 ───────────────────────────────────────────── */
+  getPairCode: () => ipcRenderer.invoke('get-pair-code'),
+  getConnectionStatus: () => ipcRenderer.invoke('get-connection-status'),
+  onConnectionStatusChanged: (callback: (status: string) => void) => {
+    const listener = (_event: unknown, status: string) => callback(status)
+    ipcRenderer.on('connection-status-changed', listener)
+    return () => ipcRenderer.removeListener('connection-status-changed', listener)
+  },
+  onPairCodeUpdated: (callback: (code: string) => void) => {
+    const listener = (_event: unknown, code: string) => callback(code)
+    ipcRenderer.on('pair-code-updated', listener)
+    return () => ipcRenderer.removeListener('pair-code-updated', listener)
+  },
+
   /* ── SQLite 会话存储 ───────────────────────────────────── */
   createConversation: (id: string, title: string) =>
     ipcRenderer.invoke('create-conversation', id, title),

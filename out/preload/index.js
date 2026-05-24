@@ -122,6 +122,19 @@ const electronAPI = {
     return () => electron.ipcRenderer.removeListener("task-finished", listener);
   },
   killClaude: () => electron.ipcRenderer.invoke("kill-claude"),
+  /* ── 远程控制 ───────────────────────────────────────────── */
+  getPairCode: () => electron.ipcRenderer.invoke("get-pair-code"),
+  getConnectionStatus: () => electron.ipcRenderer.invoke("get-connection-status"),
+  onConnectionStatusChanged: (callback) => {
+    const listener = (_event, status) => callback(status);
+    electron.ipcRenderer.on("connection-status-changed", listener);
+    return () => electron.ipcRenderer.removeListener("connection-status-changed", listener);
+  },
+  onPairCodeUpdated: (callback) => {
+    const listener = (_event, code) => callback(code);
+    electron.ipcRenderer.on("pair-code-updated", listener);
+    return () => electron.ipcRenderer.removeListener("pair-code-updated", listener);
+  },
   /* ── SQLite 会话存储 ───────────────────────────────────── */
   createConversation: (id, title) => electron.ipcRenderer.invoke("create-conversation", id, title),
   getConversations: () => electron.ipcRenderer.invoke("get-conversations"),
