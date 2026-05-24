@@ -1,6 +1,6 @@
 {
   "name": "h-code",
-  "version": "1.0.16",
+  "version": "1.0.17",
   "description": "AI coding assistant desktop app with multi-model support",
   "main": "./out/main/index.js",
   "scripts": {
