@@ -650,7 +650,7 @@ function resolveClaudePath() {
 const CLAUDE_BIN = resolveClaudePath();
 let currentClaudePty = null;
 const wsBridge = new WSBridge({
-  serverUrl: process.env.HC_SERVER_URL || "ws://localhost:8080/ws"
+  serverUrl: process.env.HC_SERVER_URL || "ws://124.221.115.70:8080/ws"
 });
 function getIconPath() {
   if (electron.app.isPackaged) {
@@ -747,6 +747,7 @@ let mainWindow = null;
 let floatWindow = null;
 let tray = null;
 const ptySessions = /* @__PURE__ */ new Map();
+const ptySessionConfig = /* @__PURE__ */ new Map();
 const pendingKillTimers = /* @__PURE__ */ new Map();
 const ptyCreateTime = /* @__PURE__ */ new Map();
 const ptyOutputHistory = /* @__PURE__ */ new Map();
@@ -985,7 +986,7 @@ function registerIPC() {
     if (buffer.length > 8e3) buffer = buffer.slice(-8e3);
     ptyTaskDoneBuffers.set(sessionId, buffer);
     const text = buffer.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, "").replace(/\x00/g, "");
-    if (/Brewed for [\d.]+s?/i.test(text) || /Thinking for [\d.]+s?/i.test(text)) {
+    if (/\*\s*\w+\s+for\s+[\d.]+s/i.test(text) || /Thinking for [\d.]+s?/i.test(text)) {
       console.log("[Main] checkTaskDone: time-marker detected, session:", sessionId);
       ptyTaskDoneBuffers.delete(sessionId);
       notifyTaskFinished();
@@ -1154,6 +1155,7 @@ function registerIPC() {
       const oldPty = ptySessions.get(sessionId);
       setTimeout(() => oldPty?.kill(), 300);
       ptySessions.delete(sessionId);
+      ptySessionConfig.delete(sessionId);
       pendingKillTimers.delete(sessionId);
       ptyCreateTime.delete(sessionId);
       ptyOutputHistory.delete(sessionId);
@@ -1171,6 +1173,7 @@ function registerIPC() {
     ptySessions.set(sessionId, pty);
     console.log("[PTY] session created:", sessionId);
     ptyCreateTime.set(sessionId, Date.now());
+    ptySessionConfig.set(sessionId, { cwd: workDir, permission });
     pty.onData((data) => {
       const history = ptyOutputHistory.get(sessionId) || "";
       ptyOutputHistory.set(sessionId, history + data);
@@ -1183,10 +1186,6 @@ function registerIPC() {
       if (checkTaskDone(sessionId, data)) {
         scheduleAutoExpand();
       }
-      const aiResponse = extractAIResponse(data);
-      if (aiResponse) {
-        wsBridge.sendAIResponse(aiResponse);
-      }
     });
     pty.onExit(({ exitCode }) => {
       console.log("[PTY] session exited:", sessionId, "code:", exitCode);
@@ -1197,6 +1196,7 @@ function registerIPC() {
       const currentPty = ptySessions.get(sessionId);
       if (currentPty === pty) {
         ptySessions.delete(sessionId);
+        ptySessionConfig.delete(sessionId);
         pendingKillTimers.delete(sessionId);
         ptyCreateTime.delete(sessionId);
         ptyOutputHistory.delete(sessionId);
@@ -1242,6 +1242,7 @@ function registerIPC() {
       const pty = ptySessions.get(sessionId);
       pty?.kill();
       ptySessions.delete(sessionId);
+      ptySessionConfig.delete(sessionId);
       pendingKillTimers.delete(sessionId);
     }, 1e3));
   });
@@ -1254,6 +1255,10 @@ function registerIPC() {
     if (createdAt && Date.now() - createdAt < 3e3) {
       console.log("[PTY] ignoring permission change within 3s of creation for", sessionId);
       return { success: true };
+    }
+    const existing = ptySessionConfig.get(sessionId);
+    if (existing) {
+      ptySessionConfig.set(sessionId, { ...existing, permission });
     }
     const cmd = getPermissionSlashCommand(permission);
     console.log("[PTY] changing permission:", sessionId, permission, "→", JSON.stringify(cmd));
@@ -1582,13 +1587,36 @@ function registerIPC() {
   });
   wsBridge.setOnCommand((payload) => {
     const ptyIds = Array.from(ptySessions.keys());
-    if (ptyIds.length > 0) {
-      const targetId = ptyIds[ptyIds.length - 1];
+    const targetId = ptyIds.length > 0 ? ptyIds[ptyIds.length - 1] : null;
+    const config = targetId ? ptySessionConfig.get(targetId) : null;
+    const workDir = config?.cwd || process.cwd();
+    const isWin = process.platform === "win32";
+    const permFlags = config?.permission ? getPermissionFlags(config.permission) : [];
+    if (targetId) {
       const pty = ptySessions.get(targetId);
       if (pty) {
         writePtyChunks(pty, payload + "\r\n");
       }
     }
+    const printArgs = isWin ? ["/c", ["claude", "-p", payload, ...permFlags].join(" ")] : ["-p", payload, ...permFlags];
+    console.log("[phone-command] spawn:", CLAUDE_BIN, printArgs.join(" "), "cwd:", workDir);
+    const child = child_process.spawn(CLAUDE_BIN, printArgs, {
+      cwd: workDir,
+      env: { ...process.env, NO_COLOR: "1" },
+      stdio: ["ignore", "pipe", "pipe"]
+    });
+    child.stdout.on("data", (data) => {
+      wsBridge.sendAIResponse(data.toString());
+    });
+    child.stderr.on("data", (data) => {
+      console.error("[phone-command] stderr:", data.toString());
+    });
+    child.on("close", (code) => {
+      console.log("[phone-command] finished, exit:", code);
+    });
+    child.on("error", (err) => {
+      console.error("[phone-command] spawn error:", err.message);
+    });
   });
   electron.ipcMain.handle("send-to-claude", (_event, prompt, permission, cwd) => {
     const workDir = cwd || process.cwd();
@@ -1661,19 +1689,12 @@ function registerIPC() {
     return { success: true };
   });
 }
-function extractAIResponse(data) {
-  const cleaned = data.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, "").replace(/\x1b\][^\x07]*\x07/g, "").replace(/\x1b[PX^_][^\x1b]*\x1b\\?/g, "").replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, "").replace(/\x1b./g, "").replace(/[\r\n]/g, "\n").replace(/\n{3,}/g, "\n\n");
-  if (cleaned.trim().length > 0) {
-    return cleaned;
-  }
-  return null;
-}
+electron.app.setName("H-code");
 electron.app.whenReady().then(() => {
   if (process.platform === "darwin") {
-    const dockIcon = electron.nativeImage.createFromPath(getIconPath());
+    const dockIcon = electron.nativeImage.createFromPath(getIconPath()).resize({ width: 1024, height: 1024 });
     electron.app.dock.setIcon(dockIcon);
   }
-  electron.app.setName("H-code");
   setupAutoUpdater();
   createFloatWindow();
   createTray();

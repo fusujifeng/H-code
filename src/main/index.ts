@@ -3,7 +3,7 @@ import { spawn as spawnPty } from 'node-pty'
 import path from 'path'
 import fs from 'fs'
 import os from 'os'
-import { execSync } from 'child_process'
+import { execSync, spawn } from 'child_process'
 import { autoUpdater } from 'electron-updater'
 import https from 'https'
 import { sessionStore } from './session-store'
@@ -111,7 +111,7 @@ const CLAUDE_BIN = resolveClaudePath()
 let currentClaudePty: ReturnType<typeof spawnPty> | null = null
 
 const wsBridge = new WSBridge({
-  serverUrl: process.env.HC_SERVER_URL || 'ws://localhost:8080/ws'
+  serverUrl: process.env.HC_SERVER_URL || 'ws://124.221.115.70:8080/ws'
 })
 
 function getIconPath(): string {
@@ -233,6 +233,7 @@ let mainWindow: BrowserWindow | null = null
 let floatWindow: BrowserWindow | null = null
 let tray: Tray | null = null
 const ptySessions = new Map<string, ReturnType<typeof spawnPty>>()
+const ptySessionConfig = new Map<string, { cwd: string; permission?: UIPermission }>()
 const pendingKillTimers = new Map<string, ReturnType<typeof setTimeout>>()
 const ptyCreateTime = new Map<string, number>()
 const ptyOutputHistory = new Map<string, string>()
@@ -522,8 +523,8 @@ function registerIPC() {
     // 更彻底地去除 ANSI escape 序列
     const text = buffer.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, '').replace(/\x00/g, '')
 
-    // 模式1: Claude Code CLI 完成任务后输出 "Brewed for Xs" / "Thinking for Xs"
-    if (/Brewed for [\d.]+s?/i.test(text) || /Thinking for [\d.]+s?/i.test(text)) {
+    // 模式1: Claude Code CLI 完成任务后输出 "* Word for Xs" (Brewed/Crunched/Worked/Infusing 等)
+    if (/\*\s*\w+\s+for\s+[\d.]+s/i.test(text) || /Thinking for [\d.]+s?/i.test(text)) {
       console.log('[Main] checkTaskDone: time-marker detected, session:', sessionId)
       ptyTaskDoneBuffers.delete(sessionId)
       notifyTaskFinished()
@@ -734,6 +735,7 @@ function registerIPC() {
       // 延迟 kill 旧 PTY，避免 Windows 上 AttachConsole 冲突
       setTimeout(() => oldPty?.kill(), 300)
       ptySessions.delete(sessionId)
+      ptySessionConfig.delete(sessionId)
       pendingKillTimers.delete(sessionId)
       ptyCreateTime.delete(sessionId)
       ptyOutputHistory.delete(sessionId)
@@ -755,6 +757,7 @@ function registerIPC() {
     ptySessions.set(sessionId, pty)
     console.log('[PTY] session created:', sessionId)
     ptyCreateTime.set(sessionId, Date.now())
+    ptySessionConfig.set(sessionId, { cwd: workDir, permission })
 
     pty.onData((data) => {
       const history = ptyOutputHistory.get(sessionId) || ''
@@ -772,12 +775,6 @@ function registerIPC() {
       if (checkTaskDone(sessionId, data)) {
         scheduleAutoExpand()
       }
-
-      // 远程控制：提取 AI 回复转发给手机端
-      const aiResponse = extractAIResponse(data)
-      if (aiResponse) {
-        wsBridge.sendAIResponse(aiResponse)
-      }
     })
 
     pty.onExit(({ exitCode }) => {
@@ -789,6 +786,7 @@ function registerIPC() {
       const currentPty = ptySessions.get(sessionId)
       if (currentPty === pty) {
         ptySessions.delete(sessionId)
+        ptySessionConfig.delete(sessionId)
         pendingKillTimers.delete(sessionId)
         ptyCreateTime.delete(sessionId)
         ptyOutputHistory.delete(sessionId)
@@ -842,6 +840,7 @@ function registerIPC() {
       const pty = ptySessions.get(sessionId)
       pty?.kill()
       ptySessions.delete(sessionId)
+      ptySessionConfig.delete(sessionId)
       pendingKillTimers.delete(sessionId)
     }, 1000))
   })
@@ -856,6 +855,10 @@ function registerIPC() {
     if (createdAt && Date.now() - createdAt < 3000) {
       console.log('[PTY] ignoring permission change within 3s of creation for', sessionId)
       return { success: true }
+    }
+    const existing = ptySessionConfig.get(sessionId)
+    if (existing) {
+      ptySessionConfig.set(sessionId, { ...existing, permission })
     }
     const cmd = getPermissionSlashCommand(permission)
     console.log('[PTY] changing permission:', sessionId, permission, '→', JSON.stringify(cmd))
@@ -1284,13 +1287,48 @@ function registerIPC() {
 
   wsBridge.setOnCommand((payload: string) => {
     const ptyIds = Array.from(ptySessions.keys())
-    if (ptyIds.length > 0) {
-      const targetId = ptyIds[ptyIds.length - 1]
+    const targetId = ptyIds.length > 0 ? ptyIds[ptyIds.length - 1] : null
+    const config = targetId ? ptySessionConfig.get(targetId) : null
+    const workDir = config?.cwd || process.cwd()
+    const isWin = process.platform === 'win32'
+    const permFlags = config?.permission ? getPermissionFlags(config.permission) : []
+
+    // 1) 写入主 PTY 保持桌面端可见
+    if (targetId) {
       const pty = ptySessions.get(targetId)
       if (pty) {
         writePtyChunks(pty, payload + '\r\n')
       }
     }
+
+    // 2) 另起 claude --print 获取无 TUI 的干净输出发给手机
+    const printArgs = isWin
+      ? ['/c', ['claude', '-p', payload, ...permFlags].join(' ')]
+      : ['-p', payload, ...permFlags]
+
+    console.log('[phone-command] spawn:', CLAUDE_BIN, printArgs.join(' '), 'cwd:', workDir)
+
+    const child = spawn(CLAUDE_BIN, printArgs, {
+      cwd: workDir,
+      env: { ...process.env, NO_COLOR: '1' } as { [key: string]: string },
+      stdio: ['ignore', 'pipe', 'pipe']
+    })
+
+    child.stdout.on('data', (data: Buffer) => {
+      wsBridge.sendAIResponse(data.toString())
+    })
+
+    child.stderr.on('data', (data: Buffer) => {
+      console.error('[phone-command] stderr:', data.toString())
+    })
+
+    child.on('close', (code) => {
+      console.log('[phone-command] finished, exit:', code)
+    })
+
+    child.on('error', (err) => {
+      console.error('[phone-command] spawn error:', err.message)
+    })
   })
 
   /* 保留旧的 CLI 流式接口（供 InputArea 用） */
@@ -1373,21 +1411,6 @@ function registerIPC() {
 
     return { success: true }
   })
-}
-
-function extractAIResponse(data: string): string | null {
-  const cleaned = data
-    .replace(/\x1b\[[0-9;?]*[A-Za-z]/g, '')   // CSI: ESC[*letter
-    .replace(/\x1b\][^\x07]*\x07/g, '')        // OSC: ESC]text BEL (window title, etc.)
-    .replace(/\x1b[PX^_][^\x1b]*\x1b\\?/g, '') // DCS/SOS/APC/PM
-    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '') // Other control chars
-    .replace(/\x1b./g, '')                      // Remaining single-char ESC sequences
-    .replace(/[\r\n]/g, '\n')                   // Normalize newlines
-    .replace(/\n{3,}/g, '\n\n')                 // Collapse excessive blank lines
-  if (cleaned.trim().length > 0) {
-    return cleaned
-  }
-  return null
 }
 
 /* ── lifecycle ───────────────────────────────────────────── */
