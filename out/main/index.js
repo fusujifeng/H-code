@@ -1107,9 +1107,9 @@ function registerIPC() {
       terminator = "\n";
       data = data.slice(0, -1);
     }
-    const CHUNK_SIZE = 256;
-    if (data.length <= CHUNK_SIZE) {
-      pty.write(data + terminator);
+    const CHUNK_SIZE = 64;
+    if (data.length === 0) {
+      pty.write(terminator);
       onDone?.();
       return;
     }
@@ -1119,10 +1119,12 @@ function registerIPC() {
       pty.write(chunk);
       offset += CHUNK_SIZE;
       if (offset < data.length) {
-        setTimeout(writeNext, 10);
+        setTimeout(writeNext, 20);
       } else {
-        pty.write(terminator);
-        onDone?.();
+        setTimeout(() => {
+          pty.write(terminator);
+          onDone?.();
+        }, 30);
       }
     };
     writeNext();
@@ -1598,13 +1600,15 @@ function registerIPC() {
         writePtyChunks(pty, payload + "\r\n");
       }
     }
-    const printArgs = isWin ? ["/c", ["claude", "-p", payload, ...permFlags].join(" ")] : ["-p", payload, ...permFlags];
-    console.log("[phone-command] spawn:", CLAUDE_BIN, printArgs.join(" "), "cwd:", workDir);
+    const printArgs = isWin ? ["/c", "claude", "-p"] : ["-p", ...permFlags];
+    console.log("[phone-command] spawn:", CLAUDE_BIN, printArgs.join(" "), "cwd:", workDir, "payloadLen:", payload.length);
     const child = child_process.spawn(CLAUDE_BIN, printArgs, {
       cwd: workDir,
       env: { ...process.env, NO_COLOR: "1" },
-      stdio: ["ignore", "pipe", "pipe"]
+      stdio: ["pipe", "pipe", "pipe"]
     });
+    child.stdin.write(payload + "\n");
+    child.stdin.end();
     child.stdout.on("data", (data) => {
       wsBridge.sendAIResponse(data.toString());
     });

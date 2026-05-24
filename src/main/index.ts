@@ -664,8 +664,11 @@ function registerIPC() {
 
   /* ── PTY 辅助函数 ───────────────────────────────────────── */
 
-  // 分块写入 PTY，避免长文本被输入缓冲区截断导致需要额外回车
-  // 关键：将末尾的 \r 剥离后单独写入，确保 CLI 收到完整内容后才收到回车符
+  // 分块写入 PTY，避免长文本溢出内核 PTY 缓冲区
+  // 关键：
+  // 1. 内容按小尺寸分块（64 code units），每块间延迟 20ms
+  // 2. 终止符紧跟最后一块内容立即写入，确保 CLI 将整行识别为一次输入
+  // 3. macOS PTY 缓冲区约 1024 字节，中文每字 3 字节，64 字 ≈ 192 字节安全
   function writePtyChunks(pty: ReturnType<typeof spawnPty>, data: string, onDone?: () => void) {
     let terminator = ''
     if (data.endsWith('\r\n')) {
@@ -679,21 +682,22 @@ function registerIPC() {
       data = data.slice(0, -1)
     }
 
-    const CHUNK_SIZE = 256
-    if (data.length <= CHUNK_SIZE) {
-      pty.write(data + terminator)
+    const CHUNK_SIZE = 64
+    if (data.length === 0) {
+      pty.write(terminator)
       onDone?.()
       return
     }
     let offset = 0
     const writeNext = () => {
       const chunk = data.slice(offset, offset + CHUNK_SIZE)
-      pty.write(chunk)
       offset += CHUNK_SIZE
       if (offset < data.length) {
-        setTimeout(writeNext, 10)
+        pty.write(chunk)
+        setTimeout(writeNext, 20)
       } else {
-        pty.write(terminator)
+        // 最后一块：内容 + 终止符一起写入，CLI 才能正确识别为一次提交
+        pty.write(chunk + terminator)
         onDone?.()
       }
     }
@@ -1293,7 +1297,7 @@ function registerIPC() {
     const isWin = process.platform === 'win32'
     const permFlags = config?.permission ? getPermissionFlags(config.permission) : []
 
-    // 1) 写入主 PTY 保持桌面端可见
+    // 1) 写入主 PTY：使用分块写入，确保长文本内容完整发送，最后才发回车符
     if (targetId) {
       const pty = ptySessions.get(targetId)
       if (pty) {
@@ -1302,17 +1306,22 @@ function registerIPC() {
     }
 
     // 2) 另起 claude --print 获取无 TUI 的干净输出发给手机
+    //    长文本通过 stdin 传入，避免命令行参数长度限制
     const printArgs = isWin
-      ? ['/c', ['claude', '-p', payload, ...permFlags].join(' ')]
-      : ['-p', payload, ...permFlags]
+      ? ['/c', 'claude', '-p']
+      : ['-p', ...permFlags]
 
-    console.log('[phone-command] spawn:', CLAUDE_BIN, printArgs.join(' '), 'cwd:', workDir)
+    console.log('[phone-command] spawn:', CLAUDE_BIN, printArgs.join(' '), 'cwd:', workDir, 'payloadLen:', payload.length)
 
     const child = spawn(CLAUDE_BIN, printArgs, {
       cwd: workDir,
       env: { ...process.env, NO_COLOR: '1' } as { [key: string]: string },
-      stdio: ['ignore', 'pipe', 'pipe']
+      stdio: ['pipe', 'pipe', 'pipe']
     })
+
+    // 通过 stdin 传入 prompt（末尾加换行，确保 claude 读取完整）
+    child.stdin!.write(payload + '\n')
+    child.stdin!.end()
 
     child.stdout.on('data', (data: Buffer) => {
       wsBridge.sendAIResponse(data.toString())

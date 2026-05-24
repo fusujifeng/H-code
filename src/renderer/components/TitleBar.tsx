@@ -68,38 +68,24 @@ export default function TitleBar() {
           display: 'flex',
           alignItems: 'center',
           gap: 2,
-          paddingLeft: isMac ? 12 : 8,
+          paddingLeft: isMac ? 78 : 8,
           paddingRight: 8,
           flexShrink: 0,
           ...noDrag
         }}
       >
-        {isMac ? (
-          <>
-            <TrafficBtn color="#ff5f56" onClick={handleClose} icon={<CloseInset />} />
-            <TrafficBtn color="#ffbd2e" onClick={handleMinimize} icon={<MinusInset />} />
-            <TrafficBtn
-              color="#27c93f"
-              onClick={handleMaximize}
-              icon={isMaximized ? <RestoreInset /> : <MaxInset />}
-            />
-          </>
-        ) : (
-          <>
-            <TitleBarIconBtn icon={<MenuOutlined />} title="菜单" />
-            <TitleBarIconBtn
-              icon={<LayoutOutlined />}
-              title={showMidPanel ? '收起侧边栏' : '展开侧边栏'}
-              onClick={toggleMidPanel}
-              active={showMidPanel}
-            />
-            <Divider />
-            <TitleBarIconBtn icon={<SearchOutlined />} title="全局搜索 (Ctrl+K)" onClick={toggleSearch} />
-            <Divider />
-            <TitleBarIconBtn icon={<LeftOutlined />} title="后退" />
-            <TitleBarIconBtn icon={<RightOutlined />} title="前进" />
-          </>
-        )}
+        <TitleBarIconBtn icon={<MenuOutlined />} title="菜单" />
+        <TitleBarIconBtn
+          icon={<LayoutOutlined />}
+          title={showMidPanel ? '收起侧边栏' : '展开侧边栏'}
+          onClick={toggleMidPanel}
+          active={showMidPanel}
+        />
+        <Divider />
+        <TitleBarIconBtn icon={<SearchOutlined />} title="全局搜索 (Ctrl+K)" onClick={toggleSearch} />
+        <Divider />
+        <TitleBarIconBtn icon={<LeftOutlined />} title="后退" />
+        <TitleBarIconBtn icon={<RightOutlined />} title="前进" />
       </div>
 
       {/* ── CENTER (breadcrumb) ────────────── */}
@@ -142,7 +128,7 @@ export default function TitleBar() {
           fontSize: 11, color: 'var(--text-secondary)', whiteSpace: 'nowrap',
           fontFamily: 'SF Mono, monospace', letterSpacing: pairCode ? 2 : 0
         }}>
-          {connStatus === 'connected' ? (pairCode ? pairCode.replace(/(\d{3})(\d{3})/, '$1 $2') : '已连接') :
+          {connStatus === 'connected' ? (pairCode ? (pairCode.length === 6 ? pairCode.replace(/(\d{3})(\d{3})/, '$1 $2') : pairCode.length === 4 ? pairCode.replace(/(\d{2})(\d{2})/, '$1 $2') : pairCode) : '已连接') :
            connStatus === 'connecting' ? '连接中...' : '未连接'}
         </span>
       </div>
