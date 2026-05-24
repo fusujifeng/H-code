@@ -113,6 +113,12 @@ export class WSBridge {
     }
   }
 
+  sendProjectSync(project: { id: string; name: string; description: string; status: string; taskCount: number; lastActive: number }) {
+    if (this.ws && this.status === 'connected') {
+      this.ws.send(JSON.stringify({ type: 'project_sync', payload: project }))
+    }
+  }
+
   private flushAIResponse() {
     this.aiResponseFlushTimer = null
     if (this.aiResponseBuffer.trim().length > 0 && this.ws && this.status === 'connected') {

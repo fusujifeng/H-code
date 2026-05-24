@@ -523,6 +523,11 @@ class WSBridge {
       this.ws.send(JSON.stringify({ type: "todo_update", payload }));
     }
   }
+  sendProjectSync(project) {
+    if (this.ws && this.status === "connected") {
+      this.ws.send(JSON.stringify({ type: "project_sync", payload: project }));
+    }
+  }
   flushAIResponse() {
     this.aiResponseFlushTimer = null;
     if (this.aiResponseBuffer.trim().length > 0 && this.ws && this.status === "connected") {
@@ -1116,15 +1121,13 @@ function registerIPC() {
     let offset = 0;
     const writeNext = () => {
       const chunk = data.slice(offset, offset + CHUNK_SIZE);
-      pty.write(chunk);
       offset += CHUNK_SIZE;
       if (offset < data.length) {
+        pty.write(chunk);
         setTimeout(writeNext, 20);
       } else {
-        setTimeout(() => {
-          pty.write(terminator);
-          onDone?.();
-        }, 30);
+        pty.write(chunk + terminator);
+        onDone?.();
       }
     };
     writeNext();
