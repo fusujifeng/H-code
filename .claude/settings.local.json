@@ -10,7 +10,11 @@
       "Bash(taskkill /f /im node.exe)",
       "Bash(taskkill /f /im electron.exe)",
       "Bash(ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ pnpm dist:win)",
-      "Bash(ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/ pnpm dist:win)"
+      "Bash(ELECTRON_MIRROR=https://npmmirror.com/mirrors/electron/ ELECTRON_BUILDER_BINARIES_MIRROR=https://npmmirror.com/mirrors/electron-builder-binaries/ pnpm dist:win)",
+      "Bash(curl -s --connect-timeout 5 https://github.com -o /dev/null)",
+      "Bash(git push *)",
+      "Bash(git stash *)",
+      "Bash(git pull *)"
     ]
   }
 }
